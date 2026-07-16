@@ -1,0 +1,28 @@
+[project]
+name = "process-inspector"
+version = "0.1.0"
+description = "按命令行关键字查询进程及线程数"
+requires-python = ">=3.12,<3.15"
+dependencies = [
+    "psutil>=6,<8",
+]
+
+[project.scripts]
+process-inspector = "process_inspector.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3,<9",
+    "ruff>=0.8.6",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.15,<0.9"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100

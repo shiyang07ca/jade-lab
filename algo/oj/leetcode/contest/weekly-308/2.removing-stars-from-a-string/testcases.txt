@@ -1,9 +1,0 @@
-input:
-"leet**cod*e"
-output:
-"lecoe"
-
-input:
-"erase*****"
-output:
-""

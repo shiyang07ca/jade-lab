@@ -1,21 +1,15 @@
 [submodule "500lines"]
-	path = others/500lines
+	path = studies/500lines
 	url = https://github.com/aosabook/500lines.git
-[submodule "TexasSolver"]
-	path = others/TexasSolver
-	url = https://github.com/bupticybee/TexasSolver.git
 [submodule "algorithms"]
-	path = others/algorithms
+	path = studies/algorithms
 	url = https://github.com/keon/algorithms.git
-[submodule "Python"]
-	path = others/Python
-	url = https://github.com/TheAlgorithms/Python.git
 [submodule "algorithmbasic2020"]
-	path = others/algorithmbasic2020
+	path = studies/algorithmbasic2020
 	url = https://github.com/algorithmzuo/algorithmbasic2020.git
 [submodule "codeforces-go"]
-	path = others/codeforces-go
+	path = studies/codeforces-go
 	url = https://github.com/EndlessCheng/codeforces-go.git
 [submodule "guava"]
-	path = others/guava
+	path = studies/guava
 	url = https://github.com/google/guava.git

@@ -1,0 +1,27 @@
+[project]
+name = "python-cookbook"
+version = "0.1.0"
+description = "可复用的 Python 语言、算法和数据结构样本"
+requires-python = ">=3.12,<3.15"
+dependencies = [
+    "requests>=2.32,<3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3,<9",
+    "ruff>=0.8.6",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["testing"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "F82"]

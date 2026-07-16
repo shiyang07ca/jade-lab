@@ -1,9 +1,0 @@
-input:
-10
-output:
-182
-
-input:
-37
-output:
-1478

@@ -1,0 +1,43 @@
+author: shiyang07ca
+language: zh
+
+code:
+  lang: python
+  filename_template: "{{ .Id | padWithZero 5 }}"
+  separate_description_file: true
+
+  python3:
+    out_dir: .
+    filename_template: "{{ .Id | padWithZero 5 }}/python"
+    executable: python3.12
+
+  go:
+    out_dir: .
+    filename_template: "{{ .Id | padWithZero 5 }}/go"
+
+  cpp:
+    out_dir: .
+    filename_template: "{{ .Id | padWithZero 5 }}/cpp"
+    cxx: clang++
+    cxxflags: -O2 -std=c++17
+
+  rust:
+    out_dir: .
+    filename_template: "{{ .Id | padWithZero 5 }}/rust"
+
+  java:
+    out_dir: .
+    filename_template: "{{ .Id | padWithZero 5 }}/java/Solution"
+
+leetcode:
+  site: https://leetcode.cn
+  credentials:
+    from: browser
+
+contest:
+  out_dir: contests
+  filename_template: '{{ .ContestShortSlug }}/{{ .Id }}/{{ if eq .Lang "python3" }}python{{ else }}{{ .Lang }}{{ end }}'
+  open_in_browser: false
+
+editor:
+  use: none

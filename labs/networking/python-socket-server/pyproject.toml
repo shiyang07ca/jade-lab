@@ -1,0 +1,12 @@
+[project]
+name = "python-socket-server-lab"
+version = "0.1.0"
+description = "Python socket 与 WSGI server 演进实验"
+requires-python = ">=3.12,<3.15"
+dependencies = [
+    "flask>=3.0,<4",
+    "pyramid>=2.0,<3",
+]
+
+[tool.uv]
+package = false

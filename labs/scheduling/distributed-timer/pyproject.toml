@@ -1,0 +1,15 @@
+[project]
+name = "distributed-timer-lab"
+version = "0.1.0"
+description = "基于 Celery schedule 与 Redis 的分布式定时器实验"
+requires-python = ">=3.12,<3.15"
+dependencies = [
+    "celery>=5.4,<6",
+    "redis>=5,<6",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.3,<9"]
+
+[tool.uv]
+package = false
