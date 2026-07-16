@@ -1,4 +1,4 @@
-# Personal Engineering Lab
+# Jade Lab
 
 本仓库用于把学习材料转化为可重复验证、可持续维护的个人工程资产。
 

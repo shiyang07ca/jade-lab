@@ -1,3 +1,3 @@
-module github.com/shiyang07ca/lab/cookbook/go
+module github.com/shiyang07ca/jade-lab/cookbook/go
 
 go 1.22.2

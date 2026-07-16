@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>io.github.shiyang07ca.lab</groupId>
+    <groupId>io.github.shiyang07ca.jadelab</groupId>
     <artifactId>spring-web-lab</artifactId>
     <version>0.1.0-SNAPSHOT</version>
 
