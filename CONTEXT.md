@@ -24,6 +24,6 @@ _Avoid_: Utility, Helper Script
 能够重复生成同类工程起点，并包含必要环境、结构和最小验证的脚手架。
 _Avoid_: Example Project, Boilerplate Folder
 
-**Study**:
-通过 Git submodule 固定版本、用于阅读和分析的外部开源项目源码。
+**Reference Source**:
+通过 Git submodule 固定版本、用于阅读和分析的外部参考源码。
 _Avoid_: Vendor Copy, Others

@@ -9,7 +9,7 @@
 - `labs/`：仍在探索或具有独立运行环境的实验。
 - `tools/`：具备稳定输入输出的日常工具。
 - `templates/`：按需创建的工程脚手架；没有成熟模板时不保留空目录。
-- `studies/`：通过 Git submodule 固定的开源项目源码。
+- `references/`：通过 Git submodule 固定、用于阅读和分析的外部参考源码。
 - `docs/`：工程约定、研究记录、ADR 和路线图。
 
 目录语义和维护规则分别见 `CONTEXT.md`、`docs/project/structure.md` 与 `docs/project/maintenance.md`。
