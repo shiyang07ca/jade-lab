@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 4 课：变量、引用与展开</title>
+<meta name="course-audit" content="2026-08-12; GNU Bash 5.3.15">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="breadcrumb">
+  <a href="../MISSION.md">使命</a> → <a href="0003-pipes-and-redirections.html">第 3 课</a> → 第 4 课
+</nav>
+
+<div class="lesson-meta">
+  <span class="number">第 4 课</span>
+  <span class="duration">⏱ 约 20 分钟</span>
+</div>
+
+<h1>变量、引用与展开</h1>
+<p class="subtitle">理解 Bash 在运行命令之前对你的文字做了什么</p>
+
+<div class="mission-tie">
+部署脚本里最常见的困惑：为什么 <code>DIR=/opt/app</code> 等号两边不能有空格？为什么变量要写 <code>"${LOG_DIR}"</code> 而不只是 <code>$LOG_DIR</code>？单引号和双引号到底有什么区别？这节课让你彻底搞明白。
+</div>
+
+<h2>1. Bash 在运行命令前做了什么？</h2>
+
+<p>这是理解变量的关键前提。当你按下回车，Bash <strong>不是</strong>直接把你的输入发给命令——它先做一轮"展开"（expansion），把你写的文字替换成实际的值：</p>
+
+<div class="diagram">
+<pre>
+你输入：  echo "当前用户是 $USER，路径是 $(pwd)"
+              │
+              ▼  Bash 展开处理
+              │  1. 大括号展开  {a,b,c} → a b c
+              │  2. 波浪号展开  ~ → /home/you
+              │  3. <strong>变量展开    $USER → alice</strong>
+              │  4. <strong>命令替换    $(pwd) → /opt/app</strong>
+              │  5. 单词分割    按 IFS 切分
+              │  6. 文件名通配  *.txt → a.txt b.txt
+              │  7. 引用移除    去掉引号
+              ▼
+命令看到：echo 当前用户是 alice，路径是 /opt/app</pre>
+</div>
+
+<p>这个过程叫 <strong>expansion</strong>（展开）。变量、引号和命令替换都在这个阶段处理。<strong>命令本身永远看不到你写的原始文本——它只看到展开后的结果。</strong></p>
+
+<div class="insight">
+这解释了为什么 Bash 和 Python/JS 的变量行为完全不同。在 Python 里，变量是运行时的概念；在 Bash 里，变量替换发生在命令启动<strong>之前</strong>，由 Shell 完成。命令（如 <code>echo</code>）收到的已经是替换后的纯字符串。
+</div>
+
+<h2>2. 变量赋值：三条铁律</h2>
+
+<pre><code><span class="prompt"></span>NAME="alice"             # ✅ 等号两边<strong>不能有空格</strong>
+<span class="prompt"></span>AGE=30                  # ✅ 数字不用引号也行
+<span class="prompt"></span>GREETING="hello world"   # ✅ 引号把含空格的值作为一个赋值词
+
+<span class="prompt"></span>NAME = "alice"           # ❌ Bash 以为 NAME 是个命令，"=" 和 "alice" 是参数
+<span class="prompt"></span>NAME= alice              # ❌ 把 NAME 设成空字符串，然后运行 alice 命令</code></pre>
+
+<table style="width:100%; margin:1rem 0;">
+  <tr style="border-bottom:1px solid var(--border);">
+    <th style="text-align:left; padding:0.3rem 0;">铁律</th>
+    <th style="text-align:left; padding:0.3rem 0;">说明</th>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td>等号两边<strong>不能有空格</strong></td>
+    <td><code>VAR=value</code>，多了空格 Bash 就会误解</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td>值有空格或特殊字符时应引用或转义</td>
+    <td><code>MSG="hello world"</code> 最清晰；也可以逐字符转义</td>
+  </tr>
+  <tr>
+    <td>变量名由字母、数字、下划线组成，且不能以数字开头</td>
+    <td><code>app_home</code> ✅，<code>2nd_app</code> 和 <code>app-home</code> ❌</td>
+  </tr>
+</table>
+
+<h2>3. 读取变量：<code>$VAR</code> 还是 <code>${VAR}</code>？</h2>
+
+<pre><code><span class="prompt"></span>echo $NAME            # → alice（最简写法）
+<span class="prompt"></span>echo ${NAME}          # → alice（带大括号，更安全）
+<span class="prompt"></span>echo "$NAME"          # → alice（双引号内照样展开）</code></pre>
+
+<p>那什么时候<strong>必须</strong>用大括号？</p>
+
+<pre><code><span class="prompt"></span>APP="myapp"
+<span class="prompt"></span>VERSION="v2"
+<span class="prompt"></span>echo $APP_$VERSION      # → v2 —— 等等，$APP 去哪了？
+<span class="prompt"></span>echo ${APP}_${VERSION}  # → myapp_v2 —— 正确！
+
+# 原因：Bash 把 APP_ 当成一个变量名（没定义，所以空），只输出了 $VERSION
+# 大括号明确告诉 Bash 变量名的边界在哪</code></pre>
+
+<div class="pitfall">
+<b>什么时候必须加花括号？</b> 当变量名后面紧跟着字母、数字或下划线时——这些字符本身也是合法的变量名字符，Bash 会贪心地往后匹配。部署脚本里常见 <code>${APP_HOME}/logs</code>、<code>${VERSION}.tar.gz</code>——养成默认加 <code>${VAR}</code> 的习惯，安全又清晰。
+</div>
+
+<h2>4. 引用：本课最重要的一节</h2>
+
+<p>三种写法，三种行为：</p>
+
+<div class="diagram">
+<pre>
+         文本写成      变量展开？    命令替换？    单词分割？    通配展开？
+         ─────────────────────────────────────────────────────────────
+         '...' 单引号     ❌            ❌            ❌            ❌
+         "..." 双引号     ✅            ✅            ❌            ❌
+         无引号           ✅            ✅            ✅            ✅
+</pre>
+</div>
+
+<h3>单引号：一切按字面来</h3>
+
+<pre><code><span class="prompt"></span>echo '$USER says $(date) and *.txt'
+<span class="output">$USER says $(date) and *.txt</span>
+
+# 单引号里面，美元符号、反引号、星号……全部失去特殊含义
+# 你写了什么，就是什么。一个字都不会变。</code></pre>
+
+<h3>双引号：展开变量，但保护结构</h3>
+
+<pre><code><span class="prompt"></span>echo "用户是 $USER，今天是 $(date +%m月%d日)"
+<span class="output">用户是 alice，今天是 07月22日</span>
+
+# $VAR 和 $(cmd) 正常展开，但空格和通配符不会造成额外的分割或匹配</code></pre>
+
+<h3>无引号：危险！</h3>
+
+<pre><code><span class="prompt"></span>FILES="*.txt"
+<span class="prompt"></span>echo $FILES       # → a.txt b.txt c.txt（展开了通配符）
+<span class="prompt"></span>echo "$FILES"     # → *.txt（保留了原样）
+
+<span class="prompt"></span>MSG="hello   world"
+<span class="prompt"></span>echo $MSG         # → hello world（多个空格被"压扁"成一个）
+<span class="prompt"></span>echo "$MSG"       # → hello   world（空格保留）</code></pre>
+
+<div class="insight">
+<b>默认用双引号包裹参数位置中的变量展开。</b> 除非你明确需要单词分割或通配展开，否则写 <code>"$VAR"</code> 而不是 <code>$VAR</code>。ShellCheck 会在可能发生意外分割或通配展开的场景报告 SC2086，但赋值、<code>[[ ]]</code> 等上下文有不同规则。路径变量没加引号是常见 bug：<code>cd $DIR</code> 在 DIR 含空格时会拆成多个参数，而 <code>cd "$DIR"</code> 保持一个参数。
+</div>
+
+<h2>5. 命令替换：把命令的输出变成字符串</h2>
+
+<pre><code><span class="prompt"></span>NOW=$(date)                  # $(...) 是<strong>现代写法</strong>，推荐
+<span class="prompt"></span>echo "现在是：$NOW"
+<span class="output">现在是：2026年 7月22日 星期三 14时30分00秒 CST</span>
+
+<span class="prompt"></span>TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+<span class="prompt"></span>echo "备份文件：backup_${TIMESTAMP}.tar.gz"
+<span class="output">备份文件：backup_20260722_143000.tar.gz</span>
+
+<span class="prompt"></span>LINE_COUNT=$(wc -l &lt; /var/log/app.log)   # 把命令输出存到变量里
+<span class="prompt"></span>echo "日志共 $LINE_COUNT 行"</code></pre>
+
+<div class="pitfall">
+你可能见过反引号写法：<code>`date`</code>。它的嵌套与转义规则更难读，新增脚本优先使用 <code>$(...)</code>。命令替换可以嵌套，例如 <code>name=$(basename "$PWD")</code>；仍需按所在上下文正确引用展开结果。
+</div>
+
+<h2>6. 特殊变量：Bash 给你的"免费变量"</h2>
+
+<p>以下是在脚本里出现频率最高的特殊变量：</p>
+
+<table style="width:100%; margin:1rem 0;">
+  <tr style="border-bottom:1px solid var(--border);">
+    <th style="text-align:left; padding:0.3rem 0;">变量</th>
+    <th style="text-align:left; padding:0.3rem 0;">含义</th>
+    <th style="text-align:left; padding:0.3rem 0;">部署脚本典型用法</th>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>$?</code></td>
+    <td>上一条命令的退出码</td>
+    <td><code>if [ $? -ne 0 ]; then echo "失败"; fi</code></td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>$0</code></td>
+    <td>脚本自身的名字</td>
+    <td><code>echo "用法: $0 &lt;参数&gt;"</code></td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>$1</code> … <code>$9</code></td>
+    <td>第 1-9 个命令行参数</td>
+    <td><code>DEPLOY_ENV="$1"</code> — 读取第一个参数</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>$#</code></td>
+    <td>参数个数</td>
+    <td><code>if [ $# -lt 1 ]; then echo "缺少参数"; exit 1; fi</code></td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>"$@"</code></td>
+    <td>所有参数（每个保持独立）</td>
+    <td><code>for arg in "$@"; do process "$arg"; done</code></td>
+  </tr>
+  <tr>
+    <td><code>"$*"</code></td>
+    <td>所有参数（用 <code>IFS</code> 首字符连接成一个字符串）</td>
+    <td>几乎不用，优先用 <code>"$@"</code></td>
+  </tr>
+</table>
+
+<div class="pitfall">
+可靠且最有用的差异出现在双引号内：<code>"$@"</code> 让每个参数保持独立，例如 "a"、"b c"、"d" 三个参数；<code>"$*"</code> 用 <code>IFS</code> 的第一个字符把它们合成一个参数。转发参数时使用 <code>"$@"</code>。不加引号的 <code>$@</code> 和 <code>$*</code> 还会发生单词分割与路径名展开，不能保持原始边界。
+</div>
+
+<h2>7. 实战：部署脚本里的变量模式</h2>
+
+<p>下面是一个典型部署脚本中你将会看到的变量用法——它们不是魔法，就是本节学的内容：</p>
+
+<pre><code>#!/bin/bash
+# 典型的部署脚本片段——看看你认识多少种变量用法？
+
+<span class="comment"># 1. 变量赋值 + 命令替换</span>
+TIMESTAMP=<strong>$(date +%Y%m%d_%H%M%S)</strong>
+APP_DIR=<strong>"/opt/${APP_NAME}"</strong>
+
+<span class="comment"># 2. 参数读取</span>
+ENV=<strong>"${1:-production}"</strong>        <span class="comment"># ← 第 8 课会讲，先用 $1 理解</span>
+
+<span class="comment"># 3. 双引号保护路径</span>
+cd <strong>"$APP_DIR"</strong> || exit 1
+
+<span class="comment"># 4. 组合路径时花括号定界</span>
+BACKUP_FILE=<strong>"${APP_DIR}/backups/${APP_NAME}_${TIMESTAMP}.tar.gz"</strong>
+
+<span class="comment"># 5. 检查退出码</span>
+tar -czf "$BACKUP_FILE" "$APP_DIR"
+if [ <strong>$?</strong> -eq 0 ]; then
+    echo "备份成功：$BACKUP_FILE"
+else
+    echo "备份失败！" &gt;&amp;2
+    exit 1
+fi</code></pre>
+
+<h2>8. 参数展开速览（预告）</h2>
+
+<p>除了 <code>${VAR}</code> 基本展开，Bash 还提供了一套"参数展开"语法来处理默认值、字符串截取等：</p>
+
+<pre><code><span class="prompt"></span>echo ${VAR:-default}    # 如果 VAR 未设置或为空，用 "default"
+<span class="prompt"></span>echo ${VAR:=default}    # 同上，但还会把 VAR 赋值为 "default"
+<span class="prompt"></span>echo ${VAR:?错误消息}   # 如果 VAR 未设置，打印错误并退出脚本
+<span class="prompt"></span>echo ${VAR:+replaced}   # 如果 VAR 已设置，用 "replaced" 代替原值
+
+<span class="prompt"></span>FILE="backup.tar.gz"
+<span class="prompt"></span>echo ${FILE%.*}         # → backup.tar  (去掉最短匹配的 .* 后缀)
+<span class="prompt"></span>echo ${FILE##*.}        # → gz          (去掉最长匹配的 *. 前缀)</code></pre>
+
+<p>这些会在后续课程中深入展开。现在你只需要知道它们的存在，看到 <code>${VAR:-default}</code> 时不会懵。</p>
+
+<div class="exercise">
+<h3>动手练习（5 分钟）</h3>
+<p>在终端完成以下任务，体会变量的各种行为：</p>
+<pre><code><span class="comment"># 1. 变量赋值——注意空格的影响</span>
+<span class="prompt"></span>NAME=alice
+<span class="prompt"></span>echo "Hello, ${NAME}"
+
+<span class="comment"># 2. 单引号 vs 双引号 vs 无引号</span>
+<span class="prompt"></span>echo '单引号里 $NAME 不展开'
+<span class="prompt"></span>echo "双引号里 $NAME 展开了"
+<span class="prompt"></span>echo 无引号 $NAME 展开了但会做单词分割
+
+<span class="comment"># 3. 带空格的值——引号的保护作用</span>
+<span class="prompt"></span>MSG="hello   world"
+<span class="prompt"></span>echo $MSG          <span class="comment"># 空格被压扁</span>
+<span class="prompt"></span>echo "$MSG"        <span class="comment"># 空格保留</span>
+
+<span class="comment"># 4. 命令替换：生成带时间戳的文件名</span>
+<span class="prompt"></span>echo "backup_$(date +%Y%m%d_%H%M%S).tar.gz"
+
+<span class="comment"># 5. 特殊变量——先写个小脚本试试</span>
+<span class="prompt"></span>cat &gt; /tmp/test-vars.sh &lt;&lt; 'EOF'
+#!/bin/bash
+echo "脚本名: $0"
+echo "参数个数: $#"
+echo "第一个参数: $1"
+echo "所有参数: $@"
+echo "上条命令退出码: $?"
+EOF
+<span class="prompt"></span>chmod +x /tmp/test-vars.sh
+<span class="prompt"></span>/tmp/test-vars.sh deploy production v2</span></code></pre>
+</div>
+
+<h2>总结</h2>
+
+<div class="diagram">
+<pre>
+         ┌──────────────────────────────────────────────┐
+         │         变量、引用与展开 速查                   │
+         │                                              │
+         │  VAR=value         赋值（等号两边<strong>无空格</strong>）    │
+         │  ${VAR}            安全取值（花括号定界）        │
+         │  "$VAR"            双引号保护（展开但不分割）     │
+         │  '$VAR'            单引号字面（一字不变）        │
+         │  $(cmd)            命令替换（现代写法）          │
+         │  $?                上一条命令的退出码            │
+         │  $1..$9            命令行参数                   │
+         │  $@                所有参数（保持独立）          │
+         │  $#                参数个数                     │
+         │                                              │
+         │  <strong>黄金法则：变量引用永远加双引号 "${VAR}"</strong>      │
+         └──────────────────────────────────────────────┘
+</pre>
+</div>
+
+<div class="quiz">
+<h3>快速自检</h3>
+
+<div class="question" id="q1">
+  <p><strong>Q1:</strong> 下面哪一行会导致错误？</p>
+  <div class="options">
+    <span class="option" data-q="q1" data-a="a">NAME="alice"</span>
+    <span class="option" data-q="q1" data-a="b">NAME= "alice"</span>
+    <span class="option" data-q="q1" data-a="c">NAME='alice'</span>
+  </div>
+  <div class="feedback" id="q1-fb"></div>
+</div>
+
+<div class="question" id="q2">
+  <p><strong>Q2:</strong> <code>MSG="hello world"; echo $MSG</code> 和 <code>echo "$MSG"</code> 的输出有什么不同？</p>
+  <div class="options">
+    <span class="option" data-q="q2" data-a="a">完全一样，没有区别</span>
+    <span class="option" data-q="q2" data-a="b">无引号会把多个空格压成一个，双引号会保留原始空格</span>
+    <span class="option" data-q="q2" data-a="c">无引号会展开变量，双引号不会展开变量</span>
+  </div>
+  <div class="feedback" id="q2-fb"></div>
+</div>
+
+<div class="question" id="q3">
+  <p><strong>Q3:</strong> 有个部署脚本里看到 <code>LOG_DIR="${APP_HOME}/logs"</code>，花括号 <code>${APP_HOME}</code> 是必需的吗？</p>
+  <div class="options">
+    <span class="option" data-q="q3" data-a="a">不是，直接写 $APP_HOME/logs 效果一样，花括号只是风格问题</span>
+    <span class="option" data-q="q3" data-a="b">是，因为变量名后面跟着 /，Bash 会把 APP_HOME/logs 整个当成变量名</span>
+    <span class="option" data-q="q3" data-a="c">不，这里不是必需的——但花括号让边界更清晰，是推荐写法</span>
+  </div>
+  <div class="feedback" id="q3-fb"></div>
+</div>
+
+<div class="question" id="q4">
+  <p><strong>Q4:</strong> 你想在脚本里捕获当前时间的字符串，存到变量 <code>NOW</code> 里。正确写法是？</p>
+  <div class="options">
+    <span class="option" data-q="q4" data-a="a">NOW='date'</span>
+    <span class="option" data-q="q4" data-a="b">NOW=$(date)</span>
+    <span class="option" data-q="q4" data-a="c">NOW="$DATE"</span>
+  </div>
+  <div class="feedback" id="q4-fb"></div>
+</div>
+</div>
+
+<div class="session-footer">
+  <p>
+    📖 <strong>推荐阅读</strong>：<a href="https://mywiki.wooledge.org/BashGuide/Parameters" target="_blank">BashGuide — Parameters</a>（Greg Wooledge 的参数展开指南，写得极好）<br>
+    📋 <strong>速查参考</strong>：<a href="../reference/expansion-and-quoting.html">变量展开与引用速查表</a><br>
+    📝 <strong>上一课</strong>：<a href="0003-pipes-and-redirections.html">第 3 课 — 管道与重定向</a><br>
+    📝 <strong>下一课预告</strong>：第 5 课 — 控制流（if/for/while/case——脚本终于开始"长脑子"了）<br>
+    ❓ <strong>有疑问？</strong>在对话中直接问我。试试把你见过的某个部署脚本贴过来，我可以帮你逐行分析其中的变量用法。
+  </p>
+</div>
+
+<script>
+(function() {
+  const answers = {
+    q1: { correct: 'b', fb: {
+      b: '正确！NAME= 和 "alice" 中间有空格，Bash 会把 NAME 设为空字符串，然后尝试把 "alice" 当成一个命令来执行——这肯定报错。记住：等号两边不能有空格。',
+      a: '这一行是正确的。赋值等号两边没有空格，值用双引号包裹。',
+      c: '这一行也是正确的。单引号包裹值也可以赋值，效果和双引号一样。'
+    }},
+    q2: { correct: 'b', fb: {
+      b: '正确！不加引号时，Bash 会做"单词分割"——MSG 的值 "hello   world" 被分割成两个单词 "hello" 和 "world"，echo 收到两个参数，输出时每个参数之间用一个空格隔开。加双引号后，整个字符串作为一个参数传给 echo，三个空格全部保留。',
+      a: '不一样。不加强制引号时，Bash 会做单词分割，多个连续空格会被压缩。',
+      c: '不对。双引号内变量照样展开——你可以自己试试 echo "$MSG"。双引号阻止的是单词分割和通配展开，但不阻止变量展开。'
+    }},
+    q3: { correct: 'c', fb: {
+      c: '正解！这里的定界符是 /——它不属于变量名的合法字符（只含字母、数字、下划线），所以 Bash 知道变量名到 APP_HOME 就结束了，$APP_HOME/logs 也能得出正确结果。但 ${APP_HOME}/logs 确实更清晰，强烈推荐。如果后面跟的是下划线——比如 $APP_HOME_logs——那花括号就是必需的了，否则 Bash 会去读 HOME_logs 这个变量。',
+      a: '效果确实一样（因为 / 不是合法变量名字符），但花括号让代码更清晰，是推荐写法。',
+      b: '不对。/ 不是合法变量名字符（只有字母数字下划线），Bash 会正确识别变量名的边界。'
+    }},
+    q4: { correct: 'b', fb: {
+      b: '正确！$(date) 执行 date 命令，把它的 stdout 输出（当前时间字符串）捕获并赋值给 NOW。这是现代 Bash 脚本的标准写法。',
+      a: '不行。单引号里面一切按字面来——NOW 的值会是字符串 "date" 三个字母，不是当前时间。',
+      c: '不行。$DATE 是读取 DATE 变量的值（它大概率没被设置过，所以是空字符串）。这不是执行 date 命令。'
+    }}
+  };
+  document.querySelectorAll('.quiz .option').forEach(opt => {
+    opt.addEventListener('click', function() {
+      const qid = this.dataset.q, aid = this.dataset.a, fb = document.getElementById(qid+'-fb'), qa = answers[qid];
+      document.querySelectorAll('[data-q="'+qid+'"]').forEach(o => o.classList.remove('selected','correct','wrong'));
+      this.classList.add('selected');
+      this.classList.add(aid===qa.correct?'correct':'wrong');
+      if(aid!==qa.correct) document.querySelector('[data-q="'+qid+'"][data-a="'+qa.correct+'"]').classList.add('correct');
+      fb.className = 'feedback '+(aid===qa.correct?'correct':'wrong')+' show';
+      fb.textContent = qa.fb[aid];
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

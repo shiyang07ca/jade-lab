@@ -1,6 +1,11 @@
 import argparse
+import shlex
+import sys
+from collections.abc import Callable, Sequence
 
-from process_inspector.core import find_processes
+from process_inspector.core import ProcessInfo, find_processes
+
+Finder = Callable[[str], list[ProcessInfo]]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -9,15 +14,23 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> int:
-    args = build_parser().parse_args()
-    matches = find_processes(args.query)
+def main(
+    argv: Sequence[str] | None = None,
+    *,
+    finder: Finder = find_processes,
+) -> int:
+    args = build_parser().parse_args(argv)
+    try:
+        matches = finder(args.query)
+    except ValueError as exc:
+        print(f"参数错误: {exc}", file=sys.stderr)
+        return 2
     if not matches:
-        print(f"未找到进程: {args.query}")
+        print(f"未找到进程: {args.query}", file=sys.stderr)
         return 1
 
     for process in matches:
-        command = " ".join(process.command)
+        command = shlex.join(process.command)
         print(
             f"PID={process.pid} name={process.name} "
             f"threads={process.thread_count} command={command}"

@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 5 课：控制流</title>
+<meta name="course-audit" content="2026-08-12; GNU Bash 5.3.15">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="breadcrumb">
+  <a href="../MISSION.md">使命</a> → <a href="0004-variables-quoting-expansion.html">第 4 课</a> → 第 5 课
+</nav>
+
+<div class="lesson-meta">
+  <span class="number">第 5 课</span>
+  <span class="duration">⏱ 约 20 分钟</span>
+</div>
+
+<h1>控制流</h1>
+<p class="subtitle">让脚本拥有判断、循环和分支的能力</p>
+
+<div class="mission-tie">
+部署脚本需要做决策：部署成功还是失败？重试还是放弃？针对不同环境做不同配置？这些全靠控制流。你会在脚本里看到大量的 <code>if</code>、<code>for</code>、<code>while</code> 和 <code>case</code>——它们不是魔法，就是本节的内容。
+</div>
+
+<h2>1. <code>if</code> 不判断真假，它判断退出码</h2>
+
+<p>这是 Bash 和其他语言最根本的区别：</p>
+
+<pre><code><span class="comment"># Python/JS 思维（在 Bash 里是错的！）</span>
+<span class="comment"># if (condition == true) { ... }</span>
+
+<span class="comment"># Bash 的真实逻辑：</span>
+<span class="comment"># if 后面跟着一条命令，命令成功（退出码 0）→ then 分支</span>
+<span class="comment">#                         命令失败（退出码非 0）→ else 分支</span></code></pre>
+
+<pre><code><span class="prompt"></span>if grep -q "ERROR" /var/log/app.log; then
+    echo "发现错误！"
+else
+    echo "一切正常"
+fi
+
+<span class="comment"># grep 找到匹配 → 退出码 0 → "发现错误！"
+# grep 没找到   → 退出码 1 → "一切正常"</span></code></pre>
+
+<div class="insight">
+<b>任何命令都可以放在 if 后面。</b> <code>if cd /tmp; then</code>、<code>if tar -xf backup.tar.gz; then</code>、<code>if curl -s http://localhost/health; then</code>——它们都返回退出码，if 只看退出码。这个设计让 Bash 的 if 比大多数语言更直接：你不需要先"获取结果"再"判断"，你直接判断命令本身。
+</div>
+
+<h2>2. <code>test</code> 命令和它的三个化身</h2>
+
+<p>那你肯定想问：比较字符串、检查文件存在这种"条件"怎么做？答案是 <code>test</code>——它就是一个<strong>普通命令</strong>，根据条件返回 0 或 1：</p>
+
+<pre><code><span class="comment"># 三种写法，完全等价：</span>
+<span class="prompt"></span>test -f /etc/passwd          <span class="comment"># test 命令</span>
+<span class="prompt"></span>[ -f /etc/passwd ]          <span class="comment"># [ 是 test 的命令形式之一（注意空格）</span>
+<span class="prompt"></span>[[ -f /etc/passwd ]]        <span class="comment"># Bash 增强版，更安全（推荐）</span></code></pre>
+
+<div class="pitfall">
+<code>[</code> 是一个<strong>命令名</strong>，不是语法括号！所以 <code>[ "$x" = "y" ]</code> 必须带空格——<code>["$x"</code> 会被当成一个命令名。同理，<code>]</code> 是 <code>[</code> 命令的最后一个参数，也必须前面有空格。记不记得住？想想 <code>ls -l</code> 命令和参数之间怎么写的，<code>[</code> 也是一条命令。
+</div>
+
+<h3>最常用的测试条件</h3>
+
+<table style="width:100%; margin:1rem 0;">
+  <tr style="border-bottom:1px solid var(--border);">
+    <th style="text-align:left; padding:0.3rem 0;">类别</th>
+    <th style="text-align:left; padding:0.3rem 0;">写法</th>
+    <th style="text-align:left; padding:0.3rem 0;">含义</th>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td rowspan="3" style="vertical-align:top;">文件测试</td>
+    <td><code>[ -f "$FILE" ]</code></td>
+    <td>文件存在且是普通文件</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>[ -d "$DIR" ]</code></td>
+    <td>是目录</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>[ -x "$FILE" ]</code></td>
+    <td>是可执行文件</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td rowspan="2" style="vertical-align:top;">字符串测试</td>
+    <td><code>[ "$A" = "$B" ]</code></td>
+    <td>字符串相等</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>[ -z "$VAR" ]</code></td>
+    <td>字符串为空（zero length）</td>
+  </tr>
+  <tr>
+    <td rowspan="2" style="vertical-align:top;">数值比较</td>
+    <td><code>[ "$N" -eq 5 ]</code></td>
+    <td>等于（-eq / -ne / -lt / -gt / -le / -ge）</td>
+  </tr>
+  <tr>
+    <td><code>[ "$N" -lt 10 ]</code></td>
+    <td>小于</td>
+  </tr>
+</table>
+
+<h3><code>[ ]</code> vs <code>[[ ]]</code>：选哪个？</h3>
+
+<pre><code><span class="comment"># [ ] 是 POSIX 标准，但功能弱、易出错：</span>
+<span class="prompt"></span>[ "$A" = "$B" ]          <span class="comment"># 引用展开，避免空值和通配展开改变参数</span>
+<span class="prompt"></span>[ "$A" = "$B" -a "$C" = "$D" ]  <span class="comment"># -a (and) 语法诡异</span>
+
+<span class="comment"># [[ ]] 是 Bash 增强版——好写、安全、功能强：</span>
+<span class="prompt"></span>[[ $A = "$B" ]]          <span class="comment"># 变量可以不加引号（内部不做单词分割）</span>
+<span class="prompt"></span>[[ $A = "$B" &amp;&amp; $C = "$D" ]]  <span class="comment"># &amp;&amp; 和 || 直接用，直觉性满分</span>
+<span class="prompt"></span>[[ $A =~ ^[0-9]+$ ]]      <span class="comment"># 支持正则表达式匹配（=~）</span></code></pre>
+
+<div class="insight">
+<b>实用建议：明确以 Bash 为运行时的脚本默认用 <code>[[ ]]</code></b>，它避免部分单词分割和路径名展开问题。需要兼容 POSIX <code>sh</code> 时使用 <code>[ ]</code>。Dockerfile 的 <code>RUN</code> 由镜像和 <code>SHELL</code> 指令决定解释器；Alpine 默认通常是 BusyBox <code>ash</code>，但这不是所有容器的统一规则。
+</div>
+
+<h2>3. <code>if</code> / <code>elif</code> / <code>else</code>：完整的条件分支</h2>
+
+<pre><code><span class="prompt"></span>if [[ "$ENV" = "production" ]]; then
+    echo "谨慎操作！"
+elif [[ "$ENV" = "staging" ]]; then
+    echo "可以大胆一点"
+else
+    echo "本地环境，随意折腾"
+fi
+
+<span class="comment"># elif 可以有多个，else 和 elif 都是可选的
+# 别忘了 fi 结束——它是 if 倒过来写</span></code></pre>
+
+<p>部署脚本里最常见的 if 模式：</p>
+
+<pre><code><span class="comment"># 模式 1：检查命令是否成功</span>
+if ! tar -xzf "$ARCHIVE" -C "$DIR"; then
+    echo "解压失败！" &gt;&amp;2
+    exit 1
+fi
+
+<span class="comment"># 模式 2：检查必需的文件/目录是否存在</span>
+if [[ ! -f "$CONFIG_FILE" ]]; then
+    echo "配置文件 $CONFIG_FILE 不存在" &gt;&amp;2
+    exit 1
+fi
+
+<span class="comment"># 模式 3：根据参数选择行为</span>
+if [[ "$1" = "--force" ]]; then
+    FORCE=true
+    shift   <span class="comment"># shift 把参数列表左移（$2 变 $1，$3 变 $2...）</span>
+fi</code></pre>
+
+<h2>4. <code>for</code> 循环：遍历一串东西</h2>
+
+<p>和 Python 的 <code>for i in range(10)</code> 不同，Bash 的 for 是<strong>遍历一个词列表</strong>：</p>
+
+<pre><code><span class="comment"># 模式 1：直接写列表</span>
+<span class="prompt"></span>for fruit in apple banana orange; do
+    echo "处理 $fruit"
+done
+
+<span class="comment"># 模式 2：遍历文件通配</span>
+<span class="prompt"></span>for log in /var/log/*.log; do
+    echo "归档 $log"
+    gzip "$log"
+done
+
+<span class="comment"># 模式 3：遍历命令输出（关键：用 $() 生成列表）</span>
+<span class="prompt"></span>for user in $(cut -d: -f1 /etc/passwd); do
+    echo "用户: $user"
+done</code></pre>
+
+<p>需要像 Python 那样数数字怎么做？</p>
+
+<pre><code><span class="comment"># {start..end} 大括号展开</span>
+<span class="prompt"></span>for i in {1..5}; do
+    echo "第 $i 次重试"
+    curl -s https://api.example.com/health &amp;&amp; break
+    sleep 2
+done
+
+<span class="comment"># seq 命令（更灵活）</span>
+<span class="prompt"></span>for i in $(seq 1 2 10); do   <span class="comment"># 1 到 10，步长 2 → 1, 3, 5, 7, 9</span>
+    echo $i
+done</code></pre>
+
+<div class="pitfall">
+<b><code>for f in *.txt</code> 当没有任何 .txt 文件时，<code>$f</code> 的值是字面量 <code>*.txt</code>。</b> 不会报错，但你会陷入困惑。安全写法：先检查文件存不存在——<code>if [[ -f "$f" ]]; then</code>，或开启 <code>shopt -s nullglob</code>（让无匹配的通配符展开成空）。
+</div>
+
+<h2>5. <code>while</code> 和 <code>until</code>：条件驱动的循环</h2>
+
+<pre><code><span class="comment"># while: 条件为真（退出码 0）时继续循环</span>
+<span class="prompt"></span>COUNT=0
+while [[ $COUNT -lt 3 ]]; do
+    echo "尝试连接... ($((++COUNT)))"
+    nc -z localhost 8080 &amp;&amp; break
+    sleep 1
+done
+
+<span class="comment"># until: 条件为假（退出码非 0）时继续循环（= while 的相反）</span>
+<span class="prompt"></span>until curl -s http://localhost:8080/health; do
+    echo "等待服务就绪..."
+    sleep 2
+done
+echo "服务已就绪！"</code></pre>
+
+<div class="insight">
+部署脚本里最经典的 while 模式——<strong>等待某个条件满足</strong>：等待数据库就绪、等待端口监听、等待健康检查通过。另一个经典模式——<strong>逐行读取文件</strong>：<code>while IFS= read -r line; do echo "$line"; done &lt; file.txt</code>（这个我们会在后续课程深入）。
+</div>
+
+<h2>6. <code>case</code>：多路分支的模式匹配</h2>
+
+<pre><code><span class="prompt"></span>case "$1" in
+    start)
+        echo "启动服务..."
+        ;;
+    stop)
+        echo "停止服务..."
+        ;;
+    restart|reload)
+        echo "重启服务..."
+        ;;
+    *)
+        echo "用法: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac</code></pre>
+
+<p>case 的模式使用 <strong>glob 通配符</strong>（不是正则！）：</p>
+
+<pre><code><span class="prompt"></span>case "$INPUT" in
+    y|Y|yes|YES)     echo "确认" ;;
+    n|N|no|NO)       echo "取消" ;;
+    [0-9]*)          echo "以数字开头" ;;   <span class="comment"># glob 模式：[0-9] 单个数字，* 任意字符串</span>
+    *.tar.gz|*.tgz)  echo "压缩包" ;;      <span class="comment"># | 表示"或"</span>
+    *)               echo "未知输入" ;;
+esac</code></pre>
+
+<h2>7. <code>&amp;&amp;</code> 和 <code>||</code>：短路运算符</h2>
+
+<p>有时候你不需要完整的 if/then/fi，一行就够了：</p>
+
+<pre><code><span class="comment"># cmd1 &amp;&amp; cmd2  —— cmd1 成功才执行 cmd2</span>
+<span class="prompt"></span>cd /opt/app &amp;&amp; ./deploy.sh        <span class="comment"># cd 失败就不执行后面</span>
+
+<span class="comment"># cmd1 || cmd2  —— cmd1 失败才执行 cmd2</span>
+<span class="prompt"></span>grep -q "OK" /tmp/status || echo "没找到 OK" &gt;&amp;2
+
+<span class="comment"># 组合使用：三元运算的效果</span>
+<span class="prompt"></span>curl -s http://localhost/health &amp;&amp; echo "OK" || echo "FAIL"</code></pre>
+
+<div class="pitfall">
+<b><code>&amp;&amp;</code> 和 <code>||</code> 是短路运算，不是 if/else！</b> 回头看 <code>cmd1 &amp;&amp; cmd2 || cmd3</code>：如果 cmd1 失败，cmd2 不执行（短路），然后 cmd3 执行。但如果 <strong>cmd1 成功、cmd2 也成功了，cmd3 也会执行</strong>吗？不会——因为 cmd2 成功返回 0，<code>||</code> 发现左边已经"真"了，短路跳过 cmd3。但如果 <strong>cmd1 成功、cmd2 失败了</strong>，cmd3 也会执行！<code>A &amp;&amp; B || C</code> 不等于 if/else，它等于"A 且 B 失败时，或 A 失败时，执行 C"。逻辑复杂时，老老实实用 if。
+</div>
+
+<h2>8. 实战：把这些组合成有用的脚本</h2>
+
+<pre><code>#!/bin/bash
+<span class="comment"># deploy.sh — 一个简单的部署脚本</span>
+<span class="comment"># 用法: ./deploy.sh [staging|production]</span>
+
+set -euo pipefail   <span class="comment"># 第 8 课会详细讲，先记住这是"严格模式"</span>
+
+ENV="${1:-}"
+APP_DIR="/opt/myapp"
+
+<span class="comment"># 1. 参数检查</span>
+if [[ -z "$ENV" ]]; then
+    echo "用法: $0 &lt;staging|production&gt;" &gt;&amp;2
+    exit 1
+fi
+
+<span class="comment"># 2. 环境分支</span>
+case "$ENV" in
+    staging)
+        SERVER="staging.example.com"
+        ;;
+    production)
+        SERVER="prod.example.com"
+        echo "⚠️  你正在操作生产环境！"
+        read -p "确认？(yes/no) " CONFIRM
+        [[ "$CONFIRM" != "yes" ]] &amp;&amp; exit 0
+        ;;
+    *)
+        echo "未知环境: $ENV" &gt;&amp;2
+        exit 1
+        ;;
+esac
+
+<span class="comment"># 3. 前置检查</span>
+if [[ ! -d "$APP_DIR" ]]; then
+    echo "应用目录不存在: $APP_DIR" &gt;&amp;2
+    exit 1
+fi
+
+<span class="comment"># 4. 部署循环——重试 3 次</span>
+for i in {1..3}; do
+    echo "部署尝试 $i/3 ..."
+    if rsync -avz ./build/ "$SERVER:$APP_DIR/"; then
+        echo "✅ 部署成功"
+        exit 0
+    fi
+    echo "部署失败，等待 5 秒后重试..."
+    sleep 5
+done
+
+<span class="comment"># 5. 循环结束 = 全部失败</span>
+echo "❌ 部署失败：已重试 3 次" &gt;&amp;2
+exit 1</code></pre>
+
+<div class="exercise">
+<h3>动手练习（5 分钟）</h3>
+<p>在终端完成以下任务：</p>
+<pre><code><span class="comment"># 1. 体验 if 直接判断命令</span>
+<span class="prompt"></span>if grep -q root /etc/passwd; then echo "root 用户存在"; fi
+
+<span class="comment"># 2. 写一个简单的 for 循环</span>
+<span class="prompt"></span>for lang in bash python go rust; do echo "我会学 $lang"; done
+
+<span class="comment"># 3. while 等一个条件</span>
+<span class="prompt"></span>SECONDS=0; while [[ $SECONDS -lt 5 ]]; do echo "已等待 ${SECONDS}s"; sleep 1; done; echo "5 秒到！"
+
+<span class="comment"># 4. 写一个完整的小脚本</span>
+<span class="prompt"></span>cat &gt; /tmp/check-file.sh &lt;&lt; 'EOF'
+#!/bin/bash
+FILE="$1"
+if [[ -z "$FILE" ]]; then
+    echo "用法: $0 &lt;文件路径&gt;"
+    exit 1
+elif [[ -f "$FILE" ]]; then
+    echo "✅ $FILE 是一个普通文件"
+    echo "大小: $(wc -c &lt; "$FILE") 字节"
+elif [[ -d "$FILE" ]]; then
+    echo "📁 $FILE 是一个目录"
+    echo "内容: $(ls "$FILE" | wc -l) 项"
+else
+    echo "❌ $FILE 不存在"
+fi
+EOF
+<span class="prompt"></span>chmod +x /tmp/check-file.sh
+<span class="prompt"></span>/tmp/check-file.sh /etc/passwd
+<span class="prompt"></span>/tmp/check-file.sh /etc
+<span class="prompt"></span>/tmp/check-file.sh /nonexistent</span></code></pre>
+</div>
+
+<h2>总结</h2>
+
+<div class="diagram">
+<pre>
+      ┌──────────────────────────────────────────────────┐
+      │              控制流速查                            │
+      │                                                  │
+      │  if <strong>命令</strong>; then ... fi   判断命令的退出码（0→then）│
+      │  [[ "$A" = "$B" ]]        字符串相等              │
+      │  [[ -f "$F" ]]            文件存在                │
+      │  [[ "$N" -eq 5 ]]         数值比较（-eq -lt -gt） │
+      │                                                  │
+      │  for x in <strong>列表</strong>; do ... done  遍历词列表      │
+      │  for i in {1..10}        数字范围                │
+      │  for f in *.txt          文件通配                │
+      │                                                  │
+      │  while [[ 条件 ]]; do ... done   条件真→循环      │
+      │  until [[ 条件 ]]; do ... done   条件假→循环      │
+      │                                                  │
+      │  case $VAR in            Glob 模式多路分支       │
+      │  cmd1 &amp;&amp; cmd2            成功才继续               │
+      │  cmd1 || cmd2            失败才执行               │
+      │                                                  │
+      │  <strong>记住：if 判断的是退出码，不是布尔值</strong>             │
+      └──────────────────────────────────────────────────┘
+</pre>
+</div>
+
+<div class="quiz">
+<h3>快速自检</h3>
+
+<div class="question" id="q1">
+  <p><strong>Q1:</strong> <code>if grep "ERROR" app.log; then echo "有错"; fi</code>——这个 if 什么时候输出"有错"？</p>
+  <div class="options">
+    <span class="option" data-q="q1" data-a="a">grep 找到包含 ERROR 的行（退出码 0）时</span>
+    <span class="option" data-q="q1" data-a="b">grep 没找到包含 ERROR 的行（退出码 1）时</span>
+    <span class="option" data-q="q1" data-a="c">app.log 文件存在时</span>
+  </div>
+  <div class="feedback" id="q1-fb"></div>
+</div>
+
+<div class="question" id="q2">
+  <p><strong>Q2:</strong> 下面哪个写法是错的？</p>
+  <div class="options">
+    <span class="option" data-q="q2" data-a="a">[ "$A" = "$B" ]</span>
+    <span class="option" data-q="q2" data-a="b">["$A" = "$B"]</span>
+    <span class="option" data-q="q2" data-a="c">[[ $A = "$B" ]]</span>
+  </div>
+  <div class="feedback" id="q2-fb"></div>
+</div>
+
+<div class="question" id="q3">
+  <p><strong>Q3:</strong> 部署脚本中 <code>for i in {1..3}; do curl api/health &amp;&amp; break; sleep 2; done</code> 是什么意思？</p>
+  <div class="options">
+    <span class="option" data-q="q3" data-a="a">精确执行 curl 命令 3 次，每次间隔 2 秒</span>
+    <span class="option" data-q="q3" data-a="b">最多重试 3 次：curl 成功就跳出循环，失败就等 2 秒再试</span>
+    <span class="option" data-q="q3" data-a="c">如果 curl 失败，重复 3 次；如果成功，直接退出脚本</span>
+  </div>
+  <div class="feedback" id="q3-fb"></div>
+</div>
+
+<div class="question" id="q4">
+  <p><strong>Q4:</strong> <code>case $ENV in start|restart)</code> 中的 <code>|</code> 含义是？</p>
+  <div class="options">
+    <span class="option" data-q="q4" data-a="a">正则表达式的"或"——匹配 start 或 restart</span>
+    <span class="option" data-q="q4" data-a="b">Glob 模式的"或"——匹配 start 或 restart</span>
+    <span class="option" data-q="q4" data-a="c">管道——把 start 的输出传给 restart</span>
+  </div>
+  <div class="feedback" id="q4-fb"></div>
+</div>
+</div>
+
+<div class="session-footer">
+  <p>
+    📖 <strong>推荐阅读</strong>：<a href="https://mywiki.wooledge.org/BashGuide/TestsAndConditionals" target="_blank">BashGuide — Tests and Conditionals</a><br>
+    📝 <strong>上一课</strong>：<a href="0004-variables-quoting-expansion.html">第 4 课 — 变量、引用与展开</a><br>
+    📝 <strong>下一课预告</strong>：第 6 课 — 函数与脚本结构（把代码打包复用，写出模块化的脚本）<br>
+    ❓ <strong>有疑问？</strong>在对话中直接问我。
+  </p>
+</div>
+
+<script>
+(function() {
+  const answers = {
+    q1: { correct: 'a', fb: {
+      a: '正确！if 判断的是命令的退出码。grep 找到匹配行时退出码为 0（成功），if 走 then 分支。有趣的是，grep 没找到时退出码是 1（失败），if 反而走 else 分支——if 不关心"语义上的真/假"，它只关心"命令是否成功"。',
+      b: '不对。grep 没找到时退出码是 1（失败），if 会走 else 分支。',
+      c: '不对。if 判断的是 grep 命令本身的退出码，不直接检查文件是否存在（那是 test -f 做的事）。'
+    }},
+    q2: { correct: 'b', fb: {
+      b: '正确！[ 是命令名，"$A" 是它后面的参数——命令名和参数之间需要空格。["$A" 会组成另一个命令词而无法按预期执行。把 [ 当作普通命令形式理解即可。',
+      a: '这个写法是正确的（POSIX 风格）。',
+      c: '这个写法也是正确的（Bash 增强版，推荐）。'
+    }},
+    q3: { correct: 'b', fb: {
+      b: '正确！&amp;&amp; 实现了"成功就不再重试"的逻辑——curl 成功（退出码 0）时，&amp;&amp; 后面的 break 执行，跳出了循环。curl 失败时，&amp;&amp; 短路跳过 break，执行 sleep 2，然后进入下一轮循环。这是部署脚本里最常见的"重试直到成功"模式。',
+      a: '不完全对。如果 curl 成功，break 会立即跳出循环——不一定会执行满 3 次。',
+      c: 'break 只跳出循环，不退出脚本。exit 才是退出脚本。'
+    }},
+    q4: { correct: 'b', fb: {
+      b: '正确！case 的模式使用 glob 通配符语法，| 表示多个模式共享同一段处理代码。这里的 | 不是管道——它在 case 语句内部有特殊含义。start|restart 匹配 $ENV 等于 "start" 或 "restart"。',
+      a: '接近，但不精确。case 模式使用的是 glob 模式（通配符），不是正则表达式。例如 * 匹配任意字符串、[0-9] 匹配单个数字——这些是 glob 语法，不是正则。',
+      c: '不对。case 语句内的 | 不是管道符号，它失去了管道的含义。'
+    }}
+  };
+  document.querySelectorAll('.quiz .option').forEach(opt => {
+    opt.addEventListener('click', function() {
+      const qid = this.dataset.q, aid = this.dataset.a, fb = document.getElementById(qid+'-fb'), qa = answers[qid];
+      document.querySelectorAll('[data-q="'+qid+'"]').forEach(o => o.classList.remove('selected','correct','wrong'));
+      this.classList.add('selected');
+      this.classList.add(aid===qa.correct?'correct':'wrong');
+      if(aid!==qa.correct) document.querySelector('[data-q="'+qid+'"][data-a="'+qa.correct+'"]').classList.add('correct');
+      fb.className = 'feedback '+(aid===qa.correct?'correct':'wrong')+' show';
+      fb.textContent = qa.fb[aid];
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

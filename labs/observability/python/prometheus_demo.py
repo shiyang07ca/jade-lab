@@ -1,26 +1,47 @@
-import random
+"""Measure request work with an injectable Prometheus Summary."""
+
+from __future__ import annotations
+
 import time
+from collections.abc import Callable
 
-from prometheus_client import Summary, start_http_server
+from prometheus_client import CollectorRegistry, Summary, generate_latest
 
-# Create a metric to track time spent and requests made.
 
 REQUEST_TIME = Summary("request_processing_seconds", "Time spent processing request")
 
 
-# Decorate function with metric.
+def create_request_timer(registry: CollectorRegistry) -> Summary:
+    return Summary(
+        "request_processing_seconds",
+        "Time spent processing request",
+        registry=registry,
+    )
 
 
-@REQUEST_TIME.time()
-def process_request(t):
-    """A dummy function that takes some time."""
-    time.sleep(t)
+def process_request(
+    delay: float,
+    *,
+    metric: Summary = REQUEST_TIME,
+    sleeper: Callable[[float], None] = time.sleep,
+    clock: Callable[[], float] = time.perf_counter,
+) -> None:
+    if delay < 0:
+        raise ValueError("delay must be non-negative")
+
+    started = clock()
+    try:
+        sleeper(delay)
+    finally:
+        metric.observe(clock() - started)
+
+
+def render_demo() -> str:
+    registry = CollectorRegistry()
+    metric = create_request_timer(registry)
+    process_request(0.001, metric=metric)
+    return generate_latest(registry).decode("utf-8")
 
 
 if __name__ == "__main__":
-    # Start up the server to expose the metrics.
-    start_http_server(8000)
-
-    # Generate some requests.
-    while True:
-        process_request(random.random())
+    print(render_demo(), end="")

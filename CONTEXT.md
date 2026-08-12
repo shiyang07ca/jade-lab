@@ -4,9 +4,14 @@
 
 ## Language
 
-**Cookbook Sample**:
-已经理解、整理并具备可重复验证方式的代码样本，按语言和主题组织。
-_Avoid_: Demo, Playground, Snippet
+**学习工作区（Learning Workspace）**:
+围绕一个明确学习使命组织、需要版本历史的课程安排、课件、资料索引和学习记录。可执行实验和外部源码不属于
+学习工作区。
+_Avoid_: Notes Dump, Course Archive
+
+**软件包（Package）**:
+由其他代码导入、链接或声明为依赖，具有公开接口、稳定错误类型、构建产物和消费方测试的模块。
+_Avoid_: Sample, Demo, Playground, Snippet
 
 **Problem Solution**:
 由题目平台和稳定题目标识符定位的一组单语言或多语言解答。
@@ -17,7 +22,7 @@ _Avoid_: Algo Folder, OJ Script
 _Avoid_: Test Project, Playground
 
 **Tool**:
-具有明确输入、输出、错误语义和验证方式，可供日常重复使用的程序或脚本。
+由人、CI 或定时任务作为进程直接启动，用来完成一个命名的重复工作流程，并明确参数、输出、状态变更和退出码的程序。
 _Avoid_: Utility, Helper Script
 
 **Template**:

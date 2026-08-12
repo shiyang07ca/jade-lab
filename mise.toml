@@ -1,7 +1,7 @@
 [tools]
 python = "3.12.9"
 uv = "0.8.15"
-go = "1.22.2"
+go = "1.26.5"
 java = "temurin-21"
 maven = "3.9.9"
 cmake = "3.31.6"
@@ -9,3 +9,29 @@ ninja = "1.12.1"
 shellcheck = "0.10.0"
 shfmt = "3.10.0"
 "ubi:j178/leetgo" = "1.4.17"
+
+[env]
+JADE_BASH_IMAGE = "docker.io/library/bash:5.3.15-alpine3.24@sha256:a19c811ee9e97fa8a080001d82b8e0ded303f0795cffdb1cbd162731bc8ce208"
+
+[tasks.modules]
+description = "List learning, package, problem, lab, tool, and reference modules"
+raw_args = true
+run = "python tools/repo-manager/repo.py list"
+
+[tasks.doctor]
+description = "Check pinned tools, module paths, and submodule revisions"
+run = "python tools/repo-manager/repo.py doctor"
+
+[tasks.check]
+description = "Run selected module checks without repository-wide policy"
+raw_args = true
+run = "python tools/repo-manager/repo.py check"
+
+[tasks.policy]
+description = "Validate repository-wide structure, links, and content rules"
+run = "python tools/repo-manager/repo.py policy"
+
+[tasks.bash]
+description = "Run the pinned GNU Bash course runtime in a read-only repository mount"
+raw_args = true
+run = 'docker run --rm -v "{{config_root}}:/workspace:ro" -w /workspace "$JADE_BASH_IMAGE" bash'

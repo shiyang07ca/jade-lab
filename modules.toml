@@ -1,0 +1,283 @@
+schema = 1
+
+[runtimes]
+go_version = "1.26.5"
+bash_version = "5.3.15"
+bash_image = "docker.io/library/bash:5.3.15-alpine3.24@sha256:a19c811ee9e97fa8a080001d82b8e0ded303f0795cffdb1cbd162731bc8ce208"
+
+# `default_check = true` 只用于无需外部服务、无需公网目标且应长期通过的模块。
+# checks 采用 argv 数组，仓库检查器不会经过 shell 解释这些值。
+
+[[modules]]
+id = "learning-go"
+path = "learning/go"
+kind = "learning"
+status = "active"
+summary = "Go 语言、后端工程与固定开源案例课程"
+
+[[modules]]
+id = "learning-bash"
+path = "learning/bash"
+kind = "learning"
+status = "active"
+summary = "Bash 自动化与部署脚本课程"
+checks = [["python", "{root}/tools/repo-manager/bash_course.py"]]
+
+[[modules]]
+id = "package-python-algorithms"
+path = "packages/python-algorithms"
+kind = "package"
+status = "stable"
+summary = "用于算法复习和题解原型的可安装 Python 软件包"
+default_check = true
+checks = [
+  ["uv", "run", "--frozen", "pytest"],
+  ["uv", "run", "--frozen", "ruff", "check", "."],
+  ["uv", "build", "--out-dir", "{scratch}/dist/python-algorithms"],
+]
+
+[[modules]]
+id = "lab-cpp-implementations"
+path = "labs/algorithms/cpp-implementations"
+kind = "lab"
+status = "incomplete"
+summary = "尚未形成公开 CMake package 的 C++ 算法与数据结构实现"
+checks = [
+  ["cmake", "-S", ".", "-B", "{scratch}/build/lab-cpp-implementations", "-G", "Ninja"],
+  ["cmake", "--build", "{scratch}/build/lab-cpp-implementations"],
+]
+
+[[modules]]
+id = "lab-python-implementations"
+path = "labs/algorithms/python-implementations"
+kind = "lab"
+status = "incomplete"
+summary = "尚未形成稳定公开接口的 Python 算法与竞赛实现"
+checks = [
+  ["uv", "run", "--frozen", "pytest"],
+  ["uv", "run", "--frozen", "python", "-m", "compileall", "-q", "algorithms", "competitive-programming", "data-structures"],
+]
+
+[[modules]]
+id = "lab-go-fundamentals"
+path = "labs/languages/go-fundamentals"
+kind = "lab"
+status = "incomplete"
+summary = "独立运行的 Go 语言与并发机制实验"
+checks = [
+  ["go", "test", "./..."],
+  ["go", "vet", "./..."],
+]
+
+[[modules]]
+id = "lab-java-runtime"
+path = "labs/languages/java-runtime"
+kind = "lab"
+status = "incomplete"
+summary = "Java 集合、并发、代理与类加载机制实验"
+checks = [["mvn", "-q", "test"]]
+
+[[modules]]
+id = "lab-python-runtime"
+path = "labs/languages/python-runtime"
+kind = "lab"
+status = "incomplete"
+summary = "Python 语言、标准库与 mock 测试机制实验"
+checks = [
+  ["uv", "run", "--frozen", "pytest"],
+  ["uv", "run", "--frozen", "python", "-m", "compileall", "-q", "language", "standard-library", "testing"],
+]
+
+[[modules]]
+id = "problems-leetcode"
+path = "problems/leetcode"
+kind = "problems"
+status = "active"
+summary = "由 leetgo 管理的 OJ 尝试；允许未完成题解"
+
+[[modules]]
+id = "problems-acwing"
+path = "problems/acwing"
+kind = "problems"
+status = "legacy"
+summary = "按 AcWing 题目标识符保存的历史题解"
+
+[[modules]]
+id = "problems-luogu"
+path = "problems/luogu"
+kind = "problems"
+status = "legacy"
+summary = "按洛谷题目标识符保存的历史题解"
+
+[[modules]]
+id = "lab-redis-sandbox"
+path = "labs/databases/redis-sandbox"
+kind = "lab"
+status = "external"
+summary = "需要本地容器运行时的 Redis 实验"
+
+[[modules]]
+id = "lab-java-mapstruct"
+path = "labs/frameworks/java/mapstruct"
+kind = "lab"
+status = "active"
+summary = "MapStruct 与 Lombok 注解处理实验"
+checks = [["mvn", "-q", "test"]]
+
+[[modules]]
+id = "lab-java-mybatis"
+path = "labs/frameworks/java/mybatis"
+kind = "lab"
+status = "external"
+summary = "需要 MySQL 的 MyBatis 与 Mapper XML 实验"
+
+[[modules]]
+id = "lab-java-spring-web"
+path = "labs/frameworks/java/spring-web"
+kind = "lab"
+status = "active"
+summary = "Spring Boot Web 最小依赖实验"
+checks = [["mvn", "-q", "test"]]
+
+[[modules]]
+id = "lab-python-pydantic"
+path = "labs/frameworks/python/pydantic"
+kind = "lab"
+status = "active"
+summary = "Pydantic v2 数据验证实验"
+checks = [
+  ["uv", "run", "--frozen", "pytest"],
+  ["uv", "run", "--frozen", "ruff", "check", "."],
+]
+
+[[modules]]
+id = "lab-async-socket-server"
+path = "labs/networking/async-socket-server"
+kind = "lab"
+status = "legacy"
+summary = "Linux epoll、libuv 与线程模型的历史网络实验"
+
+[[modules]]
+id = "lab-java-concurrent-http"
+path = "labs/networking/java-concurrent-http"
+kind = "lab"
+status = "external"
+summary = "会访问外部网络的 Java 并发 HTTP 实验"
+
+[[modules]]
+id = "lab-python-socket-server"
+path = "labs/networking/python-socket-server"
+kind = "lab"
+status = "legacy"
+summary = "含 Python 2 历史代码的 socket server 阶段实验"
+
+[[modules]]
+id = "lab-yolanda"
+path = "labs/networking/yolanda"
+kind = "lab"
+status = "legacy"
+summary = "主要面向 Linux 的 C 网络编程章节实验"
+
+[[modules]]
+id = "lab-numpy"
+path = "labs/numerical-computing/numpy"
+kind = "lab"
+status = "active"
+summary = "NumPy 数值计算实验"
+checks = [
+  ["uv", "run", "--frozen", "pytest"],
+  ["uv", "run", "--frozen", "ruff", "check", "."],
+]
+
+[[modules]]
+id = "lab-python-observability"
+path = "labs/observability/python"
+kind = "lab"
+status = "active"
+summary = "OpenTelemetry trace 与 Prometheus metric 实验"
+checks = [
+  ["uv", "run", "--frozen", "pytest"],
+  ["uv", "run", "--frozen", "ruff", "check", "."],
+]
+
+[[modules]]
+id = "lab-unix-linux-programming"
+path = "labs/operating-systems/unix-linux-programming"
+kind = "lab"
+status = "legacy"
+summary = "UNIX/Linux 系统编程书籍章节练习"
+
+[[modules]]
+id = "lab-distributed-timer"
+path = "labs/scheduling/distributed-timer"
+kind = "lab"
+status = "external"
+summary = "需要 Redis 的历史分布式定时器实验"
+
+[[modules]]
+id = "lab-btree"
+path = "labs/storage/btree"
+kind = "lab"
+status = "active"
+summary = "B-Tree 插入、分裂、查找和遍历实验"
+checks = [
+  ["uv", "run", "--frozen", "pytest"],
+  ["uv", "run", "--frozen", "ruff", "check", "."],
+]
+
+[[modules]]
+id = "tool-process-inspector"
+path = "tools/process-inspector"
+kind = "tool"
+status = "stable"
+summary = "按命令行关键字查询进程和线程数"
+default_check = true
+checks = [
+  ["uv", "run", "--frozen", "pytest"],
+  ["uv", "run", "--frozen", "ruff", "check", "."],
+  ["bash", "-n", "scripts/thread-count.sh"],
+]
+
+[[modules]]
+id = "tool-repo-manager"
+path = "tools/repo-manager"
+kind = "tool"
+status = "stable"
+summary = "列出模块、诊断开发环境并运行模块检查"
+default_check = true
+checks = [["python", "-m", "unittest", "discover", "-s", "tests"]]
+
+[[modules]]
+id = "reference-500lines"
+path = "references/500lines"
+kind = "reference"
+status = "pinned"
+summary = "500 Lines or Less 固定源码"
+
+[[modules]]
+id = "reference-algorithmbasic2020"
+path = "references/algorithmbasic2020"
+kind = "reference"
+status = "pinned"
+summary = "算法课程固定源码"
+
+[[modules]]
+id = "reference-algorithms"
+path = "references/algorithms"
+kind = "reference"
+status = "pinned"
+summary = "Python 数据结构与算法固定源码"
+
+[[modules]]
+id = "reference-codeforces-go"
+path = "references/codeforces-go"
+kind = "reference"
+status = "pinned"
+summary = "Go 竞赛代码固定源码"
+
+[[modules]]
+id = "reference-guava"
+path = "references/guava"
+kind = "reference"
+status = "pinned"
+summary = "Guava 固定源码"

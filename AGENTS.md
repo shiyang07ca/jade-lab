@@ -14,6 +14,13 @@
 
 本仓库使用单一领域上下文布局：根目录 `CONTEXT.md` 与 `docs/adr/`。详见 `docs/agents/domain.md`。
 
+### Learning workspaces
+
+需要长期维护的学习使命、课程、课件和学习记录使用 `learning/<topic>/`。`.scratch/` 只保存本地票据、临时验证和
+机器相关状态；与单课共同演进的短练习可以进入 `learning/<topic>/exercises/`，其他课程代码按实际用途进入
+`labs/`、`packages/` 或 `tools/`。详见
+`docs/project/architecture.md`。
+
 ## 文档语言与术语
 
 - 面向项目成员的说明、规格文档、任务票据和架构决策记录默认使用中文。先给结论，再写清具体对象、

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 1 · 从 Python 到 Go：准确的心智模型与工具链</title>
+<link rel="stylesheet" href="../assets/styles.css">
+<script src="../assets/quiz.js"></script>
+</head>
+<body>
+
+<header class="lesson-head">
+  <div class="lesson-number">LESSON 1 · PHASE 0 · 预计 35–40 分钟 · GO 1.26.5</div>
+  <h1>从 Python 到 Go：准确的心智模型与工具链</h1>
+  <div class="meta">目标：区分两种语言的执行与失败模型，建立可重复的格式化、检查、测试和构建流程</div>
+</header>
+
+<h2>0. 先核对工具链版本</h2>
+
+<p>本课程所有语言行为、标准库链接和案例构建统一使用 <strong>Go 1.26.5</strong>。先运行：</p>
+
+<pre><code>go version
+go env GOOS GOARCH GOTOOLCHAIN
+GOTOOLCHAIN=go1.26.5 go version</code></pre>
+
+<p>最后一行必须以 <code>go version go1.26.5</code> 开头。补丁版本也会包含安全和缺陷修复，因此课程不接受
+“任意 Go 1.26”。默认 <code>go version</code> 可以是已有的启动工具链；课程命令实际解析出的版本必须是
+1.26.5。如果当前 Go 支持工具链选择，可以只在课程 shell 中运行
+<code>export GOTOOLCHAIN=go1.26.5</code>；也可以阅读官方的
+<a href="https://go.dev/doc/manage-install">多版本安装说明</a>或使用官方安装包。两种方式都不能用未核对的版本
+继续课程。</p>
+
+<h2>1. Go 为什么存在：以官方历史为准</h2>
+
+<p>Go 项目始于 2007 年。Robert Griesemer、Rob Pike 和 Ken Thompson 面对的是大型软件及其构建系统
+日益复杂、多核处理器逐渐普及，而当时常用语言对安全高效的并发支持不足。Go 因而尝试同时获得静态
+类型和本机代码的安全与效率，以及动态语言较轻的开发体验，并把格式化、构建和分析工具作为语言生态的
+一部分。<a href="https://go.dev/doc/faq#history">Go 官方 FAQ</a>给出了项目目的和
+历史；课程不把它简化成某次“等待 C++ 编译”的单一故事。</p>
+
+<p>Go 的设计确实重视简化，但要按当前语言描述：</p>
+
+<ul>
+  <li>Go 没有类继承层次，主要通过方法、组合和隐式满足接口组织抽象；</li>
+  <li>Go 1.18 起已经支持类型参数；本课程使用的 Go 1.26.5 当然包含泛型；</li>
+  <li>普通失败通常通过 <code>error</code> 返回值表达；<code>panic/recover</code> 留给真正异常的边界，不等同于
+      日常 <code>try/except</code>；</li>
+  <li>Go 没有用户自定义运算符重载，也没有隐式数值类型转换，但仍存在隐式接口满足、类型推断和零值等机制。</li>
+</ul>
+
+<div class="sidenote">一句总结：Go 主要优化的是构建和维护软件的可预测性。它既能写长期运行的服务，也能写
+CLI 和小工具；“适不适合快速原型”取决于问题和团队，不能由语言标签直接决定。</div>
+
+<h2>2. 从 Python/Django 切换时，真正不同的是什么</h2>
+
+<p>Python 和 Go 都同时包含显式与隐式机制。Python 的 Zen 甚至明确写着 “Explicit is better than
+implicit”。因此不要记“Python 隐式、Go 显式”这种口号；应当记住下面可观察的差异。</p>
+
+<table>
+  <tr><th>维度</th><th>Python / Django 常见做法</th><th>Go 1.26.5</th><th>实践影响</th></tr>
+  <tr><td>类型</td><td>运行时动态类型；类型标注和静态检查工具可选</td><td>编译期静态类型；局部变量常由编译器推断</td><td>许多不匹配在运行前暴露，但边界数据仍必须运行时验证</td></tr>
+  <tr><td>参数传递</td><td>对象引用按值传递，名称绑定到对象</td><td>所有参数按值传递；值可能含指针、slice、map 等描述符</td><td>必须判断复制了什么、是否共享底层状态</td></tr>
+  <tr><td>普通失败</td><td><code>raise</code> / <code>try</code>；异常可跨多层传播</td><td>返回 <code>error</code> 并在合适层包装或处理</td><td>调用路径上能直接看到失败，但不能机械地到处写相同判断</td></tr>
+  <tr><td>抽象</td><td>类、协议、鸭子类型、装饰器等</td><td>具体类型、方法、组合、由使用方定义的小接口</td><td>先写具体代码，在真实调用方需要替换时抽取接口</td></tr>
+  <tr><td>并发</td><td>取决于解释器和部署方式；常见 CPython 构建受 GIL 等因素影响</td><td>goroutine 复用操作系统线程；channel 和 sync 提供同步手段</td><td>创建 goroutine 很便宜但不是免费，仍要限制数量、取消并等待结束</td></tr>
+  <tr><td>依赖</td><td>常见为 pip/uv/Poetry 与虚拟环境</td><td>模块版本记录在 <code>go.mod</code>/<code>go.sum</code></td><td><code>go get</code> 调整依赖；<code>go install pkg@version</code> 安装命令</td></tr>
+  <tr><td>构建与部署</td><td>通常需要解释器、环境和依赖，也可以打包为其他形态</td><td>通常提前编译成本机可执行文件</td><td>纯 Go 服务常便于分发；cgo、动态库、证书和外部资源仍需单独处理</td></tr>
+  <tr><td>格式</td><td>PEP 8 加 Black/Ruff 等工具，是否执行由项目决定</td><td><code>gofmt</code> 提供统一格式，是否阻止合并由 CI 决定</td><td>Go 社区的格式差异少，但编译器不会替团队执行格式规则</td></tr>
+</table>
+
+<div class="callout tip"><strong>本课最重要的转变</strong>：先判断值的类型、所有权和生命周期，再判断失败如何
+传回调用方。并发代码还要回答：谁启动、谁取消、谁等待、谁关闭。后续每一课都用这几个问题检查代码。</div>
+
+<h2>3. 工具链：先建立最小反馈方式</h2>
+
+<p>以下流程使用官方工具链；其中 <code>mkdir</code> 只负责创建输出目录。各 Go 命令职责不同，不要把
+<code>vet</code> 称为编译的一部分：</p>
+
+<pre><code>export GOTOOLCHAIN=go1.26.5             # 只影响当前 shell，固定本课工具链
+go version                              # 再次确认实际运行的是 go1.26.5
+go mod init example.com/hello           # 创建模块，记录模块路径
+go mod edit -go=1.26.5                 # 固定本课程使用的语言版本
+go mod edit -toolchain=go1.26.5        # 记录本课程建议使用的精确工具链
+go mod tidy                            # 按实际 import 增删依赖并维护 go.sum
+go fmt ./...                           # 格式化当前模块中的包
+go vet ./...                           # 独立静态分析，报告可疑结构
+go test ./...                          # 编译并运行全部包的测试
+go test -race ./...                    # 使用竞态检测器运行测试
+mkdir -p bin                           # 创建构建输出目录（shell 命令）
+go build -o bin/hello .                # 构建 main 包
+go run .                               # 临时编译并运行 main 包</code></pre>
+
+<p><code>go.mod</code> 不只是 Python 的 <code>requirements.txt</code>：它还声明模块路径、Go 语言版本和模块级
+指令。<a href="https://go.dev/doc/go1.26">Go 1.26 发布说明</a>指出 <code>go mod init</code> 会有意为新模块选择
+较低的默认 <code>go</code> 版本，因此本课显式设置
+<code>go 1.26.5</code>。<code>toolchain go1.26.5</code> 记录建议使用的精确工具链，但是否能自动取得该工具链仍取决于
+<code>GOTOOLCHAIN</code> 设置；依赖校验信息主要记录在 <code>go.sum</code>。添加或调整库依赖使用
+<code>go get module@version</code>；安装外部命令使用 <code>go install module/cmd@version</code>。</p>
+
+<p><code>./...</code> 是包匹配模式，表示当前目录下的包及其子目录中的包。Go 模块不要求使用旧式
+<code>src/</code> 布局；<code>go.mod</code> 所在目录是模块根目录。</p>
+
+<p>可执行程序必须包含 <code>package main</code> 以及无参数、无返回值的 <code>func main()</code>。库包可以被
+测试和构建，但不能通过 <code>go run .</code> 当作命令运行。</p>
+
+<h2>4. 动手：程序、测试、构建一次完成</h2>
+
+<div class="exercise">
+<h3>练习 1a · 创建模块（5 分钟）</h3>
+<ol>
+  <li>新建目录并初始化模块：
+    <pre><code>mkdir -p ~/go-practice/hello
+cd ~/go-practice/hello
+go mod init example.com/hello
+go mod edit -go=1.26.5
+go mod edit -toolchain=go1.26.5</code></pre>
+  </li>
+  <li>创建 <code>main.go</code>：
+    <pre><code>package main
+
+import (
+    "fmt"
+    "strings"
+)
+
+func countWords(text string) map[string]int {
+    counts := make(map[string]int)
+    for _, word := range strings.Fields(text) {
+        counts[word]++
+    }
+    return counts
+}
+
+func main() {
+    fmt.Println(countWords("go go go python go"))
+}</code></pre>
+  </li>
+  <li>运行 <code>go run .</code>，预期得到 <code>map[go:4 python:1]</code>。这个示例只有两个键；不要从这里
+      推断一般 map 的输出顺序。</li>
+</ol>
+</div>
+
+<div class="exercise">
+<h3>练习 1b · 第一张安全网（10 分钟）</h3>
+<p>创建 <code>main_test.go</code>：</p>
+
+<pre><code>package main
+
+import (
+    "reflect"
+    "testing"
+)
+
+func TestCountWords(t *testing.T) {
+    got := countWords("go  go\npython")
+    want := map[string]int{"go": 2, "python": 1}
+    if !reflect.DeepEqual(got, want) {
+        t.Fatalf("countWords() = %v, want %v", got, want)
+    }
+}</code></pre>
+
+<p>依次运行：</p>
+
+<pre><code>go fmt ./...
+go vet ./...
+go test ./...
+go test -race ./...
+mkdir -p bin
+go build -o bin/hello .
+./bin/hello</code></pre>
+
+<p>所有命令通过才算完成。然后把测试中的 <code>"go": 2</code> 改成 <code>"go": 3</code>，确认测试真的会
+失败，再改回正确值。没有见过测试失败，就不能证明测试检查了目标行为。</p>
+</div>
+
+<div class="exercise">
+<h3>练习 1c · 精确理解三个细节（5 分钟）</h3>
+<ul>
+  <li><code>counts[word]++</code> 能工作，因为读取不存在的 map 键会得到值类型的零值；若要区分“不存在”
+      和“存在但值为零”，使用 <code>value, ok := counts[word]</code>。</li>
+  <li><code>strings.Fields</code> 按连续 Unicode 空白分隔，接近无参数的 Python <code>str.split()</code>；生产代码
+      不需要为这个需求手写字符串切片。</li>
+  <li>函数签名中的参数和返回类型是显式的；函数内部的 <code>:=</code> 和 <code>make(map[string]int)</code> 让编译器
+      推断局部变量类型。</li>
+</ul>
+</div>
+
+<h2>5. 检查理解</h2>
+
+<div class="quiz" data-answer="1" data-feedback="读取不存在的键得到值类型的零值；若还要知道键是否存在，使用 value, ok := m[key]。">
+  <p class="quiz-question">1. 读取 <code>map[string]int</code> 中不存在的键，结果是什么？</p>
+  <ul class="quiz-options">
+    <li>抛出 KeyError</li>
+    <li>得到 0；可用第二个 bool 结果区分键是否存在</li>
+    <li>总是得到 nil</li>
+    <li>编译失败</li>
+  </ul>
+  <p class="quiz-feedback"></p>
+</div>
+
+<div class="quiz" data-answer="2" data-feedback="Go 通常编译成本机可执行文件，但是否完全静态、是否只需一个文件取决于 cgo、动态库、证书、配置和其他运行时资源。">
+  <p class="quiz-question">2. 关于 Go 程序部署，哪项描述最准确？</p>
+  <ul class="quiz-options">
+    <li>必须在目标机安装 Go 工具链</li>
+    <li>任何 Go 程序都保证是完全静态的单文件</li>
+    <li>通常分发本机可执行文件，但仍要检查外部库和运行时资源</li>
+    <li>只能通过容器部署</li>
+  </ul>
+  <p class="quiz-feedback"></p>
+</div>
+
+<div class="quiz" data-answer="3" data-feedback="go fmt 负责格式化；go vet 是独立静态分析；go test 编译并运行测试。编译器本身不会强制团队在提交前运行 gofmt。">
+  <p class="quiz-question">3. 哪项工具职责描述正确？</p>
+  <ul class="quiz-options">
+    <li><code>go vet</code> 是编译器的必经阶段</li>
+    <li><code>go test</code> 只做语法检查，不运行测试</li>
+    <li>编译器会拒绝所有未经 <code>gofmt</code> 的代码</li>
+    <li><code>go fmt</code> 格式化，<code>go vet</code> 报告可疑代码，<code>go test</code> 运行测试</li>
+  </ul>
+  <p class="quiz-feedback"></p>
+</div>
+
+<div class="quiz" data-answer="0" data-feedback="现代 Go 中，go get 用于调整当前模块依赖；安装命令使用 go install package@version。">
+  <p class="quiz-question">4. 要安装固定版本的外部 Go 命令，应使用什么？</p>
+  <ul class="quiz-options">
+    <li><code>go install example.com/tool@v1.2.3</code></li>
+    <li><code>go get example.com/tool@v1.2.3</code></li>
+    <li><code>go mod init example.com/tool@v1.2.3</code></li>
+    <li><code>go build example.com/tool@latest</code></li>
+  </ul>
+  <p class="quiz-feedback"></p>
+</div>
+
+<h2>6. 本课完成记录</h2>
+
+<ul>
+  <li>保存 <code>go version</code>、<code>GOOS</code>、<code>GOARCH</code> 与本课检查命令的结果。</li>
+  <li>一手资料：<a href="https://go.dev/doc/faq">Go FAQ</a>、
+      <a href="https://go.dev/doc/code">How to Write Go Code</a>、
+      <a href="https://go.dev/doc/cmd">Command Documentation</a>。</li>
+  <li>下一单元：值、指针与生命周期。将用 leetgo 的实际结构体回答“复制了什么、共享了什么”。</li>
+  <li>如果概念不清楚，或你的命令输出与本课不同，请向教师追问，并附上 <code>go version</code>、完整命令和
+      已脱敏的输出；不要带着未解释的差异继续。</li>
+</ul>
+
+<footer>
+  课程地图见 <a href="../CURRICULUM.md">CURRICULUM.md</a> · 案例路径见
+  <a href="../CASES.md">CASES.md</a> · 一手资料索引见 <a href="../RESOURCES.md">RESOURCES.md</a>
+</footer>
+
+</body>
+</html>

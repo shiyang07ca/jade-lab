@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 12 课：系统化阅读与调试脚本</title>
+<meta name="course-audit" content="2026-08-12; GNU Bash 5.3.15">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="breadcrumb">
+  <a href="../MISSION.md">使命</a> → <a href="0011-json-api-curl-jq.html">第 11 课</a> → 第 12 课
+</nav>
+
+<div class="lesson-meta">
+  <span class="number">第 12 课</span>
+  <span class="duration">⏱ 约 22 分钟</span>
+</div>
+
+<h1>系统化阅读与调试脚本</h1>
+<p class="subtitle">面对一个 200 行的陌生部署脚本——你怎么快速看懂它？</p>
+
+<div class="mission-tie">
+前 11 课教了你 Bash 的每块零件。这课教你 <b>怎么看懂整台机器</b>。面对同事的部署脚本、GitHub 上的参考实现、或者半年前自己写的脚本——你需要的不只是语法知识，而是<b>一套阅读方法论</b>：从哪开始、看什么不看什么、遇到不懂的怎么查、怀疑有 bug 怎么验证。这比再学 10 个命令都管用。
+</div>
+
+<h2>1. 阅读策略：四遍法</h2>
+
+<p>大多数人的问题是"从第 1 行开始逐行读"。这就像读一本小说时先查每个生词——你迷失在细节里，忘了故事在讲什么。</p>
+
+<div class="diagram">
+<pre>
+  <strong>第一遍</strong>（2 分钟）  扫结构——这个脚本有几"块"？骨架长什么样？
+  <strong>第二遍</strong>（5 分钟）  追主干——main() 从头到尾走了什么路径？
+  <strong>第三遍</strong>（10 分钟）  查细节——关键命令的参数含义、变量的来源
+  <strong>第四遍</strong>（按需）    调试验证——特定行为有疑问时用 bash -x 追踪
+</pre>
+</div>
+
+<h2>2. 第一遍：扫结构——认出骨架模式</h2>
+
+<p>不要读代码内容，只读"形状"。扫一眼就能认出的信号：</p>
+
+<pre><code><span class="comment"># 打开脚本，第一眼扫什么？</span>
+
+#!/bin/bash                              <span class="comment"># ← Shebang：是什么解释器？bash 还是 sh？</span>
+<span class="comment"># deploy.sh — 部署脚本                     ← 文件头注释：它是干什么的？</span>
+set -euo pipefail                        <span class="comment"># ← 选择了哪些失败规则？例外是否被正确处理？</span>
+
+readonly APP_NAME="myapp"                <span class="comment"># ← 全局常量区：有哪些配置值？</span>
+readonly LOG_DIR="/var/log/${APP_NAME}"
+
+log() { ... }                            <span class="comment"># ← 工具函数区：日志、错误处理的"基础设施"</span>
+die() { ... }
+
+check_prereqs() { ... }                  <span class="comment"># ← 业务函数区：这是脚本真正的"动词"</span>
+backup() { ... }
+deploy() { ... }
+
+main() {                                 <span class="comment"># ← 主入口：脚本的"目录"</span>
+    check_prereqs
+    backup
+    deploy "$@"
+}
+main "$@"                                <span class="comment"># ← 启动：参数怎么传进 main</span></code></pre>
+
+<div class="insight">
+<b>第一遍的核心产出：</b>你能用一句话概括脚本结构——"这是一个部署脚本，有前置检查和备份，主逻辑在 deploy()，入口是 main "$@"，开了严格模式"。如果一句话说不清，说明你对脚本的骨架理解还不够。
+</div>
+
+<h2>3. 第二遍：追主干——画出执行路径</h2>
+
+<p>从 <code>main "$@"</code> 开始，顺着函数调用链往下追，<strong>不进入函数的实现细节</strong>：</p>
+
+<pre><code>main "$@"
+│
+├── load_config          <span class="comment"># 加载配置（从哪里？环境变量？配置文件？）</span>
+│
+├── check_prereqs        <span class="comment"># 前置检查（检查什么？命令存在？目录存在？）</span>
+│   ├── for cmd in tar rsync systemctl
+│   └── command -v "$cmd" || die
+│
+├── case $ENV in         <span class="comment"># 环境分支（不同环境不同行为？）</span>
+│   ├── staging)    deploy staging    <span class="comment"># ← 这个分支是你关心的</span>
+│   └── production) deploy production
+│
+└── deploy "$ENV"        <span class="comment"># 核心部署逻辑</span>
+    ├── backup_current       <span class="comment"># 先备份</span>
+    ├── rsync ... "$ENV:/opt/app/"  <span class="comment"># 传文件</span>
+    ├── ssh "$ENV" "systemctl restart myapp"  <span class="comment"># 远程重启</span>
+    └── wait_for_http        <span class="comment"># 等就绪</span></code></pre>
+
+<p><strong>关键问题——第二遍你要能回答：</strong></p>
+
+<ul style="margin:0.8rem 0; padding-left:1.5rem;">
+  <li>脚本的"正常路径"是什么？（假设一切顺利，走了哪些步骤？）</li>
+  <li>有哪些分支？（不同环境？不同参数？）</li>
+  <li>哪些步骤可能失败？失败后怎么处理？（die？rollback？）</li>
+  <li>有没有外部依赖？（网络请求、SSH、数据库——这些是最容易出问题的地方）</li>
+</ul>
+
+<h2>4. 第三遍：查细节——搞懂你不认识的东西</h2>
+
+<p>前面两遍你可能遇到一些不认识的写法。第三遍是定点清除这些"未知符号"：</p>
+
+<table style="width:100%; margin:1rem 0;">
+  <tr style="border-bottom:1px solid var(--border);">
+    <th style="text-align:left; padding:0.3rem 0;">遇到什么</th>
+    <th style="text-align:left; padding:0.3rem 0;">去哪查</th>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td>不认识的命令或参数组合</td>
+    <td><code>man 命令名</code> 或 <a href="https://explainshell.com/" target="_blank">explainshell.com</a></td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>${VAR:-default}</code>、<code>${VAR%.*}</code></td>
+    <td><a href="../reference/expansion-and-quoting.html">速查参考：变量展开</a></td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>[[ ... ]]</code> 里面的奇怪条件</td>
+    <td><code>help test</code> 或 <code>help [[ ]]</code></td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td>可疑的写法——隐隐觉得有 bug</td>
+    <td><a href="https://www.shellcheck.net/" target="_blank">shellcheck.net</a>——把脚本贴进去</td>
+  </tr>
+  <tr>
+    <td>某个变量的值到底是多少？</td>
+    <td><code>bash -x script.sh</code>——看实际展开后的值</td>
+  </tr>
+</table>
+
+<h2>5. 第四遍：调试验证——怀疑有 bug 怎么查</h2>
+
+<p>调试不是"感觉不对就加 echo"——有一套层次化的手段：</p>
+
+<h3>Level 1：加壳追踪——不改代码</h3>
+
+<pre><code><span class="comment"># 最直接的调试方式——不需要改任何代码</span>
+<span class="prompt"></span>bash -x deploy.sh staging v2.0 2>trace.log
+<span class="comment"># 输出到文件，可以慢慢看每一步变量展开后的实际命令</span>
+
+<span class="comment"># 只看特定段落：在脚本里加标记</span>
+set -x          <span class="comment"># ← 从这里开始追踪</span>
+<span class="comment"># ... 你怀疑有问题的代码 ...</span>
+set +x          <span class="comment"># ← 到这里结束追踪</span></code></pre>
+
+<div class="pitfall">只在隔离且允许执行副作用的环境运行 <code>bash -x</code>。追踪会真实执行命令，并可能把密码、令牌和个人数据写入日志。</div>
+
+<h3>Level 2：打印关键变量——最小侵入</h3>
+
+<pre><code><span class="comment"># 不是漫天撒 echo，而是只在关键决策点打印</span>
+echo "[DEBUG] ENV=$ENV, VERSION=$VERSION, TARGET=${TARGET:-未设置}" >&2
+<span class="comment">#                                                         ↑
+#                                   输出到 stderr，不污染 stdout 数据流</span></code></pre>
+
+<h3>Level 3：隔离复现——把怀疑的函数拆出来</h3>
+
+<pre><code><span class="comment"># 先确认脚本只有定义，或入口使用下面的保护条件</span>
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+    main "$@"
+fi
+
+<span class="comment"># 再在一次性子 Shell 中加载并调用，避免污染当前交互环境</span>
+<span class="prompt"></span>bash -c 'source ./deploy.sh; if deploy_to_server staging; then status=0; else status=$?; fi; printf "status=%s\n" "$status"'
+<span class="comment"># 更复杂的测试应拆出函数库，并用自动化测试覆盖成功与失败分支</span></code></pre>
+
+<h3>Level 4：ShellCheck——让机器帮你查</h3>
+
+<pre><code><span class="prompt"></span>shellcheck deploy.sh
+<span class="output">In deploy.sh line 15:
+    rm -rf $TEMP_DIR
+           ^------^ SC2086: Double quote to prevent word splitting.</span>
+
+<span class="comment"># ShellCheck 能发现许多引用、test、可移植性和数据流问题；</span>
+<span class="comment"># 静态分析无法证明业务语义、并发、安全或恢复逻辑正确。</span></code></pre>
+
+<div class="pitfall">优先运行仓库固定版本的本地 ShellCheck，不要把含凭证、内部地址或私有逻辑的脚本粘贴到公共网页。</div>
+
+<h2>6. 实战走读：我们一起来读一个脚本</h2>
+
+<p>下面是一个中等复杂度的部署脚本。用刚学的四遍法过一遍：</p>
+
+<pre><code>#!/bin/bash
+<span class="comment"># db-migrate.sh — 数据库迁移脚本</span>
+set -euo pipefail
+
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly MIGRATIONS_DIR="${SCRIPT_DIR}/migrations"
+: "${DB_HOST:=localhost}"  : "${DB_PORT:=5432}"
+: "${DB_NAME:=myapp}"      : "${DB_USER:=admin}"
+: "${DB_PASSWORD:?必须设置 DB_PASSWORD}"
+
+log() { echo "[$(date '+%H:%M:%S')] $*" >&2; }
+die() { log "FATAL: $*"; exit 1; }
+
+run_sql() {
+    PGPASSWORD="$DB_PASSWORD" psql \
+        -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" \
+        -v ON_ERROR_STOP=1 -q "$@"
+}
+
+get_applied() {
+    run_sql -t -c "SELECT filename FROM schema_migrations ORDER BY filename;" \
+        2>/dev/null || echo ""
+}
+
+apply_migration() {
+    local file="$1"
+    log "应用迁移: $(basename "$file")"
+    run_sql -f "$file" || die "迁移失败: $file"
+    run_sql -c "INSERT INTO schema_migrations VALUES ('$(basename "$file")')" \
+        || die "记录迁移失败: $file"
+}
+
+main() {
+    local direction="${1:-up}"
+
+    log "数据库迁移开始（方向: $direction）"
+    [[ -d "$MIGRATIONS_DIR" ]] || die "迁移目录不存在: $MIGRATIONS_DIR"
+
+    <span class="comment"># 确保迁移记录表存在</span>
+    run_sql -c "CREATE TABLE IF NOT EXISTS schema_migrations (
+        filename VARCHAR(255) PRIMARY KEY, applied_at TIMESTAMP DEFAULT now()
+    );" || die "初始化迁移表失败"
+
+    local applied
+    applied=$(get_applied)
+
+    for migration in "$MIGRATIONS_DIR"/*.sql; do
+        [[ -f "$migration" ]] || continue
+        local name; name=$(basename "$migration")
+        if ! echo "$applied" | grep -qF "$name"; then
+            apply_migration "$migration"
+        fi
+    done
+
+    log "迁移完成"
+}
+main "$@"</code></pre>
+
+<h3>第一遍：扫结构（30 秒）</h3>
+
+<ul style="margin:0.5rem 0; padding-left:1.5rem;">
+  <li>Shebang: bash ✓</li>
+  <li>失败选项: <code>set -euo pipefail</code>；还需检查各语法上下文和显式分支</li>
+  <li>工具函数: <code>log()</code>、<code>die()</code></li>
+  <li>业务函数: <code>run_sql()</code>、<code>get_applied()</code>、<code>apply_migration()</code></li>
+  <li>入口: <code>main "$@"</code> ✓</li>
+</ul>
+
+<h3>第二遍：追主干</h3>
+
+<pre><code>main "$@"
+│
+├─ direction = $1 (默认 "up")
+├─ 创建 schema_migrations 表（不存在则建）
+├─get_applied() → 查询已执行的迁移文件名列表
+├─ for *.sql in migrations/
+│   └─ 如果文件名不在 applied 里 → apply_migration()
+│       ├─ run_sql -f 文件      # 执行 SQL
+│       └─ INSERT 记录到表      # 标记为已执行
+└─ "迁移完成"</code></pre>
+
+<h3>第三遍：定点清除不认识的写法</h3>
+
+<ul style="margin:0.5rem 0; padding-left:1.5rem;">
+  <li><code>: "${DB_PASSWORD:?必须设置}"</code> → 参数展开（第 4 课）：未设置或为空就报错退出</li>
+  <li><code>PGPASSWORD="$DB_PASSWORD" psql ...</code> → 临时环境变量可被同机进程观察；PostgreSQL 官方建议密码文件等更安全方式</li>
+  <li><code>run_sql -t -c "SELECT ..."</code> → psql 的 <code>-t</code> 只输出数据（去表头），<code>-c</code> 执行单条 SQL</li>
+  <li><code>grep -qF "$name"</code> → <code>-F</code> 固定字符串匹配（不把 <code>$name</code> 当正则）</li>
+</ul>
+
+<h3>第四遍：有什么潜在问题？</h3>
+
+<ul style="margin:0.5rem 0; padding-left:1.5rem;">
+  <li><code>echo "$applied" | grep -qF "$name"</code> → 如果迁移文件名恰好是另一个文件名的前缀，<code>-F</code> 可能误判？这里的逻辑是"文件名完全等于某行"还是"包含"？看源码是 <code>grep -F</code> + 不锚定，所以只要文件名 <strong>作为子串出现</strong>就算"已执行"。如果迁移文件叫 <code>1.sql</code> 和 <code>11.sql</code>——<code>1.sql</code> 会匹配到 <code>11.sql</code>。这是一个潜在的 bug！</li>
+  <li><code>get_applied</code> 把数据库查询失败降级为空列表，可能重新执行全部迁移；这里没有恢复语义，应该失败退出。</li>
+  <li>执行迁移和写入记录是两次独立的 <code>psql</code> 调用，中途失败会留下“数据库已改、记录未写”的状态；还没有并发锁。</li>
+  <li>文件名直接拼进 SQL 字符串，存在引号与 SQL 注入问题；<code>direction</code> 参数也没有真正控制任何行为。</li>
+</ul>
+
+<div class="pitfall">这段脚本是代码审查练习，不是迁移工具模板。真实服务优先采用成熟迁移工具，并明确事务支持、并发锁、不可事务化语句和回滚策略。</div>
+
+<div class="insight">
+<b>这就是四遍法的价值所在。</b> 如果你从第 1 行逐字读，读到第 50 行时早忘了第 20 行在干什么。但先建骨架、再追主干、最后查细节——你能在 15 分钟内理解一个 200 行的脚本，并且发现潜在的逻辑问题。
+</div>
+
+<div class="exercise">
+<h3>动手练习（5 分钟）</h3>
+<p>用四遍法分析下面这段故意带缺陷的脚本。除了正常路径，重点检查：相对路径在 <code>cd</code> 后指向哪里、报告的生命周期、管道的子 Shell 是否真的影响结果，以及被忽略的错误是否有恢复语义。</p>
+<pre><code><span class="comment"># 这个脚本在干什么？用四遍法分析</span>
+<span class="prompt"></span>cat > /tmp/mystery-script.sh &lt;&lt; 'EOF'
+#!/bin/bash
+set -euo pipefail
+
+readonly BASE="${1:?用法: $0 <目录>}"
+readonly OUT="${2:-report.txt}"
+
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+cd "$tmp" || exit 1
+
+find "$BASE" -type f -name '*.log' | while IFS= read -r f; do
+    bn=$(basename "$f")
+    grep -c 'ERROR' "$f" > /dev/null 2>&1 || continue
+    cp "$f" "${bn}.bak" 2>/dev/null || true
+    sort -t' ' -k2 "$f" | awk '{print $1, $4, $5}' > "${bn}.parsed"
+done
+
+echo "=== 报告 ===" > "$OUT"
+for f in *.parsed; do
+    [[ -f "$f" ]] || continue
+    name="${f%.parsed}"
+    wc -l < "$f" >> "$OUT"
+done
+
+echo "报告已生成: $OUT"
+EOF
+<span class="prompt"></span>chmod +x /tmp/mystery-script.sh
+
+<span class="comment"># 试着回答：
+# 1. 第一遍：骨架——有哪些部分？
+# 2. 第二遍：主干——正常路径是什么？
+# 3. 第三遍：哪些写法需要查？管道子 Shell 在这里是否真的改变结果？
+# 4. 第四遍：有什么潜在问题？</span></code></pre>
+</div>
+
+<div class="quiz">
+<h3>快速自检</h3>
+
+<div class="question" id="q1">
+  <p><strong>Q1:</strong> 四遍法的"第一遍"最应该关注什么？</p>
+  <div class="options">
+    <span class="option" data-q="q1" data-a="a">每一行的语法细节，确保看懂了每个符号</span>
+    <span class="option" data-q="q1" data-a="b">脚本的整体骨架——严格模式、函数分区、main入口、配置常量</span>
+    <span class="option" data-q="q1" data-a="c">寻找 bug，标记所有可疑的写法</span>
+  </div>
+  <div class="feedback" id="q1-fb"></div>
+</div>
+
+<div class="question" id="q2">
+  <p><strong>Q2:</strong> 你在脚本里看到 <code>${VAR:-default}</code> 但忘了具体含义——最好的做法是？</p>
+  <div class="options">
+    <span class="option" data-q="q2" data-a="a">猜一下，根据上下文大概能推出意思</span>
+    <span class="option" data-q="q2" data-a="b">跳过它，反正不影响理解主流程</span>
+    <span class="option" data-q="q2" data-a="c">查速查参考或 Bash 手册，搞清楚再继续</span>
+  </div>
+  <div class="feedback" id="q2-fb"></div>
+</div>
+
+<div class="question" id="q3">
+  <p><strong>Q3:</strong> 想追踪脚本每一步实际执行了什么命令，最快的做法是什么？</p>
+  <div class="options">
+    <span class="option" data-q="q3" data-a="a">在每一行前面加 echo 打印行号</span>
+    <span class="option" data-q="q3" data-a="b">用 bash -x script.sh 运行</span>
+    <span class="option" data-q="q3" data-a="c">把脚本贴到 ChatGPT 让它解释</span>
+  </div>
+  <div class="feedback" id="q3-fb"></div>
+</div>
+
+<div class="question" id="q4">
+  <p><strong>Q4:</strong> 你怀疑某个函数有 bug，想单独测试它，怎么做最合适？</p>
+  <div class="options">
+    <span class="option" data-q="q4" data-a="a">复制函数代码到新文件，手动构造参数测试</span>
+    <span class="option" data-q="q4" data-a="b">确认入口有 BASH_SOURCE 保护后，在一次性子 Shell 中 source 并调用函数</span>
+    <span class="option" data-q="q4" data-a="c">在整个脚本后面加测试代码，运行脚本时会自动测试</span>
+  </div>
+  <div class="feedback" id="q4-fb"></div>
+</div>
+</div>
+
+<div class="session-footer">
+  <p>
+    📖 <strong>推荐阅读</strong>：<a href="https://www.gnu.org/software/bash/manual/" target="_blank">GNU Bash 官方手册</a>；<a href="https://www.shellcheck.net/" target="_blank">ShellCheck</a>（本仓库使用固定版本的本地命令）<br>
+    📋 <strong>速查参考</strong>：<a href="../reference/expansion-and-quoting.html">变量展开与引用速查表</a><br>
+    📝 <strong>上一课</strong>：<a href="0011-json-api-curl-jq.html">第 11 课 — Bash 中处理 JSON/API</a><br>
+    📝 <strong>下一课预告</strong>：第 13 课 — 日志分析脚本的逐步实现与审查<br>
+    ❓ <strong>有疑问？</strong>在对话中直接问我。如果你手头有看不太懂的脚本，贴过来我带你用四遍法分析。
+  </p>
+</div>
+
+<script>
+(function() {
+  const answers = {
+    q1: { correct: 'b', fb: {
+      b: '正确！第一遍的目的就是建立整体认知——严格模式、函数列表、配置常量、入口位置。你不应该看函数内部的实现代码，就像看地图时不应该先读每条小巷的名字。先找到主干道，再深入。',
+      a: '这是第三遍才做的事。第一遍看语法细节会迷失方向——你没看懂全局就在纠结 tree 命令的参数含义，本末倒置。',
+      c: '找 bug 是第四遍的事。在理解脚本正常做什么之前找 bug，你找到的"bug"很可能只是你没理解的设计意图。'
+    }},
+    q2: { correct: 'c', fb: {
+      c: '正确！${VAR:-default} 是参数展开的核心语法（第 4 课），它的语义非常精确——"VAR 未设置或为空时用 default"。猜可能猜反（以为是"替换掉"的意思），跳过可能错过重要的默认值逻辑。花 30 秒查一下速查参考，不打断节奏。',
+      a: '不推荐。参数展开语法有精确语义——${VAR:-default}、${VAR:=default}、${VAR:?error} 的差别很小但行为完全不同。猜错了会导致你理解错误的脚本逻辑。',
+      b: '不推荐。这种写法可能承载重要的逻辑——比如 ${VAR:?必须设置} 是"没设置就报错退出"。跳过它可能让你忽略了关键的防御逻辑。'
+    }},
+    q3: { correct: 'b', fb: {
+      b: '正确！在隔离且允许副作用的环境中，bash -x 能显示实际执行的展开结果。追踪可能泄露敏感值，日志必须受控。',
+      a: '可以，但工作量大且容易遗漏。无论哪种方式都不能在未隔离的生产环境随意执行。',
+      c: '静态解释可以辅助建立假设，但不能替代受控环境中的真实执行证据；也不要上传私有代码或凭证。'
+    }},
+    q4: { correct: 'b', fb: {
+      b: '正确！source 会执行文件中的顶层代码，因此必须先确认入口受 BASH_SOURCE 条件保护。一次性子 Shell 能减少变量、目录和选项对当前交互环境的污染；长期则应拆出可测试函数库。',
+      a: '可行但不够好。复制代码脱离了原来的上下文——函数里引用的全局变量（readonly 常量、其他函数）都需要手动重建，容易引入新问题。',
+      c: '可行但不灵活。每次改测试参数都要改代码，而且容易"测试代码一直留在脚本里"影响生产（虽然有 git 可以撤）。source + 手工调用更灵活。'
+    }}
+  };
+  document.querySelectorAll('.quiz .option').forEach(opt => {
+    opt.addEventListener('click', function() {
+      const qid = this.dataset.q, aid = this.dataset.a, fb = document.getElementById(qid+'-fb'), qa = answers[qid];
+      document.querySelectorAll('[data-q="'+qid+'"]').forEach(o => o.classList.remove('selected','correct','wrong'));
+      this.classList.add('selected');
+      this.classList.add(aid===qa.correct?'correct':'wrong');
+      if(aid!==qa.correct) document.querySelector('[data-q="'+qid+'"][data-a="'+qa.correct+'"]').classList.add('correct');
+      fb.className = 'feedback '+(aid===qa.correct?'correct':'wrong')+' show';
+      fb.textContent = qa.fb[aid];
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

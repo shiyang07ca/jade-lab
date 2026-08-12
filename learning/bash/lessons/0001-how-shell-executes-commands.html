@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 1 课：命令是如何被执行的</title>
+<meta name="course-audit" content="2026-08-12; GNU Bash 5.3.15">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="breadcrumb">
+  <a href="../MISSION.md">← 回到使命</a>
+</nav>
+
+<div class="lesson-meta">
+  <span class="number">第 1 课</span>
+  <span class="duration">⏱ 约 15 分钟</span>
+</div>
+
+<h1>命令是如何被执行的</h1>
+<p class="subtitle">Shell 的心智模型 — 你按下回车之后发生了什么</p>
+
+<div class="mission-tie">
+学习部署脚本时，你首先需要的不是记住一堆命令，而是理解「命令是怎么跑起来的」。这节课帮你建立一个能解释一切的心智模型。
+</div>
+
+<h2>1. Shell 是什么</h2>
+
+<p>
+打开终端，你看到的是这样的提示符：
+</p>
+
+<pre><code><span class="prompt"></span>cd /tmp
+<span class="prompt"></span>ls
+<span class="prompt"></span>echo hello</code></pre>
+
+<p>
+<b>Shell</b> 是命令解释器。交互式 Shell 通常反复完成下面三步；运行脚本的非交互式 Shell 则从文件或标准输入读取命令，不一定显示提示符：
+</p>
+
+<div class="diagram">
+<pre>
+┌─────────────────────────────────────┐
+│                                     │
+│  ① 打印提示符，等待你输入           │
+│         ↓                           │
+│  ② 解析你输入的命令                 │
+│         ↓                           │
+│  ③ 执行命令，等待它结束             │
+│         ↓                           │
+│     回到 ①                          │
+│                                     │
+└─────────────────────────────────────┘
+</pre>
+</div>
+
+<p>
+当你输入 <code>ls</code> 并按下回车时，Shell 先解析命令，再按 Bash 的查找规则判断它是函数、内置命令还是外部可执行文件。<code>ls</code> 通常是外部程序；<code>cd</code> 则是内置命令。
+</p>
+
+<div class="insight">
+Shell 的核心工作不是执行具体任务，而是<b>找到正确的程序，启动它，把输入传给它，收集它的输出和退出状态</b>。理解这四点，就等于理解了 Shell 的骨架。
+</div>
+
+<h2>2. Shell 怎么找到命令？</h2>
+
+<p>
+当命令名不是函数或内置命令，而且不含斜杠时，Bash 才使用名为 <strong><code>PATH</code></strong> 的环境变量查找外部程序。
+</p>
+
+<p>看看你当前的 <code>PATH</code>：</p>
+
+<pre><code><span class="prompt"></span>echo $PATH
+<span class="output">/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</span></code></pre>
+
+<p>
+<code>PATH</code> 是一串用冒号分隔的目录路径。当 Shell 看到 <code>ls</code> 时，它<strong>按顺序</strong>在这些目录里搜索：
+</p>
+
+<ol>
+  <li>先找 <code>/usr/local/bin/ls</code> — 存在吗？</li>
+  <li>再找 <code>/usr/bin/ls</code> — 找到了！启动它。</li>
+</ol>
+
+<p>用 Bash 自带的 <code>type -a</code> 或 <code>command -V</code> 查看完整的命令解析结果；外部 <code>which</code> 工具通常只查 PATH，可能看不到函数、别名或内置命令：</p>
+
+<pre><code><span class="prompt"></span>type -a ls
+<span class="output">ls is /bin/ls</span>
+<span class="prompt"></span>command -V cd
+<span class="output">cd is a shell builtin</span></code></pre>
+
+<div class="insight">
+<code>PATH</code> 是外部命令的搜索目录。当你运行 <code>./deploy.sh</code> 时，斜杠告诉 Shell 不要查 PATH，直接使用该路径。当前目录通常不在 PATH 中，所以本地脚本一般写作 <code>./script.sh</code>；如果脚本安装在 PATH 目录中，则可直接使用命令名。
+</div>
+
+<h2>3. 外部命令与 Shell 当前进程</h2>
+
+<p>
+在常见 Unix 实现中，Bash 启动需要等待的外部命令时，会创建子进程并在其中执行目标程序。下面的 fork + exec 是有用的简化模型，不是所有命令的固定步骤：
+</p>
+
+<div class="diagram">
+<pre>
+  Shell 进程 (PID 1234)
+       │
+       │ fork()  — 复制出一个一模一样的子进程
+       ↓
+  子 Shell (PID 5678)          ← 现在有两个 Shell 进程
+       │
+       │ exec("ls")  — 把子进程替换成 ls 程序
+       ↓
+  ls 进程 (PID 5678)           ← 不再是 Shell 了，变成了 ls
+       │
+       │ 执行完，退出
+       ↓
+  Shell 进程 (PID 1234)        ← 父 Shell 一直在等待
+</pre>
+</div>
+
+<p>
+关键点：<strong>外部程序通常在独立进程中运行；内置命令和函数可以直接在当前 Shell 中执行</strong>。<code>cd</code> 必须改变当前 Shell 的工作目录，因此是内置命令。管道、后台任务和子 Shell 还会引入其他进程规则，后续课程再展开。
+</p>
+
+<div class="exercise">
+<h3>动手试一下</h3>
+<p>在终端运行以下命令，观察进程 ID 的变化：</p>
+<pre><code><span class="prompt"></span>echo $$        # $$ 是当前 Shell 的进程 ID
+<span class="output">1234</span>
+<span class="prompt"></span>bash           # 启动一个子 Shell
+<span class="prompt"></span>echo $$        # 你会看到不同的 PID
+<span class="output">5678</span>
+<span class="prompt"></span>exit           # 退出子 Shell，回到父 Shell
+<span class="prompt"></span>echo $$        # 又变回来了
+<span class="output">1234</span></code></pre>
+</div>
+
+<h2>4. 退出码：成功的命令和失败的命令</h2>
+
+<p>
+每个命令结束时，都会返回一个数字——<strong>退出码（exit code）</strong>。Shell 把它存在特殊变量 <code>$?</code> 里。
+</p>
+
+<pre><code><span class="prompt"></span>ls /tmp
+<span class="output">...（正常输出）</span>
+<span class="prompt"></span>echo $?
+<span class="output">0</span>              ← 0 表示命令判定为真或成功
+
+<span class="prompt"></span>ls /nonexistent
+<span class="output">ls: /nonexistent: No such file or directory</span>
+<span class="prompt"></span>echo $?
+<span class="output">2</span>              ← 非 0 表示未成功，含义由命令定义</code></pre>
+
+<div class="insight">
+Bash 把 <b>0 视为成功或逻辑真，非 0 视为未成功或逻辑假</b>。具体数值由命令定义，例如 <code>grep</code> 返回 1 表示“没有匹配”，不一定是程序故障。<code>if</code>、<code>&amp;&amp;</code> 和 <code>||</code> 都依据这个状态决定后续动作。
+</div>
+
+<p>这两个操作符直接利用了退出码：</p>
+
+<pre><code><span class="prompt"></span>make &amp;&amp; ./deploy      # make 成功（退出码=0）才执行 deploy
+<span class="prompt"></span>make || echo "失败"    # make 失败（退出码≠0）才 echo</code></pre>
+
+<h2>5. 三条数据流：stdin, stdout, stderr</h2>
+
+<p>
+每个进程启动时，操作系统自动打开三条数据流：
+</p>
+
+<table style="width:100%; border-collapse:collapse; margin:1rem 0;">
+  <tr style="border-bottom:1px solid var(--border);">
+    <th style="text-align:left; padding:0.4rem 0;">名字</th>
+    <th style="text-align:right; padding:0.4rem 0;">文件描述符</th>
+    <th style="text-align:left; padding:0.4rem 0;">用途</th>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td style="padding:0.4rem 0;"><strong>stdin</strong></td>
+    <td style="text-align:right;">0</td>
+    <td style="padding:0.4rem 0;">标准输入 — 命令从这里读数据</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td style="padding:0.4rem 0;"><strong>stdout</strong></td>
+    <td style="text-align:right;">1</td>
+    <td style="padding:0.4rem 0;">标准输出 — 正常结果写到这里</td>
+  </tr>
+  <tr>
+    <td style="padding:0.4rem 0;"><strong>stderr</strong></td>
+    <td style="text-align:right;">2</td>
+    <td style="padding:0.4rem 0;">标准错误 — 错误信息写到这里</td>
+  </tr>
+</table>
+
+<p>
+默认情况下，stdin 连接到键盘，stdout 和 stderr 都显示在终端上。但你可以<strong>重定向</strong>它们（这也是下一课的主题）：
+</p>
+
+<pre><code><span class="prompt"></span>ls /tmp &gt; files.txt       # stdout → 文件
+<span class="prompt"></span>ls /nonexistent 2&gt; err.log # stderr → 文件
+<span class="prompt"></span>cat &lt; input.txt            # stdin ← 文件</code></pre>
+
+<div class="pitfall">
+很多初学者以为 <code>&gt;</code> 和 <code>&lt;</code> 是"指向数据的流向"。更好的理解是：<b>箭头指向数据要去的地方</b>。<code>ls &gt; file</code> 的意思是"ls 的输出 → 去 file"。
+</div>
+
+<h2>总结：你现在拥有的心智模型</h2>
+
+<p>每次你输入一条命令并按下回车时：</p>
+
+<ol>
+  <li>Shell <strong>解析</strong>你的输入，把空格分隔的部分拆成命令名和参数</li>
+  <li>Shell 按函数、内置命令和外部命令等规则<strong>解析命令名</strong>；需要查外部程序时才搜索 <strong><code>PATH</code></strong></li>
+  <li>内置命令可在当前 Shell 中执行；外部命令通常在子进程中加载并运行</li>
+  <li>程序运行，从 <strong>stdin</strong> (fd 0) 读数据，往 <strong>stdout</strong> (fd 1) 写结果，往 <strong>stderr</strong> (fd 2) 写错误</li>
+  <li>程序结束，返回一个 <strong>退出码</strong>（0=成功），Shell 把它存进 <code>$?</code></li>
+  <li>Shell 打印提示符，等待下一条命令</li>
+</ol>
+
+<div class="quiz">
+<h3>快速自检</h3>
+<p>考察你刚才学到的内容——请先自己思考，再点击选项查看答案。</p>
+
+<div class="question" id="q1">
+  <p><strong>Q1:</strong> <code>type -a python3</code> 输出 <code>python3 is /usr/bin/python3</code>。这意味着什么？</p>
+  <div class="options">
+    <span class="option" data-q="q1" data-a="a">python3 程序就安装在当前目录</span>
+    <span class="option" data-q="q1" data-a="b">Shell 在 PATH 的某个目录中找到了 python3</span>
+    <span class="option" data-q="q1" data-a="c">python3 是一个 Shell 内置命令</span>
+  </div>
+  <div class="feedback" id="q1-fb"></div>
+</div>
+
+<div class="question" id="q2">
+  <p><strong>Q2:</strong> <code>ls /tmp && echo "OK"</code> — 什么情况下 "OK" 不会被打印？</p>
+  <div class="options">
+    <span class="option" data-q="q2" data-a="a">/tmp 目录不存在</span>
+    <span class="option" data-q="q2" data-a="b">/tmp 中包含隐藏文件</span>
+    <span class="option" data-q="q2" data-a="c">/tmp 目录为空</span>
+  </div>
+  <div class="feedback" id="q2-fb"></div>
+</div>
+
+<div class="question" id="q3">
+  <p><strong>Q3:</strong> 为什么 <code>cd</code> 必须是 Shell 内置命令，不能是外部程序？</p>
+  <div class="options">
+    <span class="option" data-q="q3" data-a="a">因为 cd 是历史最悠久的 Unix 命令</span>
+    <span class="option" data-q="q3" data-a="b">因为外部程序无法改变父 Shell 的工作目录</span>
+    <span class="option" data-q="q3" data-a="c">因为 cd 不需要 PATH 搜索</span>
+  </div>
+  <div class="feedback" id="q3-fb"></div>
+</div>
+</div>
+
+<div class="session-footer">
+  <p>
+    📖 <strong>推荐阅读</strong>：<a href="https://linuxcommand.org/tlcl.php" target="_blank">The Linux Command Line</a> — 第 1 章（什么是 Shell）、第 7 章（重定向）<br>
+    📝 <strong>下一课预告</strong>：第 2 课 — 文件系统操作（真正操控文件和目录）<br>
+    ❓ <strong>有疑问？</strong>在对话中直接问我——我是你的老师，任何不清楚的地方都可以追问。
+  </p>
+</div>
+
+<script>
+(function() {
+  const answers = {
+    q1: { correct: 'b', fb: {
+      b: '正确！Bash 按自身的解析规则确认 python3 是 PATH 中的外部程序。',
+      a: '不对。输出的是绝对路径 /usr/bin/python3，不是当前目录。',
+      c: '不是。如果它是内置命令，type 会明确显示 shell builtin。'
+    }},
+    q2: { correct: 'a', fb: {
+      a: '正确！&& 只有在前一个命令成功（退出码=0）时才执行后一个。如果 /tmp 不存在，ls 会失败并返回非 0 退出码，echo 就不会执行。',
+      b: '不对。目录是否含隐藏文件不影响 ls 成功执行；默认不显示隐藏文件，但退出码仍为 0。',
+      c: '不对。/tmp 为空时 ls 会正常退出（退出码=0），只是不输出任何内容而已，echo 仍然会执行。'
+    }},
+    q3: { correct: 'b', fb: {
+      b: '正确！子进程只能改变自己的状态。如果 cd 是外部程序，它只能改变子进程的目录，父 Shell 不受影响——这毫无意义。',
+      a: '不对。历史久和"必须内置"没有逻辑关系。',
+      c: '不对。PATH 搜索和是否需要内置是两个独立的概念。'
+    }}
+  };
+
+  document.querySelectorAll('.quiz .option').forEach(opt => {
+    opt.addEventListener('click', function() {
+      const qid = this.dataset.q;
+      const aid = this.dataset.a;
+      const fb = document.getElementById(qid + '-fb');
+      const qa = answers[qid];
+
+      // Reset all options in this question
+      document.querySelectorAll('[data-q="' + qid + '"]').forEach(o => {
+        o.classList.remove('selected', 'correct', 'wrong');
+      });
+
+      this.classList.add('selected');
+
+      if (aid === qa.correct) {
+        this.classList.add('correct');
+        fb.className = 'feedback correct show';
+      } else {
+        this.classList.add('wrong');
+        // Highlight correct answer
+        document.querySelector('[data-q="' + qid + '"][data-a="' + qa.correct + '"]').classList.add('correct');
+        fb.className = 'feedback wrong show';
+      }
+      fb.textContent = qa.fb[aid];
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

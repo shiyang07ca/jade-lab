@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 3 课：管道与重定向</title>
+<meta name="course-audit" content="2026-08-12; GNU Bash 5.3.15">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="breadcrumb">
+  <a href="../MISSION.md">使命</a> → <a href="0002-file-system-operations.html">第 2 课</a> → 第 3 课
+</nav>
+
+<div class="lesson-meta">
+  <span class="number">第 3 课</span>
+  <span class="duration">⏱ 约 18 分钟</span>
+</div>
+
+<h1>管道与重定向</h1>
+<p class="subtitle">把简单的命令组合成强大的数据流水线</p>
+
+<div class="mission-tie">
+部署脚本里最常见的两样东西：<code>&gt; log 2&gt;&amp;1</code> 把输出存到日志文件，<code>grep ERROR | wc -l</code> 统计错误数量。这节课就是让你彻底搞懂这些写法。
+</div>
+
+<h2>1. 回顾：三条数据流</h2>
+
+<p>第 1 课我们学过——每个进程启动时自带三条流：</p>
+
+<div class="diagram">
+<pre>
+          ┌──────────┐
+  stdin ──►  进程    ├──► stdout  (fd 1)
+  (fd 0)   │          ├──► stderr  (fd 2)
+          └──────────┘
+
+默认：stdin ← 键盘，stdout → 屏幕，stderr → 屏幕
+</pre>
+</div>
+
+<p><strong>重定向</strong>就是改变这些箭头的指向：不连键盘/屏幕了，连文件或其他地方去。</p>
+
+<h2>2. 输出重定向：把结果存下来</h2>
+
+<h3>stdout → 文件</h3>
+
+<pre><code><span class="prompt"></span>echo "hello" &gt; greeting.txt    # stdout 写入文件（覆盖）
+<span class="prompt"></span>cat greeting.txt
+<span class="output">hello</span>
+
+<span class="prompt"></span>echo "world" &gt;&gt; greeting.txt   # stdout 追加到文件末尾
+<span class="prompt"></span>cat greeting.txt
+<span class="output">hello
+world</span></code></pre>
+
+<div class="insight">
+<b>记法</b>：<code>&gt;</code> 覆盖（想象一把刀切过去，旧内容没了），<code>&gt;&gt;</code> 追加。都是把 stdout 的输出流指向文件。部署脚本里 <code>&gt;&gt;</code> 更常见——你不会想覆盖掉之前的日志。
+</div>
+
+<h3>stderr → 文件</h3>
+
+<pre><code><span class="prompt"></span>ls /nonexistent 2&gt; error.log   # stderr (fd 2) 重定向到文件
+<span class="prompt"></span>cat error.log
+<span class="output">ls: /nonexistent: No such file or directory</span>
+
+# 同时重定向 stdout 和 stderr
+<span class="prompt"></span>ls /tmp /nonexistent &gt; out.txt 2&gt; err.txt</code></pre>
+
+<h3>把 stderr 合并到 stdout</h3>
+
+<pre><code><span class="prompt"></span>ls /tmp /nonexistent &gt; all.log 2&gt;&amp;1
+#                         │      ││
+#                         │      │└─ fd 1（stdout 的目标）
+#                         │      └── &amp; 表示"文件描述符"（不加 &amp; 会被当成文件名）
+#                         └──────── stderr (fd 2) → 指向 fd 1 当前的目标</code></pre>
+
+<div class="pitfall">
+<code>2&gt;&amp;1</code> 的<b>顺序很重要</b>！<code>2&gt;&amp;1 &gt; file</code> ≠ <code>&gt; file 2&gt;&amp;1</code>。前者把 stderr 指向"当时的 stdout"（还是屏幕），然后再把 stdout 指向文件——stderr 不会进文件。后者先把 stdout 指向文件，再把 stderr 指向 stdout——两者都进文件。<b>先重定向目标，再合并</b>。
+</div>
+
+<h2>3. /dev/null：比特黑洞</h2>
+
+<pre><code><span class="prompt"></span>ls /tmp &gt; /dev/null           # 输出扔进黑洞，不显示任何东西
+<span class="prompt"></span>ls /tmp &gt; /dev/null 2&gt;&amp;1     # stdout 和 stderr 都扔掉
+
+# 部署脚本里常见的安静模式
+<span class="prompt"></span>curl -s https://example.com &gt; /dev/null
+<span class="prompt"></span>grep -q "ERROR" /var/log/app.log   # -q = quiet，不输出匹配行</code></pre>
+
+<p><code>/dev/null</code> 是一个特殊文件——写进去的东西直接消失，读它永远返回 EOF。当你只关心命令的<strong>退出码</strong>而不关心输出时，把输出扔进去。</p>
+
+<h2>4. 输入重定向：让命令从文件读数据</h2>
+
+<pre><code><span class="prompt"></span>wc -l &lt; /etc/passwd            # wc -l 统计行数，stdin 从文件来
+<span class="output">45</span>
+
+# 等价于
+<span class="prompt"></span>wc -l /etc/passwd              # 大部分命令直接接受文件名参数
+<span class="output">45 /etc/passwd</span></code></pre>
+
+<p>输入重定向 <code>&lt;</code> 用得较少——大部分命令直接接受文件名。但它和管道配合时非常重要。</p>
+
+<h2>5. 管道：把命令串成链</h2>
+
+<p>这是 Unix 哲学里最重要的发明：</p>
+
+<pre><code>命令A | 命令B | 命令C
+   │      │      │
+   └──────┴──────┴── 命令A 的 stdout → 变成命令B 的 stdin → 变成命令C 的 stdin</code></pre>
+
+<p>直观的例子：</p>
+
+<pre><code><span class="prompt"></span>ls -la /usr/bin | less        # ls 的输出太长，用 less 分页看
+
+<span class="prompt"></span>ps aux | grep nginx           # 在所有进程中，筛选出包含 nginx 的行
+
+<span class="prompt"></span>cat /var/log/app.log | grep ERROR | wc -l
+#     │                    │              │
+#     输出日志内容         只保留含 ERROR 的行  统计行数
+# 最终输出：日志中 ERROR 出现的次数</span></code></pre>
+
+<div class="insight">
+管道是 Bash 区别于其他编程语言的核心特征。在 Python 里你要写嵌套函数调用或循环——<code>len([l for l in open('log') if 'ERROR' in l])</code>。在 Bash 里，<code>grep ERROR log | wc -l</code>——数据从左往右流过每个命令，每一步都做一件事。这就是 Unix 哲学：<b>每个工具做一件事，管道把它们组合起来</b>。
+</div>
+
+<h2>6. 管道 vs 重定向：别再搞混了</h2>
+
+<table style="width:100%; margin:1rem 0;">
+  <tr style="border-bottom:1px solid var(--border);">
+    <th style="text-align:left; padding:0.3rem 0;">符号</th>
+    <th style="text-align:left; padding:0.3rem 0;">连接的是什么</th>
+    <th style="text-align:left; padding:0.3rem 0;">一端</th>
+    <th style="text-align:left; padding:0.3rem 0;">另一端</th>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>|</code> 管道</td>
+    <td>命令 ↔ 命令</td>
+    <td>左边命令的 stdout</td>
+    <td>右边命令的 stdin</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>&gt;</code> 重定向</td>
+    <td>命令 → 文件</td>
+    <td>命令的 stdout</td>
+    <td>磁盘上的文件</td>
+  </tr>
+  <tr>
+    <td><code>&lt;</code> 重定向</td>
+    <td>文件 → 命令</td>
+    <td>磁盘上的文件</td>
+    <td>命令的 stdin</td>
+  </tr>
+</table>
+
+<div class="pitfall">
+一个常见误解是以为管道和重定向可以互换。不可以。<code>ls | file.txt</code> 是错的——右边必须是命令。同理，<code>ls &gt; grep foo</code> 也是错的——它把 ls 的输出写进了名叫 grep 的普通文件里。
+</div>
+
+<h2>7. tee：同时写入文件和管道</h2>
+
+<p>管道有个问题：数据一经过管道就"消失"了，只能往下游走。如果需要同时把它<strong>存到文件</strong>并且<strong>传给下一个命令</strong>，用 <code>tee</code>：</p>
+
+<pre><code><span class="prompt"></span>./deploy.sh 2&gt;&amp;1 | tee deploy.log
+# 部署脚本的所有输出：
+#   → 同时显示在屏幕上（通过 tee 的默认行为）
+#   → 同时存入 deploy.log
+# 你可以边看输出边保留完整日志！
+
+<span class="prompt"></span>grep ERROR app.log | tee errors.txt | wc -l
+# 筛选出的 ERROR 行：
+#   → 存入 errors.txt（方便之后查看）
+#   → 同时传给 wc -l 统计数量</span></code></pre>
+
+<div class="insight">
+部署脚本里的经典写法：<code>./deploy.sh 2&gt;&amp;1 | tee -a /var/log/deploy.log</code>。<code>-a</code> 是追加模式（和 <code>&gt;&gt;</code> 对应），这样每次部署的日志都追加到同一个文件而不是覆盖。
+</div>
+
+<h2>8. 实战组合：几个你马上能用的管道</h2>
+
+<pre><code># 看最占空间的 10 个文件
+<span class="prompt"></span>du -sh * | sort -rh | head -10
+
+# 统计每种文件扩展名的数量
+<span class="prompt"></span>find . -type f | sed 's/.*\.//' | sort | uniq -c | sort -rn
+
+# 查看 22 端口（SSH）有多少连接
+<span class="prompt"></span>netstat -an | grep ':22 ' | grep ESTABLISHED | wc -l
+
+# 统计访问日志里每个 IP 的请求数（top 10）
+<span class="prompt"></span>cat access.log | awk '{print $1}' | sort | uniq -c | sort -rn | head -10</span></code></pre>
+
+<div class="exercise">
+<h3>动手练习（5 分钟）</h3>
+<p>在终端完成以下任务，体会管道的力量：</p>
+<pre><code><span class="prompt"></span># 1. 创建一些测试数据
+<span class="prompt"></span>cat &gt; /tmp/test.log &lt;&lt; 'EOF'
+INFO  Server started
+ERROR Connection refused
+INFO  Request handled
+ERROR Timeout
+WARN  Retry attempt 1
+INFO  Shutdown complete
+EOF
+
+<span class="prompt"></span># 2. 统计 ERROR 出现次数
+<span class="prompt"></span>grep ERROR /tmp/test.log | wc -l
+
+<span class="prompt"></span># 3. 把所有错误单独保存，同时在屏幕上显示
+<span class="prompt"></span>grep ERROR /tmp/test.log | tee /tmp/errors.txt
+
+<span class="prompt"></span># 4. 模拟"部署脚本"：把输出同时显示和存档
+<span class="prompt"></span>echo "Deploying..." &amp;&amp; echo "Done" | tee -a /tmp/deploy.log
+
+<span class="prompt"></span># 5. 验证结果
+<span class="prompt"></span>cat /tmp/deploy.log
+<span class="prompt"></span>cat /tmp/errors.txt</span></code></pre>
+</div>
+
+<h2>总结</h2>
+
+<div class="diagram">
+<pre>
+           ┌─────────────────────────────────────────┐
+           │      管道与重定向速查                     │
+           │                                         │
+           │  cmd &gt; file       stdout → 文件（覆盖）  │
+           │  cmd &gt;&gt; file      stdout → 文件（追加）  │
+           │  cmd 2&gt; file      stderr → 文件          │
+           │  cmd &gt; file 2&gt;&amp;1  合并 stdout+stderr     │
+           │  cmd &lt; file       stdin ← 文件           │
+           │  cmd &gt; /dev/null  扔掉输出               │
+           │  cmdA | cmdB      A的stdout → B的stdin   │
+           │  cmd | tee file   输出到文件 + 继续传递    │
+           └─────────────────────────────────────────┘
+</pre>
+</div>
+
+<div class="quiz">
+<h3>快速自检</h3>
+
+<div class="question" id="q1">
+  <p><strong>Q1:</strong> <code>./deploy.sh &gt; log.txt 2&gt;&amp;1</code> 和 <code>./deploy.sh 2&gt;&amp;1 &gt; log.txt</code> 有什么区别？</p>
+  <div class="options">
+    <span class="option" data-q="q1" data-a="a">完全一样，没有区别</span>
+    <span class="option" data-q="q1" data-a="b">前者 stdout 和 stderr 都进文件，后者只有 stdout 进文件</span>
+    <span class="option" data-q="q1" data-a="c">前者只有 stdout 进文件，后者两者都进文件</span>
+  </div>
+  <div class="feedback" id="q1-fb"></div>
+</div>
+
+<div class="question" id="q2">
+  <p><strong>Q2:</strong> 你想统计一个目录下有多少个文件（不含子目录），下列哪条命令可行？</p>
+  <div class="options">
+    <span class="option" data-q="q2" data-a="a">ls | wc</span>
+    <span class="option" data-q="q2" data-a="b">ls | grep -c</span>
+    <span class="option" data-q="q2" data-a="c">ls | wc -l</span>
+  </div>
+  <div class="feedback" id="q2-fb"></div>
+</div>
+
+<div class="question" id="q3">
+  <p><strong>Q3:</strong> 你只想看某个命令有没有成功（不关心输出），把 stdout 和 stderr 都静默掉。怎么写？</p>
+  <div class="options">
+    <span class="option" data-q="q3" data-a="a">cmd > /dev/null 2>&1</span>
+    <span class="option" data-q="q3" data-a="b">cmd > /dev/null</span>
+    <span class="option" data-q="q3" data-a="c">cmd | /dev/null</span>
+  </div>
+  <div class="feedback" id="q3-fb"></div>
+</div>
+</div>
+
+<div class="session-footer">
+  <p>
+    📖 <strong>推荐阅读</strong>：<a href="https://linuxcommand.org/tlcl.php" target="_blank">The Linux Command Line</a> — 第 6-8 章（重定向）、第 10 章（管道命令）<br>
+    📝 <strong>上一课</strong>：<a href="0002-file-system-operations.html">第 2 课 — 文件系统操作</a><br>
+    📝 <strong>下一课预告</strong>：第 4 课 — 变量、引用与展开（脚本里为什么到处都是 `${VAR}` 和双引号）<br>
+    ❓ <strong>有疑问？</strong>在对话中直接问我。
+  </p>
+</div>
+
+<script>
+(function() {
+  const answers = {
+    q1: { correct: 'b', fb: {
+      b: '正确！前者：先把 stdout 指向 log.txt，再把 stderr 指向 stdout 当前的目标（=log.txt），所以两者都进文件。后者：先把 stderr 指向 stdout 当前的目标（=屏幕），再把 stdout 指向 log.txt——stderr 仍然指向屏幕。记住：先重定向目标，再合并。',
+      a: '不对。顺序不同，结果完全不同。',
+      c: '相反了。'
+    }},
+    q2: { correct: 'c', fb: {
+      c: '正确！ls 每行列出一个文件名，wc -l 统计行数，结果就是文件数。',
+      a: '不对。wc 不带参数显示行数+词数+字节数，不是你想要的结果。',
+      b: '不对。grep 需要搜索模式作为参数，直接 grep -c 会报错。'
+    }},
+    q3: { correct: 'a', fb: {
+      a: '正确！stdout → /dev/null，stderr → 指向 stdout 当前目标（也到 /dev/null），两者都静默。你仍然可以通过 echo $? 检查退出码。',
+      b: '不够。这只静默了 stdout，stderr 的错误信息仍然会显示在屏幕上。',
+      c: '不对。/dev/null 不是一个命令，不能放在管道右边。管道右边必须是可执行的命令。'
+    }}
+  };
+  document.querySelectorAll('.quiz .option').forEach(opt => {
+    opt.addEventListener('click', function() {
+      const qid = this.dataset.q, aid = this.dataset.a, fb = document.getElementById(qid+'-fb'), qa = answers[qid];
+      document.querySelectorAll('[data-q="'+qid+'"]').forEach(o => o.classList.remove('selected','correct','wrong'));
+      this.classList.add('selected');
+      this.classList.add(aid===qa.correct?'correct':'wrong');
+      if(aid!==qa.correct) document.querySelector('[data-q="'+qid+'"][data-a="'+qa.correct+'"]').classList.add('correct');
+      fb.className = 'feedback '+(aid===qa.correct?'correct':'wrong')+' show';
+      fb.textContent = qa.fb[aid];
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

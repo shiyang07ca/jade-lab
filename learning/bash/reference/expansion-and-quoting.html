@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>变量展开与引用 — 速查参考</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  /* reference-specific tweaks */
+  body { font-size: 17px; }
+  h1 { margin-top: 1rem; }
+  table { width: 100%; border-collapse: collapse; margin: 0.8rem 0; }
+  th, td { text-align: left; padding: 0.35rem 0.5rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-weight: 600; background: var(--code-bg); }
+  td:first-child, th:first-child { white-space: nowrap; }
+  .section { margin: 2rem 0 1rem; padding-top: 0.5rem; border-top: 2px solid var(--accent); }
+  .section h2 { margin-top: 0; }
+  .tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.1em 0.4em;
+    border-radius: 3px;
+    margin-left: 0.3em;
+    vertical-align: middle;
+  }
+  .tag-essential { background: var(--error-bg); color: var(--error); }
+  .tag-common { background: var(--highlight); color: #856404; }
+  .tag-advanced { background: #e2e3e5; color: #383d41; }
+</style>
+</head>
+<body>
+
+<nav class="breadcrumb">
+  <a href="../MISSION.md">使命</a> → <a href="../lessons/0004-variables-quoting-expansion.html">第 4 课</a> → 速查参考
+</nav>
+
+<h1>变量展开与引用速查</h1>
+<p class="subtitle">可打印的快速参考 · <a href="../lessons/0004-variables-quoting-expansion.html">← 返回第 4 课</a></p>
+
+<div class="section">
+<h2>变量赋值</h2>
+<table>
+  <tr><th>写法</th><th>说明</th><th></th></tr>
+  <tr>
+    <td><code>VAR=value</code></td>
+    <td>基本赋值，等号两边<strong>不能有空格</strong></td>
+    <td><span class="tag tag-essential">必须记住</span></td>
+  </tr>
+  <tr>
+    <td><code>VAR="value with spaces"</code></td>
+    <td>含空格的值必须加引号</td>
+    <td><span class="tag tag-essential">必须记住</span></td>
+  </tr>
+  <tr>
+    <td><code>VAR='literal $HOME'</code></td>
+    <td>单引号不展开变量，值是字面量</td>
+    <td><span class="tag tag-common">常用</span></td>
+  </tr>
+  <tr>
+    <td><code>VAR=$(command)</code></td>
+    <td>命令替换——把命令的 stdout 赋给变量</td>
+    <td><span class="tag tag-essential">必须记住</span></td>
+  </tr>
+  <tr>
+    <td><code>export VAR=value</code></td>
+    <td>导出为环境变量，子进程可见</td>
+    <td><span class="tag tag-common">常用</span></td>
+  </tr>
+  <tr>
+    <td><code>local VAR=value</code></td>
+    <td>函数内局部变量（只能在函数内使用）</td>
+    <td><span class="tag tag-common">常用</span></td>
+  </tr>
+  <tr>
+    <td><code>readonly VAR=value</code></td>
+    <td>只读变量，不可修改</td>
+    <td><span class="tag tag-advanced">进阶</span></td>
+  </tr>
+</table>
+</div>
+
+<div class="section">
+<h2>引用规则对照</h2>
+<table>
+  <tr><th>写法</th><th>变量展开</th><th>命令替换</th><th>单词分割</th><th>通配展开</th><th>典型用途</th></tr>
+  <tr>
+    <td><code>'...'</code> 单引号</td>
+    <td>❌</td><td>❌</td><td>❌</td><td>❌</td>
+    <td>需要<strong>绝对字面量</strong>时——文本里恰巧有 <code>$</code>、<code>`</code>、<code>\</code> 等特殊字符</td>
+  </tr>
+  <tr>
+    <td><code>"..."</code> 双引号</td>
+    <td>✅</td><td>✅</td><td>❌</td><td>❌</td>
+    <td><strong>默认选择</strong>——展开变量但不破坏结构</td>
+  </tr>
+  <tr>
+    <td>无引号</td>
+    <td>✅</td><td>✅</td><td>✅</td><td>✅</td>
+    <td><strong>极少使用</strong>——只有明确需要分割或通配时才不加引号</td>
+  </tr>
+</table>
+
+<div class="insight">
+<strong>黄金法则：变量引用一律加双引号。写 <code>"$VAR"</code>，永远不写裸的 <code>$VAR</code>。</strong>
+</div>
+</div>
+
+<div class="section">
+<h2>基本展开语法</h2>
+<table>
+  <tr><th>语法</th><th>含义</th><th>示例（VAR=hello）</th></tr>
+  <tr>
+    <td><code>$VAR</code></td>
+    <td>读取变量值</td>
+    <td><code>echo $VAR</code> → hello</td>
+  </tr>
+  <tr>
+    <td><code>${VAR}</code></td>
+    <td>读取变量值（大括号定界）</td>
+    <td><code>echo ${VAR}_world</code> → hello_world</td>
+  </tr>
+  <tr>
+    <td><code>${#VAR}</code></td>
+    <td>变量值的长度（字符数）</td>
+    <td><code>echo ${#VAR}</code> → 5</td>
+  </tr>
+</table>
+</div>
+
+<div class="section">
+<h2>参数展开：默认值 / 条件</h2>
+<table>
+  <tr><th>语法</th><th>VAR 已设置且非空时</th><th>VAR 未设置或为空时</th><th>会修改 VAR 吗？</th></tr>
+  <tr>
+    <td><code>${VAR:-word}</code></td>
+    <td>返回 VAR 的值</td>
+    <td>返回 word</td>
+    <td>不修改</td>
+  </tr>
+  <tr>
+    <td><code>${VAR:=word}</code></td>
+    <td>返回 VAR 的值</td>
+    <td>把 VAR 设为 word，再返回</td>
+    <td><strong>会修改</strong></td>
+  </tr>
+  <tr>
+    <td><code>${VAR:?message}</code></td>
+    <td>返回 VAR 的值</td>
+    <td>打印 message 到 stderr，退出脚本</td>
+    <td>不修改，但退出</td>
+  </tr>
+  <tr>
+    <td><code>${VAR:+word}</code></td>
+    <td>返回 word（不是 VAR！）</td>
+    <td>返回空</td>
+    <td>不修改</td>
+  </tr>
+</table>
+
+<p>实际用法：</p>
+<pre><code>DEPLOY_ENV="${1:-production}"     # 第一个参数没给就用 production
+BACKUP_DIR="${BACKUP_DIR:=/tmp}"  # 没设置就用 /tmp，并赋值
+: "${API_KEY:?必须设置 API_KEY}"   # 没设置就报错退出（: 是 no-op 命令）</code></pre>
+</div>
+
+<div class="section">
+<h2>参数展开：字符串操作</h2>
+<table>
+  <tr><th>语法</th><th>含义</th><th>示例（FILE=/opt/app/config.yml）</th></tr>
+  <tr>
+    <td><code>${VAR#pattern}</code></td>
+    <td>从<strong>开头</strong>去掉<strong>最短</strong>匹配</td>
+    <td><code>${FILE#*/}</code> → opt/app/config.yml</td>
+  </tr>
+  <tr>
+    <td><code>${VAR##pattern}</code></td>
+    <td>从<strong>开头</strong>去掉<strong>最长</strong>匹配</td>
+    <td><code>${FILE##*/}</code> → config.yml</td>
+  </tr>
+  <tr>
+    <td><code>${VAR%pattern}</code></td>
+    <td>从<strong>末尾</strong>去掉<strong>最短</strong>匹配</td>
+    <td><code>${FILE%.*}</code> → /opt/app/config</td>
+  </tr>
+  <tr>
+    <td><code>${VAR%%pattern}</code></td>
+    <td>从<strong>末尾</strong>去掉<strong>最长</strong>匹配</td>
+    <td><code>${FILE%%.*}</code> → /opt/app/config（同上，因为只有一个点）</td>
+  </tr>
+  <tr>
+    <td><code>${VAR:offset}</code></td>
+    <td>从 offset 开始截取子串</td>
+    <td><code>${FILE:5}</code> → app/config.yml</td>
+  </tr>
+  <tr>
+    <td><code>${VAR:offset:length}</code></td>
+    <td>从 offset 截取指定长度</td>
+    <td><code>${FILE:0:4}</code> → /opt</td>
+  </tr>
+  <tr>
+    <td><code>${VAR/old/new}</code></td>
+    <td>替换<strong>第一个</strong>匹配</td>
+    <td><code>${FILE/config/conf}</code> → /opt/app/conf.yml</td>
+  </tr>
+  <tr>
+    <td><code>${VAR//old/new}</code></td>
+    <td>替换<strong>所有</strong>匹配</td>
+    <td><code>${VAR//\//_}</code> → _opt_app_config.yml</td>
+  </tr>
+  <tr>
+    <td><code>${VAR/#old/new}</code></td>
+    <td>只在<strong>开头</strong>匹配时替换</td>
+    <td><code>${FILE/#\/opt/\/usr}</code> → /usr/app/config.yml</td>
+  </tr>
+  <tr>
+    <td><code>${VAR/%old/new}</code></td>
+    <td>只在<strong>结尾</strong>匹配时替换</td>
+    <td><code>${FILE/%yml/yaml}</code> → /opt/app/config.yaml</td>
+  </tr>
+</table>
+
+<div class="insight">
+<b>记忆口诀</b>：<code>#</code> 在左边（从开头删）、<code>%</code> 在右边（从末尾删）；单个 <code>#</code>/<code>%</code> 是最短匹配（lazy）、双个是最长匹配（greedy）。<code>/</code> 是替换，和 sed 类似——一个斜杠替换首个，两个替换全部。
+</div>
+</div>
+
+<div class="section">
+<h2>特殊变量速查</h2>
+<table>
+  <tr><th>变量</th><th>含义</th><th>常见用法</th></tr>
+  <tr>
+    <td><code>$?</code></td>
+    <td>上一条命令的退出码（0=成功）</td>
+    <td><code>if [ $? -ne 0 ]; then exit 1; fi</code></td>
+  </tr>
+  <tr>
+    <td><code>$$</code></td>
+    <td>当前 Shell 的进程 ID</td>
+    <td><code>echo $$ &gt; /var/run/app.pid</code></td>
+  </tr>
+  <tr>
+    <td><code>$!</code></td>
+    <td>最后一个后台进程的 PID</td>
+    <td><code>myapp &amp; PID=$!</code></td>
+  </tr>
+  <tr>
+    <td><code>$0</code></td>
+    <td>脚本或 Shell 自身的名称</td>
+    <td><code>echo "Usage: $0 &lt;file&gt;"</code></td>
+  </tr>
+  <tr>
+    <td><code>$1</code> ~ <code>$9</code></td>
+    <td>第 1~9 个位置参数</td>
+    <td><code>TARGET="$1"</code></td>
+  </tr>
+  <tr>
+    <td><code>${10}</code></td>
+    <td>第 10+ 个位置参数（必须花括号）</td>
+    <td><code>TENTH="${10}"</code></td>
+  </tr>
+  <tr>
+    <td><code>$#</code></td>
+    <td>位置参数个数</td>
+    <td><code>[ $# -eq 0 ] &amp;&amp; { echo "需要参数"; exit 1; }</code></td>
+  </tr>
+  <tr>
+    <td><code>$@</code></td>
+    <td>所有位置参数（每个独立）</td>
+    <td><code>for arg in "$@"; do ...; done</code></td>
+  </tr>
+  <tr>
+    <td><code>$*</code></td>
+    <td>所有位置参数（合并为一个）</td>
+    <td>几乎不用，永远用 <code>"$@"</code></td>
+  </tr>
+  <tr>
+    <td><code>$-</code></td>
+    <td>当前 Shell 选项标志</td>
+    <td><code>echo $-</code> → himBHs（调试用）</td>
+  </tr>
+  <tr>
+    <td><code>$_</code></td>
+    <td>上一条命令的最后一个参数</td>
+    <td><code>mkdir /long/path &amp;&amp; cd $_</code></td>
+  </tr>
+</table>
+</div>
+
+<div class="section">
+<h2>常见错误与修复</h2>
+<table>
+  <tr><th style="width:45%;">错误写法 ❌</th><th style="width:10%;">问题</th><th>正确写法 ✅</th></tr>
+  <tr>
+    <td><code>VAR = value</code></td>
+    <td>等号有空格</td>
+    <td><code>VAR=value</code></td>
+  </tr>
+  <tr>
+    <td><code>echo $FILE</code></td>
+    <td>未加引号，单词分割</td>
+    <td><code>echo "$FILE"</code></td>
+  </tr>
+  <tr>
+    <td><code>MSG='Hello $USER'</code></td>
+    <td>单引号不展开变量</td>
+    <td><code>MSG="Hello $USER"</code></td>
+  </tr>
+  <tr>
+    <td><code>if [ $? == 0 ]</code></td>
+    <td>含义反了（0=成功）</td>
+    <td><code>if [ $? -eq 0 ]</code></td>
+  </tr>
+  <tr>
+    <td><code>RESULT=`date`</code></td>
+    <td>旧式反引号语法</td>
+    <td><code>RESULT=$(date)</code></td>
+  </tr>
+  <tr>
+    <td><code>APP_HOME_logs=$APP_HOME/logs</code></td>
+    <td>Bash 把 HOME_logs 当变量名</td>
+    <td><code>APP_HOME_logs=${APP_HOME}/logs</code></td>
+  </tr>
+  <tr>
+    <td><code>for f in $*</code></td>
+    <td>参数含空格会分裂</td>
+    <td><code>for f in "$@"</code></td>
+  </tr>
+  <tr>
+    <td><code>echo ${11}</code></td>
+    <td>$11 被解析为 ${1}1</td>
+    <td><code>echo "${11}"</code>（第 11 个参数必须花括号）</td>
+  </tr>
+</table>
+</div>
+
+<div class="section">
+<h2>扩展阅读</h2>
+<ul style="margin:1rem 0; padding-left:1.5rem;">
+  <li><a href="https://mywiki.wooledge.org/BashGuide/Parameters">BashGuide: Parameters</a> — 参数展开的权威指南</li>
+  <li><a href="https://www.gnu.org/software/bash/manual/bash.html#Shell-Parameter-Expansion">Bash Manual: Shell Parameter Expansion</a> — 所有参数展开语法的完整参考</li>
+  <li><a href="https://mywiki.wooledge.org/Quotes">BashGuide: Quotes</a> — 引用机制的深入解释</li>
+  <li><a href="https://www.shellcheck.net/">ShellCheck</a> — 自动检测脚本中的引用错误（SC2086 是最常见的警告）</li>
+</ul>
+</div>
+
+</body>
+</html>

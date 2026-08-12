@@ -1,0 +1,244 @@
+{
+  "deck": "Mnemosyne",
+  "cards": [
+    {
+      "id": "bash-2026-08-11-045",
+      "type": "basic",
+      "front": "部署脚本把三台主机的健康检查并行放到后台，并需要汇总每台结果。为什么不能只用 `wait \"$p1\" \"$p2\" \"$p3\"` 判断哪一台失败？",
+      "back": "`wait id...` 会等待列出的任务，但最终只返回最后一个 `id` 的退出状态；前面任务的失败可能被覆盖。每次执行 `cmd &` 后应立刻保存 `$!`，再逐个 `wait \"$pid\"` 并记录该任务的状态。",
+      "extra": "在 `set -e` 脚本中可写 `if wait \"$pid\"; then rc=0; else rc=$?; fi`，既避免意外退出，也能把状态与任务名称对应起来。",
+      "source": "lesson:0010-process-management §2；GNU Bash Reference Manual: Special Parameters、Job Control Builtins (`wait`)",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_11",
+        "bash",
+        "process",
+        "wait",
+        "exit-code"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "并行部署或健康检查必须知道具体失败项；误把最后一个任务的状态当成整体状态会产生静默漏报。"
+    },
+    {
+      "id": "bash-2026-08-11-046",
+      "type": "basic",
+      "front": "脚本想统计命令输出的行数，并在循环后使用 `count`。为什么 `count=0; printf '%s\\n' a b | while read -r _; do count=$((count + 1)); done; echo \"$count\"` 通常打印 `0`，应如何改写？",
+      "back": "Bash 通常让管道的每个阶段在各自的子 shell 中运行，循环修改的是子 shell 的 `count`。让循环在当前 shell 中读取进程替换即可：`while IFS= read -r _; do count=$((count + 1)); done < <(printf '%s\\n' a b)`。",
+      "extra": "启用 `lastpipe` 且关闭 job control 时，Bash 可以让管道最后一段在当前 shell 运行；脚本不应默认依赖这个非默认设置。",
+      "source": "lesson:0010-process-management §3；GNU Bash Reference Manual: Pipelines、The Shopt Builtin (`lastpipe`)",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_11",
+        "bash",
+        "process",
+        "pipeline",
+        "subshell"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "管道子 shell 会让循环中的计数、数组追加和状态标记在循环结束后消失，是数据处理脚本中的高频隐蔽错误。"
+    },
+    {
+      "id": "bash-2026-08-11-047",
+      "type": "basic",
+      "front": "部署函数需要进入 `$release_dir` 运行构建，但不能改变调用者的当前目录。为什么 `(cd \"$release_dir\" && build)` 比 `{ cd \"$release_dir\" && build; }` 更符合目标？",
+      "back": "圆括号组在子 shell 中执行，`cd` 和其他 shell 状态修改在组结束后不会影响调用者；花括号组在当前 shell 中执行，目录变化会保留下来。",
+      "extra": "使用 `cd ... && build` 很重要：如果进入目录失败，就不能在错误目录中继续构建。圆括号组的退出状态是组内最后执行命令的状态。",
+      "source": "lesson:0010-process-management §3；GNU Bash Reference Manual: Grouping Commands",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_11",
+        "bash",
+        "process",
+        "subshell",
+        "working-directory"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "临时切换目录是构建和部署函数的常见需求；理解两种分组的状态边界可避免污染调用者环境。"
+    },
+    {
+      "id": "bash-2026-08-11-048",
+      "type": "basic",
+      "front": "停止后台服务时，为什么通常应先发送 `SIGTERM`、等待限定时间，仍未退出才发送 `SIGKILL`？",
+      "back": "`SIGTERM` 可被程序捕获和处理，使其有机会停止接收请求、刷盘并清理资源；`SIGKILL` 不能被捕获、阻塞或忽略，会立即终止进程，所以只适合作为超时后的最后手段。",
+      "extra": "对脚本直接创建的子进程，发送信号后还应 `wait \"$pid\"` 回收并取得最终状态。优先使用信号名而不是数字，可读性和可移植性更好。",
+      "source": "lesson:0010-process-management §4–§5；GNU C Library Manual: Termination Signals",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_11",
+        "bash",
+        "process",
+        "signal",
+        "shutdown"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "终止策略直接影响数据完整性和服务恢复；需要理解优雅退出与强制终止的不可替代差异。"
+    },
+    {
+      "id": "bash-2026-08-11-049",
+      "type": "basic",
+      "front": "PID 文件存在且 `kill -0 \"$pid\"` 成功，为什么仍不能证明该 PID 就是目标服务？",
+      "back": "`kill -0` 不发送信号，只检查该 PID 是否存在且当前用户是否有权限；PID 文件可能陈旧，而操作系统会复用 PID，因此它可能指向另一个进程。",
+      "extra": "优先交给服务管理器跟踪进程身份。Linux 上检查可执行文件、启动时间等只能降低误判，检查与发送信号之间仍有竞态；使用 pidfd 的工具才能避免 PID 复用竞态。",
+      "source": "lesson:0010-process-management §7；Linux man-pages: kill(2)；Linux kernel procfs documentation",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_11",
+        "bash",
+        "process",
+        "pid-file",
+        "race-condition"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "依据陈旧 PID 文件终止进程可能误杀无关服务，失败代价高；这是自制守护脚本必须理解的身份问题。"
+    },
+    {
+      "id": "bash-2026-08-11-050",
+      "type": "basic",
+      "front": "部署脚本从 Release API 的 `response.json`（内容为 `{\"version\":\"v1.2.3\"}`）提取版本号，用于比较和拼接发布路径。为什么 `version=$(jq '.version' response.json)` 不合适？",
+      "back": "默认输出仍是 JSON，字符串包含双引号；变量得到的是 `\"v1.2.3\"`。使用 `jq -r '.version' response.json` 输出供文本工具和 Bash 使用的原始字符串 `v1.2.3`。",
+      "extra": "`-r` 只改变字符串的输出格式，不验证字段是否存在或类型是否正确。需要验证时可用 `jq -er '.version | strings' response.json`。",
+      "source": "lesson:0011-json-api-curl-jq §2；jq Manual: `--raw-output`、`--exit-status`",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_11",
+        "bash",
+        "json",
+        "jq",
+        "raw-output"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "JSON 字符串与 shell 文本的边界很容易产生肉眼不明显的引号错误，直接影响版本比较、URL 和文件路径。"
+    },
+    {
+      "id": "bash-2026-08-11-051",
+      "type": "basic",
+      "front": "部署脚本要把可能含双引号、反斜杠或换行的 Bash 变量 `$msg` 放进 webhook 请求体的 `text` 字段。应如何安全构造 JSON？",
+      "back": "shell 字符串拼接不会按 JSON 规则转义数据，可能生成无效 JSON 或改变字段结构。应写 `payload=$(jq -n --arg text \"$msg\" '{text: $text}')`，让 jq 把变量作为字符串并正确编码。",
+      "extra": "jq 程序使用单引号，避免 shell 展开其中的 `$text`。需要传入数字、布尔值或对象时才使用 `--argjson`，且传入内容必须本身是合法 JSON。",
+      "source": "lesson:0011-json-api-curl-jq §3；jq Manual: `--null-input`、`--arg`、`--argjson`",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_11",
+        "bash",
+        "json",
+        "jq",
+        "escaping"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "手工拼 JSON 会在真实通知内容出现特殊字符时失效；让 JSON 工具负责编码是稳定且可迁移的边界处理原则。"
+    },
+    {
+      "id": "bash-2026-08-11-052",
+      "type": "basic",
+      "front": "健康检查 API 的 `response.json` 含 `.ready` 字段，脚本用 `jq -e '.ready' response.json` 决定是否进入成功分支。退出状态 `0`、`1`、`4` 分别表示什么？",
+      "back": "最后一个输出值既不是 `false` 也不是 `null` 时返回 `0`；最后一个输出值是 `false` 或 `null` 时返回 `1`；没有产生有效结果时返回 `4`。",
+      "extra": "jq 中只有 `false` 和 `null` 为假，`0`、空字符串、空数组和空对象都为真。不要把所有非 0 都当成业务 false；应保留 stderr，并区分无结果、解析或程序错误。",
+      "source": "lesson:0011-json-api-curl-jq §2；jq Manual: `--exit-status`",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_11",
+        "bash",
+        "json",
+        "jq",
+        "exit-code"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "教材对 `jq -e` 的无结果状态有简化；准确区分状态能避免把数据缺失或解析失败误判为正常的业务假值。"
+    },
+    {
+      "id": "bash-2026-08-11-054",
+      "type": "basic",
+      "front": "接手一个由许多函数组成的部署脚本时，为什么应先找 `main \"$@\"` 或其他顶层入口，再深入每个函数的实现？",
+      "back": "函数定义只注册函数体，不会执行其中命令；入口及顶层命令才决定实际调用顺序和可达代码。从入口追踪调用，可先确认正常路径、分支、外部副作用和失败处理。",
+      "extra": "先记录脚本解释器、严格模式、输入来源和顶层命令；再沿关心的调用路径查命令参数，能避免在未调用的辅助函数上过早消耗时间。",
+      "source": "lesson:0012-reading-and-debugging-scripts §2–§3；GNU Bash Reference Manual: Shell Functions",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_11",
+        "bash",
+        "reading",
+        "control-flow"
+      ],
+      "priority": 2,
+      "status": "approved",
+      "selection_reason": "陌生脚本阅读的关键产出是实际执行路径和副作用，而不是记住文件排版；这一方法能直接提高审查效率。"
+    },
+    {
+      "id": "bash-2026-08-11-055",
+      "type": "basic",
+      "front": "脚本末尾无条件执行 `main \"$@\"` 时，怎样改造入口，才能在 `source deploy.sh` 测试函数时不执行 `main`？",
+      "back": "`source` 会在当前 shell 中执行整个文件，因此加载函数后还会立即执行 `main`。应把入口放进守卫：`if [[ ${BASH_SOURCE[0]} == \"$0\" ]]; then main \"$@\"; fi`。",
+      "extra": "直接执行脚本时，`${BASH_SOURCE[0]}` 与 `$0` 指向同一脚本；被 source 时，前者仍是该文件，后者是调用者。这个守卫是 Bash 写法。",
+      "source": "lesson:0012-reading-and-debugging-scripts §5；GNU Bash Reference Manual: Bourne Shell Builtins (`source`)、Bash Variables (`BASH_SOURCE`)",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_11",
+        "bash",
+        "testing",
+        "source",
+        "entry-point"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "教材建议 source 后手工调用函数，但示例脚本会无条件执行入口；入口守卫是实现可测试脚本的必要边界。"
+    },
+    {
+      "id": "bash-2026-08-11-056",
+      "type": "basic",
+      "front": "在 Bash 数据库迁移脚本中，`applied.txt` 每行记录一个已执行的迁移文件名。怎样用 `grep` 检查 `$name`，避免 `1.sql` 被 `11.sql` 的记录误判为已执行？",
+      "back": "使用 `grep -Fqx -- \"$name\" applied.txt`。`-F` 按字面匹配，`-x` 要求匹配整行，因此 `1.sql` 不会匹配 `11.sql`。",
+      "extra": "`-q` 不输出匹配行，只用退出状态表示是否找到；`--` 结束选项解析，防止以 `-` 开头的名称被当成选项。前提是记录已规范化为一行一个非空文件名。",
+      "source": "file:learning/bash/lessons/0012-reading-and-debugging-scripts.html §6；GNU grep 3.12 Manual: https://www.gnu.org/s/grep/manual/grep.html (`-F`、`-x`、`-q`)",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_11",
+        "bash",
+        "grep",
+        "exact-match",
+        "migration"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "迁移脚本会据此决定是否跳过文件；子串误判会导致迁移漏执行。"
+    },
+    {
+      "id": "bash-2026-08-11-057",
+      "type": "basic",
+      "front": "调试会处理令牌或密码的 Bash 脚本时，使用 `set -x` / `bash -x` 有什么泄露风险？",
+      "back": "`set -x` / `bash -x` 会打印变量展开后的命令，可能把 secret 写入终端或日志。",
+      "extra": "在处理 secret 前关闭 xtrace，或使用明确脱敏的调试输出；`2>trace.log` 只会改变泄露位置。",
+      "source": "lesson:0012-reading-and-debugging-scripts §5；GNU Bash Reference Manual: The Set Builtin (`-x`)",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_11",
+        "bash",
+        "debugging",
+        "xtrace",
+        "secrets"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "xtrace 会输出展开后的值；需要记住这一条高风险边界，避免调试时泄露凭证。"
+    }
+  ]
+}

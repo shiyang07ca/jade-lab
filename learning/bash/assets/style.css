@@ -1,0 +1,209 @@
+/* === Bash Mastery — Shared Stylesheet === */
+/* Tufte-inspired, clean typography for learning materials */
+
+:root {
+  --bg: #fffff8;
+  --text: #111;
+  --muted: #555;
+  --accent: #b30000;
+  --link: #004c99;
+  --border: #ddd;
+  --code-bg: #f7f7f3;
+  --highlight: #fff3cd;
+  --success: #155724;
+  --success-bg: #d4edda;
+  --error: #721c24;
+  --error-bg: #f8d7da;
+  --max-width: 720px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+body {
+  font-family: "Crimson Text", "Georgia", "Times New Roman", serif;
+  color: var(--text);
+  background: var(--bg);
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* === Typography === */
+h1 { font-size: 2.2rem; font-weight: 400; margin: 2rem 0 0.5rem; line-height: 1.2; color: var(--text); }
+h2 { font-size: 1.5rem; font-weight: 400; margin: 2rem 0 0.5rem; color: var(--text); }
+h3 { font-size: 1.15rem; font-weight: 600; margin: 1.5rem 0 0.3rem; color: var(--text); }
+p { margin: 0.8rem 0; }
+a { color: var(--link); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--link) 30%, transparent); }
+a:hover { border-bottom-color: var(--link); }
+
+/* === Header === */
+.lesson-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.lesson-meta .number { font-weight: 600; color: var(--accent); }
+.lesson-meta .duration { float: right; }
+
+/* === Mission callout === */
+.mission-tie {
+  background: var(--highlight);
+  border-left: 4px solid var(--accent);
+  padding: 0.8rem 1rem;
+  margin: 1.5rem 0;
+  font-size: 0.95rem;
+}
+.mission-tie::before { content: "🎯 使命关联："; font-weight: 600; }
+
+/* === Code === */
+code {
+  font-family: "JetBrains Mono", "Fira Code", "SF Mono", "Menlo", monospace;
+  font-size: 0.88rem;
+  background: var(--code-bg);
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+}
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem 1.2rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+  line-height: 1.5;
+}
+pre code { background: none; padding: 0; font-size: 0.82rem; }
+
+/* === Prompts (user@host) === */
+.prompt {
+  color: var(--muted);
+  user-select: none;
+}
+.prompt::before { content: "$ "; }
+
+/* === Inline output === */
+.output {
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* === Key insight block === */
+.insight {
+  background: #f0f7ff;
+  border: 1px solid #b8d4f0;
+  border-radius: 6px;
+  padding: 1rem 1.2rem;
+  margin: 1.2rem 0;
+}
+.insight::before { content: "💡 关键洞察："; font-weight: 600; display: block; margin-bottom: 0.3rem; }
+
+/* === Warning / Pitfall === */
+.pitfall {
+  background: var(--error-bg);
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  padding: 1rem 1.2rem;
+  margin: 1.2rem 0;
+}
+.pitfall::before { content: "⚠️ 常见陷阱："; font-weight: 600; display: block; margin-bottom: 0.3rem; }
+
+/* === Exercise === */
+.exercise {
+  background: #f5f5f0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.8rem 1.2rem 0.6rem;
+  margin: 1.2rem 0;
+}
+.exercise h3 { margin-top: 0; font-size: 1rem; }
+.exercise h3::before { content: "✏️ "; }
+
+/* === Quiz === */
+.quiz { margin: 1.5rem 0; }
+.quiz .question {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem 1.2rem;
+  margin: 0.8rem 0;
+}
+.quiz .question p { margin: 0 0 0.6rem; }
+.quiz .options { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.quiz .option {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font-size: 0.92rem;
+  transition: all 0.15s;
+}
+.quiz .option:hover { border-color: var(--accent); }
+.quiz .option.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
+.quiz .option.correct { background: var(--success-bg); border-color: #28a745; color: var(--success); }
+.quiz .option.wrong { background: var(--error-bg); border-color: #dc3545; color: var(--error); }
+.quiz .feedback { margin-top: 0.6rem; font-size: 0.92rem; display: none; }
+.quiz .feedback.show { display: block; }
+.quiz .feedback.correct { color: var(--success); }
+.quiz .feedback.wrong { color: var(--error); }
+.quiz button.check {
+  margin-top: 0.6rem;
+  padding: 0.4rem 1rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.quiz button.check:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* === Diagram === */
+.diagram {
+  text-align: center;
+  margin: 1.5rem 0;
+  font-family: "JetBrains Mono", "Fira Code", "SF Mono", monospace;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+.diagram pre {
+  display: inline-block;
+  text-align: left;
+}
+
+/* === Nav === */
+nav.breadcrumb {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+nav.breadcrumb a { color: var(--muted); border-bottom: none; }
+nav.breadcrumb a:hover { color: var(--link); }
+
+/* === Session footer === */
+.session-footer {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* === Print === */
+@media print {
+  body { font-size: 12pt; padding: 0; max-width: none; }
+  pre, .quiz { break-inside: avoid; }
+}
+
+/* === Responsive === */
+@media (max-width: 600px) {
+  html { font-size: 16px; }
+  body { padding: 1rem; }
+}

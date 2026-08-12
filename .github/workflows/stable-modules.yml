@@ -1,0 +1,37 @@
+name: Stable modules
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stable-modules-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install pinned development tools
+        uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3
+        with:
+          version: 2026.8.4
+          sha256: 00ea78fa93b4f6372d221501a06336d515b0e0f47f99a0d1c4883ce05e01074e
+          install_args: python uv
+          cache: true
+
+      - name: Check repository policy
+        run: mise run policy
+
+      - name: Check stable modules
+        run: mise run check

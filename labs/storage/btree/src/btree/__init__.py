@@ -1,34 +1,12 @@
-"""
-# Ref: https://gist.github.com/eatonphil/51b91bb30bc7dbebd9bfb3c33248e563
+"""Educational B-tree insertion, lookup, splitting, and ordered traversal.
 
+``order`` means the maximum child count, so a node stores at most
+``order - 1`` keys. Records may live in internal nodes; storing all records in
+leaves would describe a B+ tree instead. This lab does not implement deletion
+or persistence.
 
-Resources that helped out:
-https://webdocs.cs.ualberta.ca/~holte/T26/ins-b-tree.html
-https://www.cs.usfca.edu/~galles/visualization/BTree.html
-https://sites.radford.edu/~nokie/classes/360/trees.b.tree.html
-http://carlosproal.com/ir/papers/p121-comer.pdf
-https://w6113.github.io/files/papers/btreesurvey-graefe.pdf
-
-
-TODO:
-B Tree
-
-B树的以下特性:
-- 所有叶子节点都在同一层
-- 节点中的键是有序的
-- 每个节点的子节点数量不超过阶数
-- 非根节点至少半满
-- 所有的数据都存储在叶子节点中
-
-
-假设B树的阶数（order）为 M
-
-1. 节点的最大元素数是 M-1
-2. 节点的最大子节点数是 M
-3. 非根节点的最小元素数是 ⌈M/2⌉-1
-4. 当节点中的元素数达到 M 时，需要进行分裂操作
-
-例如：如果阶数为3，则非根节点至少要有1个键，最多有2个键
+The insertion structure was initially based on:
+https://gist.github.com/eatonphil/51b91bb30bc7dbebd9bfb3c33248e563
 """
 
 import math

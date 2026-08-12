@@ -1,0 +1,250 @@
+{
+  "deck": "Mnemosyne",
+  "cards": [
+    {
+      "id": "bash-2026-08-04-032",
+      "type": "basic",
+      "front": "在 `sed` 替换命令中，`s/old/new/` 与 `s/old/new/g` 的关键差异是什么？",
+      "back": "前者每行只替换第一个匹配；后者用 `g` 替换该行的所有匹配。",
+      "extra": "`g` 的作用范围是每一行中的匹配，不是把文件当成一个整体只处理一次。",
+      "source": "lesson:0007-text-processing-trio §2",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_04",
+        "bash",
+        "sed"
+      ],
+      "priority": 2,
+      "status": "approved",
+      "selection_reason": "误把默认替换当成全局替换，会让配置文件只改掉部分目标值。"
+    },
+    {
+      "id": "bash-2026-08-04-033",
+      "type": "basic",
+      "front": "在 Bash 配置修改脚本中，`sed 's/port=80/port=8080/' config.ini` 与 `sed -i 's/port=80/port=8080/' config.ini` 的文件效果有何不同？",
+      "back": "不带 `-i` 只把修改后的内容输出到 stdout，不改原文件；`-i` 原地修改文件，也可用 `-i.bak` 先保留备份。",
+      "extra": "跨 macOS/BSD 与 GNU sed 编写脚本时要确认 `-i` 参数语法；原地修改前也应评估备份和回滚需要。",
+      "source": "lesson:0007-text-processing-trio §2",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_04",
+        "bash",
+        "sed",
+        "file-editing"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "区分 stdout 输出和原地修改，能避免“看起来改了但文件没变”以及误改配置的事故。"
+    },
+    {
+      "id": "bash-2026-08-04-034",
+      "type": "basic",
+      "front": "在 Bash 日志分析中，`awk -F: '{print $NF}'` 里的 `-F:` 与 `$NF` 分别表示什么？",
+      "back": "`-F:` 指定冒号为字段分隔符；`$NF` 表示当前行的最后一列。",
+      "extra": "`$0` 是整行，`$1` 是第一列；`-F` 让 awk 能按日志或 `/etc/passwd` 等实际格式切分。",
+      "source": "lesson:0007-text-processing-trio §3",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_04",
+        "bash",
+        "awk"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "字段引用和分隔符是部署脚本中 awk 提取日志、用户或磁盘信息的核心语义。"
+    },
+    {
+      "id": "bash-2026-08-04-035",
+      "type": "basic",
+      "front": "经典日志管道中，为什么 `awk '{print $1}' | sort | uniq -c` 要先 `sort` 再 `uniq -c`？",
+      "back": "`uniq` 只合并相邻的重复行；先排序让相同值相邻，才能统计完整的出现次数。",
+      "extra": "统计后再用 `sort -rn` 按次数降序排列，最后用 `head` 取 Top N。",
+      "source": "lesson:0007-text-processing-trio §4",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_04",
+        "bash",
+        "awk",
+        "pipeline"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "理解 `sort` 与 `uniq -c` 的前置关系，才能正确阅读和构造日志统计管道。"
+    },
+    {
+      "id": "bash-2026-08-04-036",
+      "type": "basic",
+      "front": "在 Bash 开启 `set -e` 后，为什么 `if grep 'ERROR' app.log; then` 中的 `grep` 失败通常不会让脚本退出？",
+      "back": "`if`、`while`、`until` 的条件命令属于显式测试场景；`set -e` 对这些条件失败有例外。",
+      "extra": "`set -e` 也有管道和 `&&`/`||` 相关例外，因此它不是“任何非零退出码都立即退出”的绝对保证。",
+      "source": "lesson:0008-error-handling-and-debugging §2",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_04",
+        "bash",
+        "error-handling",
+        "set-e"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "部署脚本同时使用测试条件和严格模式时，理解例外规则是避免误判的关键。"
+    },
+    {
+      "id": "bash-2026-08-04-037",
+      "type": "basic",
+      "front": "在 Bash `set -u` 的配置处理中，`${VAR:-default}` 与 `${VAR-default}` 有什么区别？",
+      "back": "`${VAR:-default}`：变量未设置或为空字符串时使用 `default`；`${VAR-default}`：只有变量未设置时使用 `default`，变量已设置但为空时保留空字符串。",
+      "extra": "未设置时两种写法都用默认值；非空时两种写法都保留原值。空字符串是否等价于缺失，决定应选带冒号还是不带冒号的形式。",
+      "source": "lesson:0008-error-handling-and-debugging §3",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_04",
+        "bash",
+        "set-u",
+        "parameter-expansion"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "这是严格模式下处理可选配置的稳定边界，能防止变量拼写错误和空配置静默传播。"
+    },
+    {
+      "id": "bash-2026-08-04-038",
+      "type": "basic",
+      "front": "在 Bash 管道 `cat huge.log | grep 'ERROR' | wc -l` 中，为什么 `cat` 失败时管道默认仍可能返回 0？",
+      "back": "默认管道退出码取最后一个命令 `wc -l` 的状态；开启 `set -o pipefail` 后，任一环节失败都会使管道失败。",
+      "extra": "`pipefail` 让上游读取失败不会被下游成功退出码掩盖，是日志处理和部署检查的重要防护。",
+      "source": "lesson:0008-error-handling-and-debugging §4",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_04",
+        "bash",
+        "pipefail",
+        "error-handling"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "管道吞掉上游失败是部署脚本中隐蔽且高代价的错误来源。"
+    },
+    {
+      "id": "bash-2026-08-04-039",
+      "type": "basic",
+      "front": "在 Bash 部署脚本中，为什么用 `trap cleanup EXIT` 清理临时目录或锁文件？",
+      "back": "`EXIT` trap 会在脚本退出时自动执行 cleanup，覆盖正常结束、`exit` 和 `set -e` 触发等路径，比在每个退出点手写清理更可靠。",
+      "extra": "`SIGKILL`（`kill -9`）无法被捕获，因此 EXIT trap 不是所有进程终止方式下都能执行。",
+      "source": "lesson:0008-error-handling-and-debugging §6",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_04",
+        "bash",
+        "trap",
+        "cleanup"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "统一退出清理是临时文件、锁文件和资源回收的高频可靠性模式。"
+    },
+    {
+      "id": "bash-2026-08-04-040",
+      "type": "basic",
+      "front": "怀疑 Bash 部署脚本的变量展开或执行顺序异常时，`bash -x deploy.sh` 能帮助你看到什么？",
+      "back": "它把 Bash 实际执行的每条命令及其展开后的参数输出到 stderr，便于逐行追踪；脚本内也可用 `set -x`/`set +x` 局部开关。",
+      "extra": "追踪输出默认走 stderr，可用 `bash -x deploy.sh 2>debug.log` 保存后分析。",
+      "source": "lesson:0008-error-handling-and-debugging §7",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_04",
+        "bash",
+        "debugging",
+        "set-x"
+      ],
+      "priority": 2,
+      "status": "approved",
+      "selection_reason": "`bash -x` 是阅读陌生脚本和定位展开/顺序问题的直接调试入口。"
+    },
+    {
+      "id": "bash-2026-08-04-041",
+      "type": "basic",
+      "front": "在严格模式 Bash 脚本中，什么时候用 `cmd || die \"msg\"`，什么时候用 `cmd || true`？",
+      "back": "关键命令失败应终止脚本并报错用 `|| die`；明确允许失败且不应影响后续流程时才用 `|| true`。",
+      "extra": "`|| true` 会主动掩盖失败，只能用于有明确恢复或忽略语义的可选步骤。",
+      "source": "lesson:0008-error-handling-and-debugging §8–§9",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_04",
+        "bash",
+        "error-handling",
+        "short-circuit"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "这是把严格模式转成业务级失败策略的核心判断，直接影响部署是否会带错继续。"
+    },
+    {
+      "id": "bash-2026-08-04-042",
+      "type": "basic",
+      "front": "部署脚本为什么用 `flock -n` 获取锁，而不是先 `[ -f lock ]` 再 `touch lock`？",
+      "back": "`flock` 是操作系统级原子加锁，可避免两个进程同时通过检查的竞态；`-n` 表示非阻塞，拿不到锁立即失败。",
+      "extra": "常见写法是先用 `exec 200>\"$LOCK_FILE\"` 打开文件描述符，再执行 `flock -n 200`，并在 EXIT 时清理资源。",
+      "source": "lesson:0009-deployment-patterns §2",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_04",
+        "bash",
+        "deployment",
+        "locking"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "手动检查加 touch 存在竞态条件，可能让两个部署同时修改同一环境；这是高失败代价的并发防护。"
+    },
+    {
+      "id": "bash-2026-08-04-043",
+      "type": "basic",
+      "front": "为什么部署脚本更新配置时常用 `mktemp` 写临时文件，再用同一文件系统上的 `mv` 替换目标？",
+      "back": "写入过程在临时文件中完成，`mv` 原子替换目录项；中途失败不会把目标文件留在半写状态，只会保留旧文件或未完成的临时文件。",
+      "extra": "原子性依赖临时文件与目标位于同一文件系统；临时文件失败路径仍需清理。",
+      "source": "lesson:0009-deployment-patterns §4",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_04",
+        "bash",
+        "deployment",
+        "atomic-write"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "直接覆盖配置可能留下半个文件；临时写入再替换是部署配置的通用可靠性模式。"
+    },
+    {
+      "id": "bash-2026-08-04-044",
+      "type": "basic",
+      "front": "在版本化部署中，`current -> releases/v2.0` 符号链接为什么有利于切换和回滚？",
+      "back": "服务始终通过 `current` 指向当前版本；切换只需原子更新链接，回滚只需把链接改回旧版本，旧版本目录仍完整保留。",
+      "extra": "典型切换命令是 `ln -sfn \"$release_dir\" \"$current_link\"`；旧版本保留也便于排查。",
+      "source": "lesson:0009-deployment-patterns §8",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_08_04",
+        "bash",
+        "deployment",
+        "symlink"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "符号链接把版本切换和回滚从复制大量文件简化为切换一个指针，是部署架构中的高价值设计。"
+    }
+  ]
+}

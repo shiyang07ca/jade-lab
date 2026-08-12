@@ -1,0 +1,285 @@
+{
+  "deck": "Mnemosyne",
+  "learning_goal": null,
+  "cards": [
+    {
+      "id": "bash-2026-07-27-014",
+      "type": "basic",
+      "front": "若 `APP=myapp`、`VERSION=v2`，Bash 会如何解析 `$APP_$VERSION`，以至于结果只有 `v2`？",
+      "back": "Bash 把 `APP_` 解析成完整变量名，而它未定义；应写 `${APP}_$VERSION`，用花括号明确第一个变量名的边界。",
+      "extra": "当变量名后紧跟字母、数字或下划线时，花括号用于消除变量名边界歧义。",
+      "source": "lesson:0004-variables-quoting-expansion §3",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_07_27",
+        "bash",
+        "parameter-expansion"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "组合路径、版本号和文件名时很常见；错误展开会产生静默的空值或错误路径。"
+    },
+    {
+      "id": "bash-2026-07-27-015",
+      "type": "basic",
+      "front": "在 Bash 部署脚本中，为什么路径变量通常写成 `cd \"$APP_DIR\"`，而不是 `cd $APP_DIR`？",
+      "back": "`\"$APP_DIR\"` 把展开结果作为一个参数；无引号时会发生单词分割和路径名展开，可能变成零个或多个参数。",
+      "extra": "尤其当变量为空时，`cd $APP_DIR` 可能退化为无参数的 `cd` 并进入主目录，而 `cd \"$APP_DIR\"` 会以空路径失败。除非明确需要分割或通配，默认引用变量。",
+      "source": "lesson:0004-variables-quoting-expansion §4",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_07_27",
+        "bash",
+        "quoting"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "未引用的路径变量是部署脚本中高频且代价较高的 bug 来源。"
+    },
+    {
+      "id": "bash-2026-07-27-016",
+      "type": "basic",
+      "front": "在 Bash 部署脚本中，`TIMESTAMP=$(date +%Y%m%d_%H%M%S)` 里的 `$(...)` 做了什么？",
+      "back": "Bash 先执行括号内的命令，再用它的 stdout 替换 `$(...)`，因此 `TIMESTAMP` 得到时间戳字符串。",
+      "extra": "命令替换会删除输出末尾的换行。`$(...)` 比旧式反引号更易读、易嵌套；需要判断内部命令是否成功时，还要检查退出状态。",
+      "source": "lesson:0004-variables-quoting-expansion §5; manual:Bash Reference Manual §3.5.4 Command Substitution",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_07_27",
+        "bash",
+        "command-substitution"
+      ],
+      "priority": 2,
+      "status": "approved",
+      "selection_reason": "时间戳、路径和命令结果在部署脚本中经常需要从 stdout 转成字符串。"
+    },
+    {
+      "id": "bash-2026-07-27-017",
+      "type": "basic",
+      "front": "在 Bash 包装脚本或函数中，把参数原样逐个转发时，为什么应写 `\"$@\"` 而不是 `\"$*\"`？",
+      "back": "`\"$@\"` 将每个原始参数保留为一个独立参数；`\"$*\"` 把全部参数合并成一个字符串。",
+      "extra": "例如参数 `a`、`b c`、`d` 经 `\"$@\"` 仍是三个参数；`\"$*\"` 默认用空格（准确说是 `$IFS` 的首字符）连接成一个参数。",
+      "source": "lesson:0004-variables-quoting-expansion §6; manual:Bash Reference Manual §3.4.2 Special Parameters",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_07_27",
+        "bash",
+        "positional-parameters"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "参数原样传递是脚本包装器、部署入口和函数复用中的高频边界。"
+    },
+    {
+      "id": "bash-2026-07-27-018",
+      "type": "basic",
+      "front": "在 Bash 控制流中，为什么 `if grep -q \"ERROR\" app.log; then` 可以直接作为条件？",
+      "back": "`if` 直接执行 `grep` 并检查退出码：0 进入 `then`，任何非 0 进入 `else`；不需要先构造布尔值。",
+      "extra": "对 `grep`，0 表示匹配，1 表示无匹配，2 通常表示读取或用法错误；简单的 `if/else` 会把后两者都放进 `else`。`-q` 只抑制匹配输出。",
+      "source": "lesson:0005-control-flow §1; manual:grep(1) EXIT STATUS",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_07_27",
+        "bash",
+        "control-flow"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "这是从其他语言迁移到 Bash 时最重要的思维转换，也是部署前置检查的基本模式。"
+    },
+    {
+      "id": "bash-2026-07-27-019",
+      "type": "basic",
+      "front": "在明确以 Bash 运行的脚本中，为什么通常优先用 `[[ $A = \"$B\" ]]` 而不是 `[ \"$A\" = \"$B\" ]`？",
+      "back": "`[[ ]]` 中变量值不会触发单词分割或路径名展开，并原生支持 `&&`、`||` 和 `=~`；`[ ]` 的优势是兼容 POSIX shell。",
+      "extra": "`[[ ]]` 不是 POSIX 语法；需要由 `sh`、`dash` 等运行时应使用 `[ ]` 等可移植写法。两种写法中的空格都具有语法意义。",
+      "source": "lesson:0005-control-flow §2",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_07_27",
+        "bash",
+        "tests"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "选择测试语法会直接影响部署脚本的可读性、兼容性和对空值的安全处理。"
+    },
+    {
+      "id": "bash-2026-07-27-021",
+      "type": "basic",
+      "front": "在 Bash 部署脚本中，`until curl --fail --silent --show-error URL; do sleep 2; done` 会在什么条件下继续和停止？",
+      "back": "`curl` 返回非 0 时继续重试，返回 0 时停止；`until` 的循环条件与 `while` 相反。",
+      "extra": "`--fail` 让 HTTP 4xx/5xx 成为失败；只有 `-s` 时，这些 HTTP 响应仍可能返回 0。实际部署还应限制尝试次数或总时长，并给单次请求设置超时，避免无限等待。",
+      "source": "lesson:0005-control-flow §5; manual:curl(1) --fail",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_07_27",
+        "bash",
+        "loops",
+        "deployment"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "等待服务就绪是部署脚本的典型场景，`until` 的反向条件很容易读反。"
+    },
+    {
+      "id": "bash-2026-07-27-022",
+      "type": "basic",
+      "front": "在 Bash `case` 分支中，应如何解释 `*.tar.gz)`，为什么不能按正则表达式读取？",
+      "back": "`case` 使用 shell 的 Glob 模式而非正则；`*.tar.gz` 表示任意字符串后接字面量 `.tar.gz`。",
+      "extra": "`case` 中的 `|` 表示多个 Glob 模式的或，例如 `restart|reload)`。",
+      "source": "lesson:0005-control-flow §6",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_07_27",
+        "bash",
+        "case",
+        "glob"
+      ],
+      "priority": 2,
+      "status": "approved",
+      "selection_reason": "Glob 与正则的混淆会让环境分支、文件类型分支悄悄匹配错误。"
+    },
+    {
+      "id": "bash-2026-07-27-023",
+      "type": "basic",
+      "front": "为什么 Bash 中的 `A && B || C` 不能无条件当作 `if A; then B; else C; fi`？",
+      "back": "只要 `A` 失败，或 `A` 成功但 `B` 失败，`C` 都会执行；只有 `A`、`B` 均成功才跳过 `C`。",
+      "extra": "当 `B` 本身可能失败且两种失败需要不同处理时，应写完整的 `if`，不要把短路表达式当成可靠的三元运算符。",
+      "source": "lesson:0005-control-flow §7",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_07_27",
+        "bash",
+        "control-flow",
+        "short-circuit"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "这是 Bash 中很常见的控制流陷阱，可能把中间步骤的失败误报成另一条分支。"
+    },
+    {
+      "id": "bash-2026-07-27-024",
+      "type": "basic",
+      "front": "若 Bash 脚本自己的 `$1` 是 `production`，随后调用 `deploy staging v2.0`，函数 `deploy` 内的 `$1` 是什么？",
+      "back": "函数内 `$1` 是调用时传入的第一个参数 `staging`。",
+      "extra": "调用函数时，传入的参数会临时成为函数的位置参数；函数结束后，脚本级 `$1` 恢复为 `production`。",
+      "source": "lesson:0006-functions-and-script-structure §2",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_07_27",
+        "bash",
+        "functions",
+        "positional-parameters"
+      ],
+      "priority": 2,
+      "status": "approved",
+      "selection_reason": "区分脚本级与函数级位置参数，是阅读嵌套部署函数和参数转发的关键。"
+    },
+    {
+      "id": "bash-2026-07-27-025",
+      "type": "basic",
+      "front": "为什么 Bash 函数内部的临时变量应声明为 `local`？",
+      "back": "未声明 `local` 的赋值可能覆盖调用者的同名变量；`local` 可避免函数意外改写外部脚本状态。",
+      "extra": "Bash 的 `local` 是动态作用域：变量在当前函数返回前有效，当前函数调用的其他函数也可能看见它；它不是严格的词法封装。",
+      "source": "lesson:0006-functions-and-script-structure §3; manual:Bash Reference Manual §3.4 Shell Parameters",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_07_27",
+        "bash",
+        "functions",
+        "scope"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "变量泄漏是 Bash 函数中高频且隐蔽的 bug 来源，会污染后续部署步骤。"
+    },
+    {
+      "id": "bash-2026-07-27-026",
+      "type": "basic",
+      "front": "在 Bash 函数中，为保留 `some_command` 的退出状态，应将 `local result=$(some_command)` 改成什么写法？",
+      "back": "`$?` 得到的是 `local` 的状态，可能掩盖命令替换的失败；应先 `local result`，再单独执行 `result=$(some_command)` 并立即检查状态。",
+      "extra": "ShellCheck 将这种声明与赋值合写的问题标为 SC2155。若只需把命令状态交给调用者，也可直接在 `if` 中执行命令，或让它成为函数最后一条命令。",
+      "source": "lesson:0006-functions-and-script-structure §3",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_07_27",
+        "bash",
+        "functions",
+        "exit-code"
+      ],
+      "priority": 2,
+      "status": "approved",
+      "selection_reason": "这是维护 Bash 函数时容易忽略的退出码陷阱，直接关系到错误处理是否可靠。"
+    },
+    {
+      "id": "bash-2026-07-27-027",
+      "type": "basic",
+      "front": "当 Bash 调用者用 `result=$(get_value)` 接收函数数据时，为什么函数的日志不能也写到 stdout？",
+      "back": "命令替换会捕获函数的全部 stdout；日志会和数据混在一起，污染 `result`。应让 stdout 只承载数据，把日志写到 stderr。",
+      "extra": "函数的成功或失败应通过退出码传递。若 `do_backup` 先向 stdout 写日志、再输出备份路径，`backup_file=$(do_backup)` 会把两行都捕获；应让 `log` 写 stderr，或改用其他数据传递方式。",
+      "source": "lesson:0006-functions-and-script-structure §4–§5",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_07_27",
+        "bash",
+        "functions",
+        "return-values"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "区分状态通道与数据通道，是设计可组合函数和可靠部署流程的核心判断。"
+    },
+    {
+      "id": "bash-2026-07-27-029",
+      "type": "basic",
+      "front": "在 Bash 中，`. lib/utils.sh` 与 `./lib/utils.sh` 对当前 Shell 状态的影响有何不同？",
+      "back": "`.`/`source` 在当前 Shell 中执行，变量、函数和目录变更可以保留；`./...` 在独立进程中执行，结束后不能把这些状态改回调用者。",
+      "extra": "函数库和环境设置常用 `source`，独立程序常用直接执行。`./lib/utils.sh` 通常还要求执行权限和有效的 shebang；`bash lib/utils.sh` 则不要求文件本身可执行。",
+      "source": "lesson:0006-functions-and-script-structure §6",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_07_27",
+        "bash",
+        "source",
+        "process-model"
+      ],
+      "priority": 2,
+      "status": "approved",
+      "selection_reason": "执行与引入的区别决定变量、函数和目录变化是否能影响调用者，是读脚本时的关键分叉。"
+    },
+    {
+      "id": "bash-2026-07-27-030",
+      "type": "basic",
+      "front": "在 Bash 中，`echo '$USER $(date)'` 与 `echo \"$USER $(date)\"` 的展开行为有何不同？",
+      "back": "单引号中的内容完全按字面保留；双引号允许变量展开和命令替换，但抑制单词分割与路径名展开。",
+      "extra": "引号是 Shell 的解析语法，处理后会被移除；外部命令收到的是展开后的参数，而不是原始引号。",
+      "source": "lesson:0004-variables-quoting-expansion §1、§4",
+      "tags": [
+        "ai_generated",
+        "codex",
+        "date_2026_07_27",
+        "bash",
+        "quoting",
+        "expansion"
+      ],
+      "priority": 1,
+      "status": "approved",
+      "selection_reason": "单引号与双引号的区别是读懂变量、命令替换和命令参数边界的基础，且原草稿未直接考查这一核心规则。"
+    }
+  ]
+}

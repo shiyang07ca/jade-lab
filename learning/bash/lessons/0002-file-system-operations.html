@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 2 课：文件系统操作</title>
+<meta name="course-audit" content="2026-08-12; GNU Bash 5.3.15">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="breadcrumb">
+  <a href="../MISSION.md">使命</a> → <a href="0001-how-shell-executes-commands.html">第 1 课</a> → 第 2 课
+</nav>
+
+<div class="lesson-meta">
+  <span class="number">第 2 课</span>
+  <span class="duration">⏱ 约 18 分钟</span>
+</div>
+
+<h1>文件系统操作</h1>
+<p class="subtitle">告别「只会 ls 和 cat」——掌握日常文件操作的核心命令</p>
+
+<div class="mission-tie">
+部署脚本里充满了文件操作：创建目录、复制配置、查看日志、检查权限。这节课覆盖的命令是你未来读脚本时最常见的「动词」。
+</div>
+
+<h2>1. 你真的会用 ls 吗？</h2>
+
+<p>你已经知道 <code>ls</code> 列出文件名。但 <code>ls</code> 的真正威力在它的选项里。四个最常用的：</p>
+
+<pre><code><span class="prompt"></span>ls -l        # long: 详细信息（权限、大小、修改时间）
+<span class="output">drwxr-xr-x  5 alice  staff  160 Jul 22 10:51 lessons
+-rw-r--r--  1 alice  staff  2048 Jul 22 11:20 deploy.sh</span>
+
+<span class="prompt"></span>ls -a        # all: 显示隐藏文件（以 . 开头的文件）
+<span class="output">.           ..          .git        .gitignore  README.md</span>
+
+<span class="prompt"></span>ls -lh       # human-readable: 文件大小用 K/M/G 显示
+<span class="output">-rw-r--r--  1 alice  staff  2.0K Jul 22 11:20 deploy.sh</span>
+
+<span class="prompt"></span>ls -lt       # time: 按修改时间排序，最新的在最前面
+<span class="output">-rw-r--r--  1 alice  staff  2.0K Jul 22 11:20 deploy.sh
+drwxr-xr-x  5 alice  staff   160 Jul 22 10:51 lessons</span></code></pre>
+
+<p>选项可以组合，顺序任意：</p>
+
+<pre><code><span class="prompt"></span>ls -ltrh     # 详细信息 + 按时间排序 + 反向（最旧的在最前面） + 人类可读
+<span class="prompt"></span>ls -la       # 详细信息 + 包含隐藏文件</code></pre>
+
+<div class="insight">
+<b>ls -l 输出解读</b>：第一列 <code>drwxr-xr-x</code> 里，第一个字符 <code>d</code> 表示目录（<code>-</code> 表示普通文件，<code>l</code> 表示符号链接）。后面九个字符是权限，分成 user/group/other 三组，每组 r=读 w=写 x=执行。这节课后我们会深入权限。
+</div>
+
+<h2>2. 导航：在目录间快速移动</h2>
+
+<pre><code><span class="prompt"></span>pwd          # 打印当前所在目录（print working directory）
+<span class="output">/Users/alice/code/jade-lab</span>
+
+<span class="prompt"></span>cd /tmp      # 去 /tmp
+<span class="prompt"></span>cd -         # 回到刚才的目录（相当于遥控器上的「返回」键）
+<span class="output">/Users/alice/code/jade-lab</span>
+
+<span class="prompt"></span>cd           # 不带参数 = 回 home 目录
+<span class="prompt"></span>cd ..        # 去上级目录
+<span class="prompt"></span>cd ../..     # 上两级</code></pre>
+
+<div class="pitfall">
+<code>cd -</code> 只记住「上一个」目录，因此可以在两个目录之间反复切换，但不能保存完整历史。如果需要管理多个目录，用 Bash 的 <code>pushd</code>、<code>popd</code> 和 <code>dirs</code>。
+</div>
+
+<h2>3. 查看文件内容：不止 cat</h2>
+
+<table style="width:100%; margin:1rem 0;">
+  <tr style="border-bottom:1px solid var(--border);">
+    <th style="text-align:left; padding:0.3rem 0;">命令</th>
+    <th style="text-align:left; padding:0.3rem 0;">用途</th>
+    <th style="text-align:left; padding:0.3rem 0;">典型场景</th>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>cat f</code></td>
+    <td>一次性输出全部内容</td>
+    <td>文件很短时、或要把它传给下一个命令</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>less f</code></td>
+    <td>分页浏览，上下翻动</td>
+    <td><strong>阅读部署脚本、日志文件</strong>（q 退出，/ 搜索）</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>head f</code></td>
+    <td>只看前 10 行</td>
+    <td>快速确认文件开头长什么样</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>tail f</code></td>
+    <td>只看末尾 10 行</td>
+    <td>检查最新日志</td>
+  </tr>
+  <tr>
+    <td><code>tail -f f</code></td>
+    <td>实时追踪文件末尾新增内容</td>
+    <td><strong>实时监控日志输出</strong>（Ctrl+C 停止）</td>
+  </tr>
+</table>
+
+<pre><code><span class="prompt"></span>head -20 deploy.sh          # 看前 20 行
+<span class="prompt"></span>tail -3 /var/log/nginx.log  # 看最后 3 条日志
+<span class="prompt"></span>tail -f /var/log/app.log    # 一直盯着日志，有新内容立刻显示
+
+<span class="prompt"></span>less deploy.sh              # 翻页浏览脚本
+# less 内部快捷键：
+#   j/k 或 ↓/↑ — 上下一行
+#   f/b 或 PgDn/PgUp — 上下翻页
+#   /关键字 — 搜索
+#   n — 下一个匹配
+#   q — 退出</code></pre>
+
+<div class="insight">
+<code>tail -f</code> 是你做日志分析时最重要的命令之一。部署出问题时，打开另一个终端跑 <code>tail -f /var/log/app.log</code>，然后触发请求——你能实时看到日志滚动。
+</div>
+
+<h2>4. 创建和删除</h2>
+
+<pre><code><span class="prompt"></span>mkdir newdir              # 创建目录
+<span class="prompt"></span>mkdir -p a/b/c/d          # 递归创建多层目录（不会因为父目录不存在报错）
+
+<span class="prompt"></span>touch empty.txt           # 创建空文件 / 更新已有文件的修改时间
+<span class="prompt"></span>touch deploy.sh           # ⚠️ 不会清空内容，只更新修改时间
+
+<span class="prompt"></span>rm file.txt               # 删除文件
+<span class="prompt"></span>rm -r mydir               # 递归删除目录（⚠️ 不可逆）
+<span class="prompt"></span>rm -rf mydir              # 强制删除，不提示确认（⚠️⚠️ 极度危险）
+<span class="prompt"></span>rmdir emptydir            # 只能删空目录，安全但很少用</code></pre>
+
+<div class="pitfall">
+<code>rm -rf</code> 是 Bash 里最危险的命令之一。没有回收站、没有确认提示（加了 <code>-f</code>）。部署脚本里经常看到 <code>rm -rf /tmp/build</code> 这种用法——限定路径很重要，<b>永远不要在 rm -rf 里用变量而不检查它是否为空</b>。
+</div>
+
+<h2>5. 复制和移动</h2>
+
+<pre><code><span class="prompt"></span>cp source.txt dest.txt     # 复制文件
+<span class="prompt"></span>cp -r srcdir/ destdir/     # 递归复制目录
+<span class="prompt"></span>cp file1 file2 file3 dir/  # 把多个文件复制到同一个目录
+
+<span class="prompt"></span>mv oldname newname         # 重命名（mv = 移动 = 改名，是一回事）
+<span class="prompt"></span>mv file.txt /tmp/          # 移动文件到 /tmp
+<span class="prompt"></span>mv file1 file2 dir/        # 移动多个文件到目录</code></pre>
+
+<div class="insight">
+<code>cp</code> 和 <code>mv</code> 默认都可能覆盖已有目标。不要把 <code>-n</code>、<code>-b</code> 当作跨平台接口：GNU 与 BSD/macOS 实现的选项和细节并不完全相同。自动化脚本应先确定目标平台，再使用该平台手册支持的选项，并用临时目录验证覆盖行为。
+</div>
+
+<h2>6. 读懂权限</h2>
+
+<pre><code><span class="prompt"></span>ls -l deploy.sh
+<span class="output">-rwxr-xr--  1 alice  staff  2048 Jul 22 11:20 deploy.sh
+ │││││││││
+ │└┬┘└┬┘└┬┘    r=读  w=写  x=执行  -=没有
+ │ │  │  │
+ │ │  │  └── other（其他人）   r--  = 只能读
+ │ │  └───── group（同组用户）  r-x  = 可读、可执行，不可写
+ │ └──────── user（文件拥有者）  rwx  = 可读、可写、可执行
+ └────────── 文件类型：- 普通文件，d 目录，l 符号链接</span></code></pre>
+
+<p>修改权限用 <code>chmod</code>：</p>
+
+<pre><code><span class="prompt"></span>chmod u+x deploy.sh         # 给文件拥有者加执行权限
+<span class="prompt"></span>chmod 755 deploy.sh         # 数字模式：user=rwx, group=r-x, other=r-x
+<span class="prompt"></span>chmod 600 secret.key         # 只有 owner 可读写（敏感文件的标准权限）</code></pre>
+
+<table style="width:100%; margin:1rem 0;">
+  <tr style="border-bottom:1px solid var(--border);">
+    <th style="text-align:left; padding:0.3rem 0;">数字</th>
+    <td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td>
+  </tr>
+  <tr>
+    <th style="text-align:left; padding:0.3rem 0;">权限</th>
+    <td>---</td><td>--x</td><td>-w-</td><td>-wx</td><td>r--</td><td>r-x</td><td>rw-</td><td>rwx</td>
+  </tr>
+</table>
+
+<p>记法：读=4、写=2、执行=1。加在一起就是你要的数字。755 = 4+2+1, 4+0+1, 4+0+1 = rwx, r-x, r-x。</p>
+
+<div class="exercise">
+<h3>动手练习（5 分钟）</h3>
+<p>在你的终端里完成以下操作，每个命令都亲自敲一遍：</p>
+<pre><code><span class="prompt"></span>mkdir -p ~/bash-practice/logs
+<span class="prompt"></span>cd ~/bash-practice
+<span class="prompt"></span>echo "这是第一行" &gt; README.md                       # 创建一个文件
+<span class="prompt"></span>echo "错误日志内容" &gt; logs/error.log
+<span class="prompt"></span>ls -lR                                           # 递归列出所有文件
+<span class="prompt"></span>head -1 README.md                                # 看第一行
+<span class="prompt"></span>chmod u+x README.md                              # 给拥有者加执行权限
+<span class="prompt"></span>ls -l README.md                                  # 确认权限已变
+<span class="prompt"></span>less README.md                                   # 翻页浏览（q 退出）
+<span class="prompt"></span>cd -                                            # 回到之前的目录</code></pre>
+</div>
+
+<h2>7. 看一眼文件类型</h2>
+
+<pre><code><span class="prompt"></span>file deploy.sh
+<span class="output">deploy.sh: Bourne-Again shell script text executable, ASCII text</span>
+
+<span class="prompt"></span>file myphoto.png
+<span class="output">myphoto.png: PNG image data, 1920 x 1080, 8-bit/color RGB</span>
+
+<span class="prompt"></span>file unknown.bin
+<span class="output">unknown.bin: ELF 64-bit LSB executable, x86-64</span></code></pre>
+
+<p><code>file</code> 不只看扩展名，而是结合文件内容、magic 数据库等规则判断类型。遇到不认识的文件时可先用它检查，但不要把识别结果当作安全审计。</p>
+
+<h2>总结：你的工具箱</h2>
+
+<table style="width:100%; margin:1rem 0;">
+  <tr style="border-bottom:1px solid var(--border);">
+    <th style="text-align:left; padding:0.3rem 0;">操作</th>
+    <th style="text-align:left; padding:0.3rem 0;">命令</th>
+    <th style="text-align:left; padding:0.3rem 0;">记法</th>
+  </tr>
+  <tr><td>我在哪</td><td><code>pwd</code></td><td>print working directory</td></tr>
+  <tr><td>有什么</td><td><code>ls -la</code></td><td>list all, long</td></tr>
+  <tr><td>里面是什么</td><td><code>less f</code></td><td>分页浏览</td></tr>
+  <tr><td>开头/结尾</td><td><code>head f</code> / <code>tail f</code></td><td>默认 10 行</td></tr>
+  <tr><td>追踪日志</td><td><code>tail -f f</code></td><td>follow，Ctrl+C 停止</td></tr>
+  <tr><td>创建目录</td><td><code>mkdir -p path</code></td><td>parents，自动创建父目录</td></tr>
+  <tr><td>创建空文件</td><td><code>touch f</code></td><td>碰一下，就有了</td></tr>
+  <tr><td>复制</td><td><code>cp [-r] src dst</code></td><td>copy</td></tr>
+  <tr><td>移动/改名</td><td><code>mv src dst</code></td><td>move</td></tr>
+  <tr><td>删除</td><td><code>rm [-r] f</code></td><td>remove，谨慎使用 -f</td></tr>
+  <tr><td>给拥有者加执行权限</td><td><code>chmod u+x f</code></td><td>change mode, user + executable</td></tr>
+  <tr><td>识别类型</td><td><code>file f</code></td><td>不看扩展名，看文件头</td></tr>
+</table>
+
+<div class="quiz">
+<h3>快速自检</h3>
+
+<div class="question" id="q1">
+  <p><strong>Q1:</strong> 你想查看一个 2000 行的日志文件的最后 50 行，用什么命令？</p>
+  <div class="options">
+    <span class="option" data-q="q1" data-a="a">cat log.txt | last 50</span>
+    <span class="option" data-q="q1" data-a="b">tail -50 log.txt</span>
+    <span class="option" data-q="q1" data-a="c">head -50 log.txt</span>
+  </div>
+  <div class="feedback" id="q1-fb"></div>
+</div>
+
+<div class="question" id="q2">
+  <p><strong>Q2:</strong> <code>rmdir mydir</code> 报错 "Directory not empty"。你检查内容并确认整个目录都应删除后，应该怎么做？</p>
+  <div class="options">
+    <span class="option" data-q="q2" data-a="a">用 rm -r mydir</span>
+    <span class="option" data-q="q2" data-a="b">用 rm -rf mydir</span>
+    <span class="option" data-q="q2" data-a="c">用 rmdir --force mydir</span>
+  </div>
+  <div class="feedback" id="q2-fb"></div>
+</div>
+
+<div class="question" id="q3">
+  <p><strong>Q3:</strong> 你发现一个脚本文件 <code>deploy.sh</code>，<code>ls -l</code> 显示权限为 <code>-rw-r--r--</code>。你执行 <code>./deploy.sh</code> 时报 "Permission denied"。为什么？</p>
+  <div class="options">
+    <span class="option" data-q="q3" data-a="a">文件内容有语法错误</span>
+    <span class="option" data-q="q3" data-a="b">没有执行权限（x）</span>
+    <span class="option" data-q="q3" data-a="c">没有读权限（r）</span>
+  </div>
+  <div class="feedback" id="q3-fb"></div>
+</div>
+
+<div class="question" id="q4">
+  <p><strong>Q4:</strong> 部署脚本里有这样一行：<code>mkdir -p /app/logs/nginx</code>。其中的 <code>-p</code> 是什么作用？</p>
+  <div class="options">
+    <span class="option" data-q="q4" data-a="a">设置目录权限（permissions）</span>
+    <span class="option" data-q="q4" data-a="b">如果父目录不存在，自动创建</span>
+    <span class="option" data-q="q4" data-a="c">打印每一步的创建过程</span>
+  </div>
+  <div class="feedback" id="q4-fb"></div>
+</div>
+</div>
+
+<div class="session-footer">
+  <p>
+    📖 <strong>推荐阅读</strong>：<a href="https://linuxcommand.org/tlcl.php" target="_blank">The Linux Command Line</a> — 第 3-4 章（文件系统导航）、第 9 章（权限）<br>
+    📝 <strong>上一课</strong>：<a href="0001-how-shell-executes-commands.html">第 1 课 — 命令是如何被执行的</a><br>
+    📝 <strong>下一课预告</strong>：第 3 课 — 管道与重定向（把命令串起来，这才是 Shell 的魔法）<br>
+    ❓ <strong>有疑问？</strong>在对话中直接问我。
+  </p>
+</div>
+
+<script>
+(function() {
+  const answers = {
+    q1: { correct: 'b', fb: {
+      b: '正确！tail -50 显示最后 50 行。tail 默认显示 10 行，-n 指定行数。-50 是老式写法，效果等同于 -n 50。',
+      a: '不对。last 不是一个命令。cat 会把整个文件打印出来（2000 行），然后再也没有然后了。',
+      c: '不对。head 显示的是文件最前面的行，不是最后面。用 head 你会看到第 1-50 行。'
+    }},
+    q2: { correct: 'a', fb: {
+      a: '正确！rm -r 递归删除整个目录及其内容。你不知道里面有什么时，可以先 ls 看看，确认了再删。',
+      b: '可以工作，但 -f 会忽略不存在的目标并抑制部分提示。这里没有恢复语义，先检查精确路径，再使用不带 -f 的 rm -r 更容易发现异常。',
+      c: 'rmdir 没有 --force 选项，它只能删除空目录。'
+    }},
+    q3: { correct: 'b', fb: {
+      b: '正确！直接执行脚本需要 x（执行）权限。权限是 rw-r--r--，owner 只有 rw-，没有 x。用 chmod u+x deploy.sh 给拥有者加执行权限即可。',
+      a: '不对。"Permission denied" 是操作系统返回的错误，跟文件内容无关——Shell 根本没机会读取和执行文件内容。',
+      c: '不对。owner 有 r 权限（rw-），可以读文件。少了的是 x（执行），不是 r（读）。'
+    }},
+    q4: { correct: 'b', fb: {
+      b: '正确！-p (parents) 的意思是：如果 /app 或 /app/logs 不存在，先创建它们，再创建 nginx。部署脚本里到处是 mkdir -p，因为它让脚本在任意环境下都能安全运行。',
+      a: '不对。-p 在这里是 parents 的缩写，跟权限无关。设置权限用的是 -m（mode），例如 mkdir -m 755 mydir。',
+      c: '不对。mkdir 确实有 -v（verbose）选项可以打印过程，但 -p 不是做这个的。'
+    }}
+  };
+  document.querySelectorAll('.quiz .option').forEach(opt => {
+    opt.addEventListener('click', function() {
+      const qid = this.dataset.q, aid = this.dataset.a, fb = document.getElementById(qid+'-fb'), qa = answers[qid];
+      document.querySelectorAll('[data-q="'+qid+'"]').forEach(o => o.classList.remove('selected','correct','wrong'));
+      this.classList.add('selected');
+      this.classList.add(aid===qa.correct?'correct':'wrong');
+      if(aid!==qa.correct) document.querySelector('[data-q="'+qid+'"][data-a="'+qa.correct+'"]').classList.add('correct');
+      fb.className = 'feedback '+(aid===qa.correct?'correct':'wrong')+' show';
+      fb.textContent = qa.fb[aid];
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

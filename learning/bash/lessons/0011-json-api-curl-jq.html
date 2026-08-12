@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 11 课：Bash 中处理 JSON/API</title>
+<meta name="course-audit" content="2026-08-12; GNU Bash 5.3.15">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="breadcrumb">
+  <a href="../MISSION.md">使命</a> → <a href="0010-process-management.html">第 10 课</a> → 第 11 课
+</nav>
+
+<div class="lesson-meta">
+  <span class="number">第 11 课</span>
+  <span class="duration">⏱ 约 22 分钟</span>
+</div>
+
+<h1>Bash 中处理 JSON 与 API</h1>
+<p class="subtitle">curl 调用接口、jq 解析数据——现代部署脚本的数据交互标配</p>
+
+<div class="mission-tie">
+自动化经常需要调用 HTTP API 并处理 JSON。这里学习 curl 的失败与期限选项，以及用 jq 做结构化解析和构造。查询“latest”只适合发现候选版本；进入可重复流程后还要记录并固定 tag、commit、校验和或镜像 digest。
+</div>
+
+<h2>1. curl：在命令行里发 HTTP 请求</h2>
+
+<p>curl 是网络请求的瑞士军刀。你不需要记所有参数——部署脚本里用到的就是固定几个组合：</p>
+
+<pre><code><span class="comment"># 最简 GET</span>
+<span class="prompt"></span>curl https://api.example.com/health
+<span class="output">OK</span>
+
+<span class="comment"># 常用参数组合</span>
+<span class="prompt"></span>curl -fsS --connect-timeout 2 --max-time 5 https://api.example.com/health
+<span class="comment"># -f: HTTP 错误返回非零；-sS: 隐藏进度但保留错误；两个 timeout 限制连接和总时长</span></code></pre>
+
+<h3>部署脚本里 curl 的六个核心参数</h3>
+
+<table style="width:100%; margin:1rem 0;">
+  <tr style="border-bottom:1px solid var(--border);">
+    <th style="text-align:left; padding:0.3rem 0;">参数</th>
+    <th style="text-align:left; padding:0.3rem 0;">作用</th>
+    <th style="text-align:left; padding:0.3rem 0;">为什么需要</th>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>-sS</code></td><td>隐藏进度条，但仍显示错误</td><td>脚本日志需要诊断信息</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>-f</code></td><td>HTTP 错误时返回退出码 22</td><td>否则 curl 只看"请求发出去了没"，不看 HTTP 状态码——404 也返回 0！</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>--connect-timeout N</code></td><td>限制建立连接的时间</td><td>和总请求期限是不同阶段</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>-H "Header: value"</code></td><td>添加请求头</td><td>JSON 要设 Content-Type，认证要带 Token</td>
+  </tr>
+  <tr style="border-bottom:1px solid var(--border);">
+    <td><code>--data '{"key":"value"}'</code></td><td>请求体；默认会选择 POST</td><td>发送 JSON 等数据</td>
+  </tr>
+  <tr>
+    <td><code>--max-time N</code></td><td>限制整个传输时间</td><td>自动化不能无限等待</td>
+  </tr>
+</table>
+
+<div class="pitfall">
+默认情况下，curl 完成 HTTP 404/500 响应的传输后仍可能返回 0。健康检查通常使用 <code>-f</code> 或需要响应体时使用 <code>--fail-with-body</code>，但认证状态等场景有文档说明的例外，仍应校验业务响应。配合 <code>-s</code> 时加 <code>-S</code>，避免隐藏诊断。
+</div>
+
+<h3>四类典型 curl 调用</h3>
+
+<pre><code><span class="comment"># 1. 健康检查 GET —— 只关心 HTTP 状态码</span>
+if curl -fsS --connect-timeout 2 --max-time 5 http://localhost:8080/health > /dev/null; then
+    echo "OK"
+fi
+
+<span class="comment"># 2. 取 JSON 数据 GET —— 输出给 jq 解析</span>
+curl -fsS --connect-timeout 3 --max-time 10 https://api.github.com/repos/kubernetes/kubernetes/releases/latest \
+    | jq -r '.tag_name'                                    <span class="comment"># ← 马上会讲 jq</span>
+
+<span class="comment"># 3. 发 JSON 数据 POST —— 触发 Webhook、上报状态</span>
+curl -fsS --connect-timeout 3 --max-time 10 \
+    -H "Authorization: Bearer ${DEPLOY_TOKEN:?必须设置 DEPLOY_TOKEN}" \
+    -H 'Content-Type: application/json' \
+    -d '{"status":"deployed","version":"v2.0"}' \
+    https://hooks.example.com/deploy
+
+<span class="comment"># 4. 下载文件 —— 保存到本地</span>
+curl -fsSLo /tmp/release.tar.gz --connect-timeout 3 --max-time 120 \
+    https://releases.example.com/app/v2.0.tar.gz
+curl -fsSLo /tmp/release.tar.gz.sha256 --connect-timeout 3 --max-time 10 \
+    https://releases.example.com/app/v2.0.tar.gz.sha256
+(cd /tmp && sha256sum -c release.tar.gz.sha256)
+<span class="comment">#      │└─ 指定输出文件名（-o file）  └L ─ 跟随重定向（-L = --location）</span></code></pre>
+
+<div class="pitfall">校验和能发现传输损坏，但如果文件与校验和来自同一个已被攻破的来源，不能证明发布者身份。高风险制品还应验证项目提供的签名或透明日志，并固定预期摘要。</div>
+
+<h2>2. jq：在命令行里查询 JSON</h2>
+
+<p>jq 之于 JSON，相当于 awk 之于表格文本、sed 之于普通文本——它是一门专门处理 JSON 的领域特定语言。部署脚本里用得最多的就是 jq 的查询和提取能力：</p>
+
+<pre><code><span class="comment"># 创建测试 JSON</span>
+<span class="prompt"></span>cat > /tmp/demo.json &lt;&lt; 'EOF'
+{
+  "app": "myapp",
+  "version": "2.3.1",
+  "status": "running",
+  "instances": [
+    {"host": "srv1", "port": 8080, "healthy": true},
+    {"host": "srv2", "port": 8080, "healthy": false},
+    {"host": "srv3", "port": 8081, "healthy": true}
+  ],
+  "config": {
+    "maxMemory": "512M",
+    "replicas": 3
+  }
+}
+EOF
+
+<span class="comment"># 基本提取</span>
+<span class="prompt"></span>jq '.app' /tmp/demo.json             <span class="comment"># → "myapp"（带引号的 JSON 字符串）</span>
+<span class="prompt"></span>jq -r '.app' /tmp/demo.json          <span class="comment"># → myapp（-r = raw——去引号，给 Bash 用）</span>
+<span class="prompt"></span>jq '.config.replicas' /tmp/demo.json <span class="comment"># → 3（嵌套取值）</span></code></pre>
+
+<div class="insight">
+<code>-r</code>（raw output）会让字符串不带 JSON 引号，适合传给 Bash。它不会验证字段存在或类型正确；缺失字段可能输出 <code>null</code>。边界数据应结合 <code>-e</code>、<code>type</code> 或 <code>has</code> 明确校验，例如 <code>jq -er '.version | select(type == "string" and length &gt; 0)'</code>。
+</div>
+
+<h3>数组操作</h3>
+
+<pre><code><span class="prompt"></span>jq '.instances[0]' /tmp/demo.json                     <span class="comment"># 第一个元素</span>
+<span class="prompt"></span>jq '.instances[0].host' /tmp/demo.json                <span class="comment"># 第一个元素的主机名</span>
+<span class="prompt"></span>jq '.instances[] | .host' /tmp/demo.json               <span class="comment"># 所有元素的主机名（展开数组，每行一个）</span>
+<span class="output">"srv1"
+"srv2"
+"srv3"</span>
+<span class="prompt"></span>jq -r '.instances[] | .host' /tmp/demo.json           <span class="comment"># -r 去掉引号</span>
+<span class="output">srv1
+srv2
+srv3</span></code></pre>
+
+<h3>过滤——jq 版的"WHERE"</h3>
+
+<pre><code><span class="comment"># select(条件) —— 只保留符合条件的元素</span>
+<span class="prompt"></span>jq '.instances[] | select(.healthy == true)' /tmp/demo.json
+<span class="output">{ "host": "srv1", "port": 8080, "healthy": true }
+{ "host": "srv3", "port": 8081, "healthy": true }</span>
+
+<span class="comment"># 管道 + 值提取：只显示健康的实例名和端口</span>
+<span class="prompt"></span>jq -r '.instances[] | select(.healthy) | "\(.host):\(.port)"' /tmp/demo.json
+<span class="output">srv1:8080
+srv3:8081</span></code></pre>
+
+<h3>构造和转换</h3>
+
+<pre><code><span class="comment"># 提取多个字段组成新对象</span>
+<span class="prompt"></span>jq '{name: .app, ver: .version, count: .instances | length}' /tmp/demo.json
+<span class="output">{ "name": "myapp", "ver": "2.3.1", "count": 3 }</span>
+
+<span class="comment"># 只列出不健康的实例</span>
+<span class="prompt"></span>jq '[.instances[] | select(.healthy == false)]' /tmp/demo.json
+<span class="output">[{"host":"srv2","port":8080,"healthy":false}]</span>
+
+<span class="comment"># 检查是否有不健康的实例（-e 退出码 0=有结果, 1=空/无结果）</span>
+<span class="prompt"></span>if jq -e '.instances[] | select(.healthy == false)' /tmp/demo.json > /dev/null; then
+    echo "存在不健康的实例！"
+fi</code></pre>
+
+<h2>3. curl + jq 组合：实战模式</h2>
+
+<h3>模式 A：获取 GitHub 最新 Release 版本号</h3>
+
+<pre><code>get_latest_version() {
+    local repo="$1"  <span class="comment"># 例如 "kubernetes/kubernetes"</span>
+    curl -fsS --connect-timeout 3 --max-time 10 \
+        "https://api.github.com/repos/${repo}/releases/latest" \
+        | jq -er '.tag_name | select(type == "string" and length > 0)'
+}
+
+LATEST=$(get_latest_version "nginx/nginx")
+echo "最新版本: $LATEST"</code></pre>
+
+<h3>模式 B：轮询部署状态——等 CI/CD 流水线完成</h3>
+
+<pre><code><span class="comment"># 轮询一个 API 直到状态变成 "completed"
+# 知识点回顾：while（L5）+ curl -sf（本节）+ jq（本节）</span>
+wait_for_deploy() {
+    local deploy_id="$1"
+    local timeout="${2:-300}"
+    local started=$SECONDS
+
+    while (( SECONDS - started < timeout )); do
+        local status
+        status=$(curl -fsS --connect-timeout 2 --max-time 5 \
+            "https://api.ci.example.com/deploys/${deploy_id}" \
+            | jq -er '.status | select(type == "string")') \
+            || { error "状态 API 或 JSON 无效"; return 1; }
+
+        case "$status" in
+            succeeded) info "部署成功"; return 0 ;;
+            failed)    error "部署失败"; return 1 ;;
+            *)         info "当前状态: $status ($((SECONDS - started))s)..." ;;
+        esac
+        sleep 5
+    done
+    error "部署超时 (${timeout}s)"
+    return 1
+}</code></pre>
+
+<h3>模式 C：发送部署通知</h3>
+
+<pre><code>notify_deploy() {
+    local status="$1"    <span class="comment"># success / failure</span>
+    local version="$2"
+    local env="$3"
+
+    local payload
+    <span class="comment"># -n 不读输入；--arg 把 Bash 字符串按 JSON 规则转义</span>
+    payload=$(jq -n \
+        --arg status "$status" \
+        --arg version "$version" \
+        --arg env "$env" \
+        --arg time "$(date -Iseconds)" \
+        '{
+            text: "部署 \($status)",
+            version: $version,
+            environment: $env,
+            timestamp: $time
+        }')
+
+    curl -fsS --connect-timeout 3 --max-time 10 \
+        -H 'Content-Type: application/json' \
+        -d "$payload" \
+        "$WEBHOOK_URL" > /dev/null || warn "通知发送失败"
+}</code></pre>
+
+<div class="pitfall">
+不要用 Shell 字符串拼接构造 JSON。版本号若含双引号或换行，手工拼接会生成无效或含义变化的数据。用 jq 的 <code>--arg</code> 传入字符串，并对数值、布尔值等使用对应类型的构造方式。
+</div>
+
+<h3>模式 D：批量读取 JSON 配置</h3>
+
+<pre><code><span class="comment"># config.json: {"targets":[{"host":"srv1","port":22},{"host":"srv2","port":2222}]}</span>
+
+<span class="comment"># 把 JSON 数组转成 Bash 可以逐行处理的列表</span>
+jq -er '.targets[] | [.host, .port] | @tsv' config.json \
+    | while IFS=$'\t' read -r host port; do
+    info "部署到 $host:$port"
+    deploy_to "$host" "$port"
+done</code></pre>
+
+<h2>4. jq 速查：最常用的 12 个表达式</h2>
+
+<div class="diagram">
+<pre>
+  <strong>读取字段</strong>
+  .field              字段值
+  .a.b.c              嵌套取值
+  .field?             字段可选（不存在不报错）
+  .[0]                数组第一个元素
+  .[]                 展开数组每个元素
+
+  <strong>过滤与变换</strong>
+  select(.x > 0)      过滤（保留符合条件的）
+  map(.name)          对数组每个元素做映射
+  {a: .x, b: .y}      构造新对象
+  "\(.x)-\(.y)"       字符串插值（-r 配合使用）
+
+  <strong>辅助</strong>
+  length              数组长度 / 字符串长度
+  keys                对象的所有键名
+  -s                  把多行输入合并成数组（slurp）</pre>
+</div>
+
+<h2>5. 当没有 jq 时——选择真实解析器</h2>
+
+<p>不要用 grep 或 sed 解析 JSON：转义、空白、字段顺序和嵌套都会让正则方案产生错误。如果目标环境已有 Python，可以使用标准库；否则把 jq 固定为该模块的显式依赖：</p>
+
+<pre><code><span class="comment"># Python 是一个可选替代，不假定所有系统都有它</span>
+<span class="prompt"></span>printf '%s\n' '{"a":1}' \
+    | python3 -c 'import json, sys; value=json.load(sys.stdin)["a"]; print(value)'</span></code></pre>
+
+<div class="insight">
+如果脚本以 jq 为接口，就在模块环境或容器镜像中固定并检查 jq 版本，不要依赖新机器“碰巧已安装”。依赖的体积、动态库和供应链来源以所选发行包为准。
+</div>
+
+<div class="exercise">
+<h3>动手练习（5 分钟）</h3>
+<pre><code><span class="comment"># 1. 基础 curl——感受 -f 的作用</span>
+<span class="prompt"></span>curl -sS --max-time 10 https://httpstat.us/200; echo "退出码: $?"
+<span class="prompt"></span>curl -sS --max-time 10 https://httpstat.us/404; echo "退出码: $?"
+<span class="prompt"></span>curl -fsS --max-time 10 https://httpstat.us/404; echo "退出码: $?"
+<span class="comment"># 这是可选网络实验；第三方站点不可用时不要把结果归因于 curl 语义</span>
+
+<span class="comment"># 2. 创建测试 JSON，练习 jq</span>
+<span class="prompt"></span>cat > /tmp/api.json &lt;&lt; 'EOF'
+{"name":"myapp","version":"3.2.1","deployments":[
+  {"env":"staging","status":"succeeded","time":"10:00"},
+  {"env":"production","status":"succeeded","time":"10:15"},
+  {"env":"dr","status":"pending","time":"10:20"}
+]}
+EOF
+
+<span class="prompt"></span>jq '.name' /tmp/api.json                              <span class="comment"># → "myapp"</span>
+<span class="prompt"></span>jq -r '.version' /tmp/api.json                        <span class="comment"># → 3.2.1（raw 去引号）</span>
+<span class="prompt"></span>jq '.deployments | length' /tmp/api.json              <span class="comment"># → 3</span>
+<span class="prompt"></span>jq -r '.deployments[] | "\(.env): \(.status)"' /tmp/api.json
+
+<span class="comment"># 3. curl + jq 组合——读取公开 API</span>
+<span class="prompt"></span>curl -fsS --max-time 10 https://api.github.com/repos/nginx/nginx/tags \
+    | jq -er '.[0].name'                              <span class="comment"># API 返回的首项，不等于语义版本排序</span>
+
+<span class="comment"># 4. 用 jq --arg 安全构造 JSON</span>
+<span class="prompt"></span>NAME="hello \"world\""; VERSION="v1"
+<span class="prompt"></span>jq -n --arg n "$NAME" --arg v "$VERSION" '{name: $n, version: $v}'</span></code></pre>
+</div>
+
+<h2>总结</h2>
+
+<div class="diagram">
+<pre>
+  ┌──────────────────────────────────────────────────────────┐
+  │           curl + jq 速查——部署脚本必备                      │
+  │                                                          │
+  │  <strong>curl 六参数</strong>                                               │
+  │  curl -fsS --connect-timeout 3 --max-time 10 URL         │
+  │  -sS 隐藏进度但保留错误 │ -f HTTP 错误→非零状态             │
+  │  -H 请求头 │ --data 请求体 │ 两类 timeout 限制不同阶段       │
+  │                                                          │
+  │  <strong>jq 核心公式</strong>                                               │
+  │  .field         取值（嵌套用 .a.b）                         │
+  │  .[]            展开数组                                   │
+  │  select(.x > 0) 过滤                                       │
+  │  -r             输出原始值（赋值给 Bash 时必备）             │
+  │  --arg v "$V"   安全传入 Bash 变量（构造 JSON 时必备）       │
+  │                                                          │
+  │  <strong>黄金法则</strong>                                                │
+  │  ① 自动化请求设置失败语义、连接期限和总期限                  │
+  │  ② jq 输出给 Bash 时同时验证字段存在、类型和值              │
+  │  ③ 用 jq --arg 等类型化接口构造 JSON                       │
+  └──────────────────────────────────────────────────────────┘
+</pre>
+</div>
+
+<div class="quiz">
+<h3>快速自检</h3>
+
+<div class="question" id="q1">
+  <p><strong>Q1:</strong> 服务器成功完成传输并返回 HTTP 404；curl 未使用 <code>-f</code> 时通常返回什么？</p>
+  <div class="options">
+    <span class="option" data-q="q1" data-a="a">退出码 0——HTTP 404 是一个成功获取到的响应</span>
+    <span class="option" data-q="q1" data-a="b">退出码 404——和 HTTP 状态码一致</span>
+    <span class="option" data-q="q1" data-a="c">退出码 1——curl 视任何非 200 响应为错误</span>
+  </div>
+  <div class="feedback" id="q1-fb"></div>
+</div>
+
+<div class="question" id="q2">
+  <p><strong>Q2:</strong> 以下哪条命令正确地把 JSON 中 `version` 字段赋给了 Bash 变量？</p>
+  <div class="options">
+    <span class="option" data-q="q2" data-a="a">VERSION=$(jq '.version' config.json)</span>
+    <span class="option" data-q="q2" data-a="b">VERSION=$(jq -er '.version | select(type == "string" and length &gt; 0)' config.json)</span>
+    <span class="option" data-q="q2" data-a="c">VERSION=jq '.version' config.json</span>
+  </div>
+  <div class="feedback" id="q2-fb"></div>
+</div>
+
+<div class="question" id="q3">
+  <p><strong>Q3:</strong> 为什么应该用 `jq -n --arg v "$VERSION"` 而不是字符串拼接来构造 JSON？</p>
+  <div class="options">
+    <span class="option" data-q="q3" data-a="a">jq --arg 会加密变量值，更安全</span>
+    <span class="option" data-q="q3" data-a="b">--arg 能正确处理变量中的双引号、反斜杠等特殊字符，拼接会毁掉 JSON 结构</span>
+    <span class="option" data-q="q3" data-a="c">--arg 比字符串拼接运行速度快</span>
+  </div>
+  <div class="feedback" id="q3-fb"></div>
+</div>
+
+<div class="question" id="q4">
+  <p><strong>Q4:</strong> 要遍历 JSON 数组 `[{"host":"a","port":80},{"host":"b","port":443}]` 中的所有 host，jq 表达式写什么？</p>
+  <div class="options">
+    <span class="option" data-q="q4" data-a="a">jq '.[] | .host'</span>
+    <span class="option" data-q="q4" data-a="b">jq '.[0].host'</span>
+    <span class="option" data-q="q4" data-a="c">jq '.host[]'</span>
+  </div>
+  <div class="feedback" id="q4-fb"></div>
+</div>
+</div>
+
+<div class="session-footer">
+  <p>
+    📖 <strong>推荐阅读</strong>：<a href="https://jqlang.github.io/jq/manual/" target="_blank">jq 官方手册</a>（写得极好，每个函数都有实例）；<a href="https://everything.curl.dev/" target="_blank">Everything curl</a>（curl 的完整指南）<br>
+    📝 <strong>上一课</strong>：<a href="0010-process-management.html">第 10 课 — 进程管理</a><br>
+    📝 <strong>下一课预告</strong>：第 12 课 — 系统化阅读和调试脚本（遇到不认识的脚本怎么高效分析——一套方法论 + 具体流程）<br>
+    ❓ <strong>有疑问？</strong>在对话中直接问我。
+  </p>
+</div>
+
+<script>
+(function() {
+  const answers = {
+    q1: { correct: 'a', fb: {
+      a: '正确！在题设的传输成功条件下，默认 curl 不把 HTTP 404 映射为失败。自动化通常使用 -f 或 --fail-with-body，并保留 -sS 的错误输出。',
+      b: 'curl 的退出码和 HTTP 状态码是不同的东西。退出码：0=传输成功，非 0=协议/网络错误。HTTP 404 不等于退出码 404。',
+      c: '不对。默认 curl 只对网络错误（连不上、DNS 失败、超时）返回非 0。HTTP 层面的错误码不触发非 0 退出码——除非加了 -f。'
+    }},
+    q2: { correct: 'b', fb: {
+      b: '正确！-r 输出原始字符串，-e 让 false/null 或无结果返回非零，select 再约束字段类型与非空条件。',
+      a: '不完整。不带 -r 会保留 JSON 引号，而且没有验证字段缺失、类型错误或空字符串。',
+      c: '不对。这里会把 VERSION=jq 当作后续命令的临时环境赋值，并尝试执行名为 .version 的命令；少了 $() 命令替换。'
+    }},
+    q3: { correct: 'b', fb: {
+	      b: '正确！如果 VERSION 的值含有双引号（例如 v2.0"test），用字符串拼接构造 JSON 会产生格式损坏的文档。jq --arg 自动处理所有转义，安全可靠。',
+      a: '不对。jq --arg 不做加密——它做的是转义（escaping），确保变量值安全嵌入 JSON。',
+      c: '不对。--arg 是安全性考虑，不是性能考虑。实际上 --arg 涉及变量传递，可能比简单拼接还稍慢一点——但这点差异完全不重要。'
+    }},
+    q4: { correct: 'a', fb: {
+      a: '正确！`.[]` 展开数组，把数组里每个元素逐个输出；然后 `| .host` 对每个元素取 host 字段。jq 的管道（`|`）含义和 Bash 管道类似——把前面的输出传给后面的过滤器。',
+      b: '这只取第一个元素的 host——输出 "a"。要遍历所有元素需要 `.[]`。',
+      c: '语法错误。host 不是数组——数组在顶层（`[]`），host 在每个元素里。应该先展开数组（`.[]`），再取字段（`.host`）。'
+    }}
+  };
+  document.querySelectorAll('.quiz .option').forEach(opt => {
+    opt.addEventListener('click', function() {
+      const qid = this.dataset.q, aid = this.dataset.a, fb = document.getElementById(qid+'-fb'), qa = answers[qid];
+      document.querySelectorAll('[data-q="'+qid+'"]').forEach(o => o.classList.remove('selected','correct','wrong'));
+      this.classList.add('selected');
+      this.classList.add(aid===qa.correct?'correct':'wrong');
+      if(aid!==qa.correct) document.querySelector('[data-q="'+qid+'"][data-a="'+qa.correct+'"]').classList.add('correct');
+      fb.className = 'feedback '+(aid===qa.correct?'correct':'wrong')+' show';
+      fb.textContent = qa.fb[aid];
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

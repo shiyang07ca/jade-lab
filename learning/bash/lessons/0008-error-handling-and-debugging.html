@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 8 课：错误处理与调试</title>
+<meta name="course-audit" content="2026-08-12; GNU Bash 5.3.15">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="breadcrumb">
+  <a href="../MISSION.md">使命</a> → <a href="0007-text-processing-trio.html">第 7 课</a> → 第 8 课
+</nav>
+
+<div class="lesson-meta">
+  <span class="number">第 8 课</span>
+  <span class="duration">⏱ 约 20 分钟</span>
+</div>
+
+<h1>错误处理与调试</h1>
+<p class="subtitle">让脚本出错了不再默默崩溃——严格模式、信号捕获和调试技巧</p>
+
+<div class="mission-tie">
+可靠脚本必须先定义失败语义：哪些非零状态是预期分支，哪些必须停止，退出前需要清理什么，以及如何定位根因。<code>set -euo pipefail</code> 可以辅助发现部分错误，但不能代替显式检查和测试。
+</div>
+
+<h2>1. 痛点：默认情况下，Bash 不会因为你出错而停下来</h2>
+
+<p>先看一个反面教材——这段代码有一个 bug，但 Bash 会若无其事地跑完：</p>
+
+<pre><code>#!/bin/bash
+<span class="comment"># ⚠️ 危险脚本——没有错误处理</span>
+
+cd /nonexistent           <span class="comment"># 这行失败了！cd 报错</span>
+echo "当前目录: $(pwd)"   <span class="comment"># 但脚本继续执行——你还在原来的目录</span>
+rm -rf *                  <span class="comment"># 😱 你以为在 /nonexistent，实际在当前目录！</span>
+echo "清理完成"</code></pre>
+
+<div class="pitfall">
+Bash 默认不会因为简单命令返回非零就自动终止脚本，而且命令是否打印诊断信息由命令自己决定。自动化脚本应显式处理关键步骤的状态；常用的 <code>set -euo pipefail</code> 只是社区俗称的“严格模式”，它有上下文相关的例外。
+</div>
+
+<h2>2. <code>set -e</code>：在规定上下文遇到非零状态时退出</h2>
+
+<p><code>-e</code>（errexit）会让 Shell 在特定上下文中的命令返回非零时退出。先看一个不处于例外上下文的简单情况：</p>
+
+<pre><code><span class="prompt"></span>cat &gt; /tmp/test-e.sh &lt;&lt; 'EOF'
+#!/bin/bash
+set -e
+echo "第一步：正常执行"
+cd /nonexistent          <span class="comment"># 失败！退出码 ≠ 0 → 脚本在这里终止</span>
+echo "第二步：永远不会执行到这里"
+EOF
+<span class="prompt"></span>bash /tmp/test-e.sh
+<span class="output">第一步：正常执行
+/tmp/test-e.sh: line 4: cd: /nonexistent: No such file or directory</span></code></pre>
+
+<p><strong>但 <code>set -e</code> 有几个"安全阀"——以下场景命令失败不会触发退出：</strong></p>
+
+<pre><code><span class="comment"># 1. if / while / until 的条件部分——它们本来就在"测试"命令</span>
+if grep "ERROR" app.log; then   <span class="comment"># grep 没找到（退出码 1），不会触发 set -e</span>
+    echo "有错误"
+fi
+
+<span class="comment"># 2. 管道中除最后一项之外的命令（除非启用 pipefail）</span>
+false | true                     <span class="comment"># false 失败，但管道整体以 true 的退出码为准</span>
+
+<span class="comment"># 3. && / || 列表中除最后一项外的命令，以及 ! 反转的命令</span>
+false && echo "不会执行"         <span class="comment"># false 用来决定是否执行右侧</span>
+! false                           <span class="comment"># ! 把状态反转为 0</span></code></pre>
+
+<div class="insight">
+<code>set -e</code> 不是“捕获异常”。除了上述规则，函数或子 Shell 作为条件执行、命令替换和不同 Bash 兼容模式还会影响行为。关键操作仍应写成 <code>if command; then ... else ... fi</code> 或 <code>command || die ...</code>，让预期状态可读、可测试。
+</div>
+
+<h2>3. <code>set -u</code>：用了未定义的变量？报错退出</h2>
+
+<p><code>-u</code> = <strong>u</strong>nset。引用一个没有定义过的变量时，立即报错退出：</p>
+
+<pre><code><span class="prompt"></span>cat &gt; /tmp/test-u.sh &lt;&lt; 'EOF'
+#!/bin/bash
+set -u
+echo "部署到: $DEPLOY_TARGET"
+EOF
+<span class="prompt"></span>bash /tmp/test-u.sh
+<span class="output">/tmp/test-u.sh: line 3: DEPLOY_TARGET: unbound variable</span></code></pre>
+
+<p>这能防止因变量名打错（`$CONFG` 而不是 `$CONFIG`）导致的静默错误。如果你确实需要"变量可能未设置"的行为，用参数展开提供默认值：</p>
+
+<pre><code>echo "部署到: ${DEPLOY_TARGET:-production}"   <span class="comment"># 未设置时用 "production"</span></code></pre>
+
+<h2>4. <code>set -o pipefail</code>：管道中任何命令失败都算失败</h2>
+
+<p>默认情况下，管道的退出码是<strong>最后一个命令的退出码</strong>：</p>
+
+<pre><code><span class="prompt"></span>cat huge.log | grep "ERROR" | wc -l
+<span class="comment">#   ↑ 失败了     ↑ 成功了         ↑ 成功了</span>
+<span class="comment"># 管道退出码 = wc -l 的退出码 = 0（成功！）——cat 的失败被吞掉了</span>
+<span class="prompt"></span>echo $?
+<span class="output">0</span></code></pre>
+
+<p>开启 <code>pipefail</code> 后，管道返回最右侧非零命令的状态；全部成功时返回 0：</p>
+
+<pre><code><span class="prompt"></span>set -o pipefail
+<span class="prompt"></span>cat huge.log | grep "ERROR" | wc -l
+<span class="output">cat: huge.log: No such file or directory</span>
+<span class="output">       0</span>
+<span class="prompt"></span>echo $?
+<span class="output">1</span>    <span class="comment"># ← 本例只有 cat 返回非零，因此状态来自 cat</span></code></pre>
+
+<h2>5. 严格模式三合一</h2>
+
+<p>许多以 Bash 为明确运行时的自动化脚本使用这个组合，但是否启用应由脚本的失败语义决定：</p>
+
+<pre><code>#!/bin/bash
+<strong>set -euo pipefail</strong>
+<span class="comment"># -e: 在 Bash 规定的上下文遇到非零状态时退出</span>
+<span class="comment"># -u: 未定义变量 → 退出</span>
+<span class="comment"># -o pipefail: 管道返回最右侧非零状态</span></code></pre>
+
+<p>有些脚本会缩小 <code>IFS</code> 来改变未引用展开和 <code>read</code> 的分割规则。这不是严格模式的固定组成，最好只在确有需要的局部设置：</p>
+
+<pre><code>set -euo pipefail
+IFS=$'\n\t'    <span class="comment"># 只把换行和 Tab 当作分隔符（空格不再是分隔符，防止意外单词分割）</span></code></pre>
+
+<div class="pitfall">
+<code>set -e</code> 的规则来自 Shell 语法上下文：函数调用位于条件中时，函数体可能不受 errexit 影响；<code>let</code> 或 <code>(( ))</code> 的算术结果为 0 时状态也是非零。不要用覆盖率百分比描述它，应针对脚本真实分支编写测试，并以 GNU Bash 手册的 <code>The Set Builtin</code> 为准。
+</div>
+
+<h2>6. <code>trap</code>：注册退出时的清理逻辑</h2>
+
+<p><code>trap</code> 让你在脚本退出（正常或异常）时自动执行清理代码。它是 Bash 的"finally"块：</p>
+
+<h3>最常用的三种 trap</h3>
+
+<pre><code><span class="comment"># trap '命令' 信号</span>
+
+<span class="comment"># EXIT  —— Shell 按正常退出流程终止时</span>
+trap 'rm -rf "$TEMP_DIR"' EXIT
+
+<span class="comment"># ERR   —— 遵循与 errexit 相近的语法例外；不是“任何失败”</span>
+trap 'echo "脚本在第 $LINENO 行失败" >&2' ERR
+
+<span class="comment"># INT/TERM —— 用户按 Ctrl+C (SIGINT) 或被 kill (SIGTERM) 时</span>
+trap 'echo "收到中断信号，正在清理..."; exit 1' INT TERM</code></pre>
+
+<h3>部署脚本里的 trap 模式</h3>
+
+<pre><code>#!/bin/bash
+set -euo pipefail
+
+TEMP_DIR=$(mktemp -d)
+
+<span class="comment"># 无论如何退出都要清理</span>
+cleanup() {
+    local exit_code=$?
+    echo "清理中..."
+    rm -rf "$TEMP_DIR"
+    echo "退出码: $exit_code"
+}
+trap cleanup EXIT
+
+<span class="comment"># 出错时额外记录</span>
+on_error() {
+    echo "[ERROR] 脚本在第 ${1:-?} 行失败" >&2
+}
+trap 'on_error $LINENO' ERR
+
+<span class="comment"># --- 主逻辑 ---</span>
+echo "部署开始，工作目录: $TEMP_DIR"
+<span class="comment"># ... 部署步骤 ...</span>
+<span class="comment"># 脚本结束时，cleanup 自动执行——你不需要记得在每一处 exit 前写清理代码</span></code></pre>
+
+<div class="insight">
+<b>EXIT trap 适合集中清理当前 Shell 创建的临时资源。</b> 它覆盖正常结束、显式 <code>exit</code> 和常见错误退出；但 SIGKILL、主机崩溃或 <code>exec</code> 成功替换当前 Shell 等路径不会执行它。清理操作应保持幂等，并且不能把临时文件清理误写成业务回滚。
+</div>
+
+<h2>7. <code>set -x</code>：打印每条命令——最强调试手段</h2>
+
+<p>当你面对一个脚本不理解它的行为时，<code>set -x</code> 是最直接有效的调试工具：</p>
+
+<pre><code><span class="prompt"></span>cat &gt; /tmp/debug-demo.sh &lt;&lt; 'EOF'
+#!/bin/bash
+set -euo pipefail
+
+NAME="alice"
+GREETING="Hello, ${NAME}"
+DIR="${HOME}/projects"
+
+cd "$DIR" || exit 1
+echo "$GREETING"
+ls -la
+EOF
+
+<span class="prompt"></span>bash -x /tmp/debug-demo.sh
+<span class="output">+ NAME=alice
++ GREETING='Hello, alice'
++ DIR=/home/alice/projects
++ cd /home/alice/projects
++ echo 'Hello, alice'
+Hello, alice
++ ls -la
+...（文件列表）</span></code></pre>
+
+<p>每一行前面有 <code>+</code> 号的都是 Bash 实际执行的命令（变量已展开），你可以逐行追踪脚本到底执行了什么。也可以只在脚本的某一段开启：</p>
+
+<div class="pitfall"><code>set -x</code> 会打印展开后的参数，可能泄露令牌、密码或个人数据。处理敏感值前先 <code>set +x</code>，并按敏感数据管理调试日志。</div>
+
+<pre><code>set -x              <span class="comment"># 开始追踪</span>
+<span class="comment"># ... 你怀疑有 bug 的那几行 ...</span>
+set +x              <span class="comment"># 关闭追踪</span></code></pre>
+
+<p>更精细的调试——把追踪输出重定向到文件：</p>
+
+<pre><code><span class="prompt"></span>bash -x deploy.sh 2>debug.log   <span class="comment"># -x 输出到 stderr，重定向到文件慢慢看</span></code></pre>
+
+<h2>8. <code>die()</code> 模式：把错误处理和日志合并</h2>
+
+<p>现在你理解了所有零件，看部署脚本里最常见的错误处理模式——它对第 6 课的函数结构做了专门化：</p>
+
+<pre><code>#!/bin/bash
+set -euo pipefail
+
+readonly SCRIPT_NAME="$(basename "$0")"
+
+<span class="comment"># 致命错误：打印消息并退出</span>
+die() {
+    echo "[${SCRIPT_NAME}] FATAL: $*" >&2
+    exit 1
+}
+
+<span class="comment"># 仅警告</span>
+warn() {
+    echo "[${SCRIPT_NAME}] WARN: $*" >&2
+}
+
+<span class="comment"># 信息日志</span>
+info() {
+    echo "[${SCRIPT_NAME}] $(date '+%H:%M:%S') $*"
+}
+
+<span class="comment"># 使用</span>
+[[ -d "$DEPLOY_DIR" ]] || die "部署目录不存在: $DEPLOY_DIR"
+[[ -f "$CONFIG_FILE" ]] || die "配置文件不存在: $CONFIG_FILE"
+
+command -v docker > /dev/null || die "需要 Docker 但未安装"
+
+info "开始部署..."
+<span class="comment"># ... 部署逻辑 ...</span>
+info "部署完成"</code></pre>
+
+<div class="insight">
+一个实用起点是：① 根据明确的失败语义选择 Shell 选项；② 用 EXIT trap 清理当前进程创建的临时资源；③ 对边界输入和关键命令显式检查并保留错误上下文。最后仍需用失败场景测试验证行为。
+</div>
+
+<h2>9. 常见错误处理模式速查</h2>
+
+<pre><code><span class="comment"># 模式 1：不能失败的关键命令就用 || die</span>
+tar -czf "$BACKUP" "$DIR" || die "备份失败"
+
+<span class="comment"># 模式 2：预期“未匹配”时显式分支，不吞掉读取错误等其他状态</span>
+if grep -q "optional-pattern" config.ini; then
+    info "找到可选配置"
+elif [[ $? -ne 1 ]]; then
+    die "读取配置失败"
+fi
+
+<span class="comment"># 模式 3：失败后重试</span>
+check_health() {
+    local i
+    for i in {1..3}; do
+        if curl -fsS --connect-timeout 2 --max-time 5 https://api.example.com/health; then
+            return 0
+        fi
+        warn "健康检查失败，重试 $i/3..."
+        sleep 2
+    done
+    return 1
+}
+check_health || die "健康检查在 3 次重试后仍然失败"
+
+<span class="comment"># 模式 4：锁文件防重复执行</span>
+LOCK_FILE="/var/run/deploy.lock"
+exec 200>"$LOCK_FILE"                        <span class="comment"># 打开文件描述符 200</span>
+if ! flock -n 200; then
+    die "另一个部署进程正在运行"
+fi
+trap 'exec 200>&-' EXIT   <span class="comment"># 关闭描述符释放锁；不要删除仍可能被锁定的 inode</span></code></pre>
+
+<div class="exercise">
+<h3>动手练习（5 分钟）</h3>
+<pre><code><span class="comment"># 1. 体验 set -e 的效果</span>
+<span class="prompt"></span>bash -c 'set -e; echo "第一步"; false; echo "这行不会执行"'
+
+<span class="comment"># 2. 体验 set -u——故意写错变量名</span>
+<span class="prompt"></span>bash -c 'set -u; echo "$UNDEFINED_VAR"'
+
+<span class="comment"># 3. 体验 trap EXIT</span>
+<span class="prompt"></span>cat &gt; /tmp/trap-demo.sh &lt;&lt; 'EOF'
+#!/bin/bash
+TEMP=$(mktemp -d)
+trap 'echo "清理 $TEMP"; rm -rf "$TEMP"; echo "清理完成"' EXIT
+echo "工作目录: $TEMP"
+echo "做一些事情..."
+<span class="comment"># 无论正常退出还是 exit 1，trap 都会执行</span>
+EOF
+<span class="prompt"></span>bash /tmp/trap-demo.sh
+
+<span class="comment"># 4. 开启 set -x 追踪一个复杂命令</span>
+<span class="prompt"></span>bash -x -c '
+NAME=alice
+DIR="/home/${NAME}/projects"
+cd "$DIR" && echo "当前目录: $(pwd)" && ls | head -3
+'
+
+<span class="comment"># 5. 写一个完整的防御性脚本骨架</span>
+<span class="prompt"></span>cat > /tmp/safe-script.sh << 'EOF'
+#!/bin/bash
+set -euo pipefail
+
+SCRIPT_NAME="$(basename "$0")"
+die() { echo "[${SCRIPT_NAME}] FATAL: $*" >&2; exit 1; }
+info() { echo "[${SCRIPT_NAME}] $(date '+%H:%M:%S') $*"; }
+
+cleanup() {
+    local ec=$?
+    info "清理中（退出码: $ec）..."
+    [ -n "${TEMP_DIR:-}" ] && rm -rf "$TEMP_DIR"
+    exit $ec
+}
+trap cleanup EXIT
+
+info "脚本启动"
+TEMP_DIR=$(mktemp -d) || die "无法创建临时目录"
+info "工作于: $TEMP_DIR"
+
+# 你的部署逻辑写在这里
+echo "Hello from safe script!"
+
+info "脚本正常结束"
+EOF
+<span class="prompt"></span>chmod +x /tmp/safe-script.sh
+<span class="prompt"></span>/tmp/safe-script.sh</span></code></pre>
+</div>
+
+<h2>总结</h2>
+
+<div class="diagram">
+<pre>
+  ┌──────────────────────────────────────────────────────────┐
+  │              错误处理与调试 速查                           │
+  │                                                          │
+  │  <strong>常用 Shell 选项（按失败语义选择）</strong>                       │
+  │  set -e          在规定上下文遇到非零状态时退出             │
+  │  set -u          未定义变量 → 报错退出                     │
+  │  set -o pipefail 管道返回最右侧非零状态                    │
+  │                                                          │
+  │  <strong>清理与恢复</strong>                                           │
+  │  trap cleanup EXIT     退出时自动清理临时文件/锁            │
+  │  trap '...' ERR        按 ERR 继承与例外规则记录错误         │
+  │  trap '...' INT TERM   处理 Ctrl+C 和 kill                │
+  │                                                          │
+  │  <strong>调试</strong>                                                │
+  │  bash -x script.sh     追踪每条命令                        │
+  │  set -x / set +x       在脚本内局部开关追踪                │
+  │                                                          │
+  │  <strong>模式</strong>                                                │
+  │  cmd || die "msg"      关键命令不能失败                     │
+  │  if cmd; then ...      区分预期状态与真实错误                │
+  │  die() / warn() / info()   分级日志函数                    │
+  └──────────────────────────────────────────────────────────┘
+</pre>
+</div>
+
+<div class="quiz">
+<h3>快速自检</h3>
+
+<div class="question" id="q1">
+  <p><strong>Q1:</strong> 开启了 <code>set -e</code> 的脚本，下面哪条命令失败时<strong>不会</strong>导致脚本退出？</p>
+  <div class="options">
+    <span class="option" data-q="q1" data-a="a">cd /nonexistent</span>
+    <span class="option" data-q="q1" data-a="b">if grep "ERROR" app.log; then echo "有错"; fi —— 其中 grep 没找到（退出码 1）</span>
+    <span class="option" data-q="q1" data-a="c">tar -xzf broken.tar.gz</span>
+  </div>
+  <div class="feedback" id="q1-fb"></div>
+</div>
+
+<div class="question" id="q2">
+  <p><strong>Q2:</strong> <code>trap 'rm -rf "$TEMP_DIR"' EXIT</code> 的行为是？</p>
+  <div class="options">
+    <span class="option" data-q="q2" data-a="a">只在脚本正常结束时删除 TEMP_DIR</span>
+    <span class="option" data-q="q2" data-a="b">Shell 走普通退出流程时执行 rm；SIGKILL 等路径不会执行</span>
+    <span class="option" data-q="q2" data-a="c">当 TEMP_DIR 变量被修改时自动执行 rm 命令</span>
+  </div>
+  <div class="feedback" id="q2-fb"></div>
+</div>
+
+<div class="question" id="q3">
+  <p><strong>Q3:</strong> 你怀疑一个部署脚本在某行做了奇怪的操作，最快的排查方式是什么？</p>
+  <div class="options">
+    <span class="option" data-q="q3" data-a="a">在脚本里到处加 echo 语句</span>
+    <span class="option" data-q="q3" data-a="b">用 bash -x 运行脚本，追踪每条命令</span>
+    <span class="option" data-q="q3" data-a="c">把脚本重写一遍</span>
+  </div>
+  <div class="feedback" id="q3-fb"></div>
+</div>
+
+<div class="question" id="q4">
+  <p><strong>Q4:</strong> 什么是"严格模式三合一"的正确写法？</p>
+  <div class="options">
+    <span class="option" data-q="q4" data-a="a">set -eux</span>
+    <span class="option" data-q="q4" data-a="b">set -euo pipefail</span>
+    <span class="option" data-q="q4" data-a="c">set -euv pipefail</span>
+  </div>
+  <div class="feedback" id="q4-fb"></div>
+</div>
+</div>
+
+<div class="session-footer">
+  <p>
+    📖 <strong>推荐阅读</strong>：<a href="https://mywiki.wooledge.org/BashFAQ/105" target="_blank">BashFAQ 105 — set -e 的行为细节</a>（深入理解为什么有时 set -e 不触发）；<a href="https://mywiki.wooledge.org/SignalTrap" target="_blank">Signal Trap 完整参考</a><br>
+    📝 <strong>上一课</strong>：<a href="0007-text-processing-trio.html">第 7 课 — 文本处理三剑客</a><br>
+    📝 <strong>下一课预告</strong>：第 9 课 — 部署脚本常见模式（日志记录、锁文件、健康检查、回滚策略——真实部署脚本的完整套路）<br>
+    ❓ <strong>有疑问？</strong>在对话中直接问我。
+  </p>
+</div>
+
+<script>
+(function() {
+  const answers = {
+    q1: { correct: 'b', fb: {
+      b: '正确！if、while、until 的条件部分不受 set -e 的影响——这些关键词的设计目的就是"测试命令的成败"，在这里命令失败是预期行为而非错误。grep 没找到返回退出码 1，if 收到后走 else 分支，但不会触发 set -e 退出。其他两个选项是普通命令，失败会立刻触发退出。',
+      a: '会触发退出。cd /nonexistent 是普通命令（不在 if/while/until 条件中），失败后 set -e 会让脚本立即退出。',
+      c: '会触发退出。tar 命令是普通命令，解压失败→退出码≠0→set -e 触发→脚本退出。这就是我们希望的行为——解压失败不应该继续。'
+    }},
+    q2: { correct: 'b', fb: {
+      b: '正确！EXIT trap 覆盖正常结束、显式 exit 和常见错误退出，但 SIGKILL、主机崩溃或 exec 成功替换 Shell 等路径不会执行。',
+      a: '不对。EXIT trap 不只覆盖 exit 0，也会覆盖多种非零退出路径；但它仍不是所有终止方式的保证。',
+      c: '不对。trap 捕获的是信号（signal），不是变量修改。变量修改触发钩子是另一个概念（比如 DEBUG trap 或者某些 shell 的变量 watch 功能），EXIT trap 只关心脚本退出这件事。'
+    }},
+    q3: { correct: 'b', fb: {
+      b: '正确！bash -x 会在每条命令执行前打印它（变量已展开）——你不需要改一行代码就能看到脚本到底执行了什么、变量的值是什么、分支走向了哪里。输出到 stderr，可以用 bash -x script.sh 2>log 保存慢慢分析。这是 Bash 调试的第一利器。',
+      a: '有效但低效。加 echo 需要猜测哪里有问题、改了还要删、还可能漏掉关键信息。bash -x 不需要改任何代码，而且能看到所有命令的实际执行情况。',
+      c: '完全没必要。重写解决不了"排查当前脚本行为"的需求，而且可能引入新的 bug。'
+    }},
+    q4: { correct: 'b', fb: {
+      b: '正确！set -euo pipefail 是常见组合：-e 遵循 errexit 的上下文规则，-u 拒绝未定义变量，pipefail 返回管道中最右侧非零状态。它不是免测试开关。',
+      a: '-x 是调试跟踪模式，会泄露展开后的参数；它不属于这个常见错误选项组合。',
+      c: '-v 是逐行打印原始源代码（不做变量展开），主要用于调试，不是严格模式的组成部分。'
+    }}
+  };
+  document.querySelectorAll('.quiz .option').forEach(opt => {
+    opt.addEventListener('click', function() {
+      const qid = this.dataset.q, aid = this.dataset.a, fb = document.getElementById(qid+'-fb'), qa = answers[qid];
+      document.querySelectorAll('[data-q="'+qid+'"]').forEach(o => o.classList.remove('selected','correct','wrong'));
+      this.classList.add('selected');
+      this.classList.add(aid===qa.correct?'correct':'wrong');
+      if(aid!==qa.correct) document.querySelector('[data-q="'+qid+'"][data-a="'+qa.correct+'"]').classList.add('correct');
+      fb.className = 'feedback '+(aid===qa.correct?'correct':'wrong')+' show';
+      fb.textContent = qa.fb[aid];
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
