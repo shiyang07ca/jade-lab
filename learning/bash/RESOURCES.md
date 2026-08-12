@@ -14,6 +14,10 @@
   jq 过滤器、类型、退出状态和参数传递的官方说明。用于 JSON 处理练习。
 - [Everything curl](https://everything.curl.dev/)
   由 curl 项目维护的协议、命令行、退出状态和安全说明。用于 HTTP/API 与失败处理练习。
+- [curl command-line manual](https://curl.se/docs/manpage.html)
+  当前命令行选项与退出状态的一手说明；课件中的 `-f`、`-sS`、连接期限和总期限以此核实。
+- [util-linux flock manual](https://man7.org/linux/man-pages/man1/flock.1.html)
+  Linux 课程示例所用 `flock` 接口；它不是 POSIX 或 macOS 默认接口。
 - [The Linux Command Line — William Shotts](https://linuxcommand.org/tlcl.php)
   可公开阅读的系统入门教材。用于第一次建立命令行全貌；精确语义仍回到 Bash、POSIX 或具体工具手册。
 
@@ -26,7 +30,7 @@
 - [Stack Overflow — bash](https://stackoverflow.com/questions/tagged/bash)
   用于定位具体错误和相似案例，不把高票数当作正确性证明。
 
-## Gaps
+## 适用边界
 
-- 尚缺一份学习者实际需要维护的部署脚本。没有这个输入，无法验证课程知识是否能迁移到真实工作。
+- 尚缺一份学习者实际需要维护的脱敏脚本或日志，用于验证知识能否迁移到真实工作。
 - 部署、systemd、PostgreSQL 和联网 API 示例依赖课程 Bash 镜像之外的系统工具；投入真实使用前必须在目标平台固定并验证这些依赖。

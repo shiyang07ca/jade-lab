@@ -41,6 +41,38 @@ test_errexit_context() {
   assert_equal "survived" "$output" 'errexit condition context'
 }
 
+test_errexit_function_condition_context() {
+  local output
+  output=$(bash -c 'set -e; step() { false; printf survived; }; if step; then :; fi')
+  assert_equal "survived" "$output" 'errexit function condition context'
+}
+
+test_command_substitution() {
+  local output
+  output=$(printf 'value\n\n')
+  assert_equal "value" "$output" 'command substitution trailing newlines'
+}
+
+test_declaration_masks_substitution_status() {
+  local output
+  output=$(bash -c 'readonly value="$(false)"; printf "%s" "$?"')
+  assert_equal "0" "$output" 'readonly masks command-substitution status'
+}
+
+test_errexit_arithmetic() {
+  local output
+  output=$(bash -c 'set -e; elapsed=0; ((elapsed += 1)); printf survived')
+  assert_equal "survived" "$output" 'errexit-safe arithmetic increment'
+}
+
+test_pipeline_subshell() {
+  local value=outer
+  printf '%s\n' input | while IFS= read -r _; do
+    value=inner
+  done
+  assert_equal "outer" "$value" 'pipeline loop subshell'
+}
+
 test_wait_statuses() {
   local first_pid second_pid first_status=0 second_status=0
   (sh -c 'exit 7') &
@@ -67,6 +99,11 @@ main() {
   test_quoted_arguments
   test_pipefail
   test_errexit_context
+  test_errexit_function_condition_context
+  test_command_substitution
+  test_declaration_masks_substitution_status
+  test_errexit_arithmetic
+  test_pipeline_subshell
   test_wait_statuses
   test_exit_cleanup
   printf 'Bash course smoke checks passed\n'

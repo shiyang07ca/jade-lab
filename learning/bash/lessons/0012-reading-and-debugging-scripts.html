@@ -19,10 +19,10 @@
 </div>
 
 <h1>系统化阅读与调试脚本</h1>
-<p class="subtitle">面对一个 200 行的陌生部署脚本——你怎么快速看懂它？</p>
+<p class="subtitle">先建立执行模型，再沿输入、状态变化、外部边界和失败路径验证行为</p>
 
 <div class="mission-tie">
-前 11 课教了你 Bash 的每块零件。这课教你 <b>怎么看懂整台机器</b>。面对同事的部署脚本、GitHub 上的参考实现、或者半年前自己写的脚本——你需要的不只是语法知识，而是<b>一套阅读方法论</b>：从哪开始、看什么不看什么、遇到不懂的怎么查、怀疑有 bug 怎么验证。这比再学 10 个命令都管用。
+前 11 课覆盖了脚本运行、数据传递、失败处理和外部调用。本课把这些知识用于阅读现有脚本：先建立结构和主路径，再核实陌生语义，并用最小用例验证失败路径。
 </div>
 
 <h2>1. 阅读策略：四遍法</h2>
@@ -31,16 +31,16 @@
 
 <div class="diagram">
 <pre>
-  <strong>第一遍</strong>（2 分钟）  扫结构——这个脚本有几"块"？骨架长什么样？
-  <strong>第二遍</strong>（5 分钟）  追主干——main() 从头到尾走了什么路径？
-  <strong>第三遍</strong>（10 分钟）  查细节——关键命令的参数含义、变量的来源
-  <strong>第四遍</strong>（按需）    调试验证——特定行为有疑问时用 bash -x 追踪
+  <strong>第一遍</strong>（快速）  扫结构——这个脚本有几"块"？骨架长什么样？
+  <strong>第二遍</strong>（主干）  追路径——main() 从头到尾走了什么路径？
+  <strong>第三遍</strong>（定点）  查细节——关键命令的参数含义、变量的来源
+  <strong>第四遍</strong>（按需）  调试验证——特定行为有疑问时构造受控实验
 </pre>
 </div>
 
 <h2>2. 第一遍：扫结构——认出骨架模式</h2>
 
-<p>不要读代码内容，只读"形状"。扫一眼就能认出的信号：</p>
+<p>第一遍先不进入函数实现，只读结构。优先识别这些信号：</p>
 
 <pre><code><span class="comment"># 打开脚本，第一眼扫什么？</span>
 
@@ -111,7 +111,7 @@ main "$@"                                <span class="comment"># ← 启动：�
   </tr>
   <tr style="border-bottom:1px solid var(--border);">
     <td>不认识的命令或参数组合</td>
-    <td><code>man 命令名</code> 或 <a href="https://explainshell.com/" target="_blank">explainshell.com</a></td>
+    <td><code>type -a 命令名</code> 确认实现，再查 <code>man 命令名</code> 或项目官方手册</td>
   </tr>
   <tr style="border-bottom:1px solid var(--border);">
     <td><code>${VAR:-default}</code>、<code>${VAR%.*}</code></td>
@@ -119,11 +119,11 @@ main "$@"                                <span class="comment"># ← 启动：�
   </tr>
   <tr style="border-bottom:1px solid var(--border);">
     <td><code>[[ ... ]]</code> 里面的奇怪条件</td>
-    <td><code>help test</code> 或 <code>help [[ ]]</code></td>
+    <td><code>help test</code> 或 <code>help '[[ '</code>（也可运行 <code>help [[</code>）</td>
   </tr>
   <tr style="border-bottom:1px solid var(--border);">
-    <td>可疑的写法——隐隐觉得有 bug</td>
-    <td><a href="https://www.shellcheck.net/" target="_blank">shellcheck.net</a>——把脚本贴进去</td>
+    <td>可疑的引用、test 或数据流</td>
+    <td>运行仓库固定版本的本地 <code>shellcheck</code>，再用最小失败用例验证</td>
   </tr>
   <tr>
     <td>某个变量的值到底是多少？</td>
@@ -151,7 +151,7 @@ set +x          <span class="comment"># ← 到这里结束追踪</span></code><
 <h3>Level 2：打印关键变量——最小侵入</h3>
 
 <pre><code><span class="comment"># 不是漫天撒 echo，而是只在关键决策点打印</span>
-echo "[DEBUG] ENV=$ENV, VERSION=$VERSION, TARGET=${TARGET:-未设置}" >&2
+echo "[DEBUG] ENV=$ENV, VERSION=$VERSION, TARGET=${TARGET:-未设置}" &gt;&amp;2
 <span class="comment">#                                                         ↑
 #                                   输出到 stderr，不污染 stdout 数据流</span></code></pre>
 
@@ -186,13 +186,13 @@ fi
 <span class="comment"># db-migrate.sh — 数据库迁移脚本</span>
 set -euo pipefail
 
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &amp;&amp; pwd)"
 readonly MIGRATIONS_DIR="${SCRIPT_DIR}/migrations"
 : "${DB_HOST:=localhost}"  : "${DB_PORT:=5432}"
 : "${DB_NAME:=myapp}"      : "${DB_USER:=admin}"
 : "${DB_PASSWORD:?必须设置 DB_PASSWORD}"
 
-log() { echo "[$(date '+%H:%M:%S')] $*" >&2; }
+log() { echo "[$(date '+%H:%M:%S')] $*" &gt;&amp;2; }
 die() { log "FATAL: $*"; exit 1; }
 
 run_sql() {
@@ -275,27 +275,32 @@ main "$@"</code></pre>
 <h3>第四遍：有什么潜在问题？</h3>
 
 <ul style="margin:0.5rem 0; padding-left:1.5rem;">
+  <li><code>readonly SCRIPT_DIR="$(...)"</code> 会让 <code>readonly</code> 的状态掩盖命令替换中的 <code>cd</code> 失败；应先单独赋值并检查，再声明只读。</li>
   <li><code>echo "$applied" | grep -qF "$name"</code> → 如果迁移文件名恰好是另一个文件名的前缀，<code>-F</code> 可能误判？这里的逻辑是"文件名完全等于某行"还是"包含"？看源码是 <code>grep -F</code> + 不锚定，所以只要文件名 <strong>作为子串出现</strong>就算"已执行"。如果迁移文件叫 <code>1.sql</code> 和 <code>11.sql</code>——<code>1.sql</code> 会匹配到 <code>11.sql</code>。这是一个潜在的 bug！</li>
   <li><code>get_applied</code> 把数据库查询失败降级为空列表，可能重新执行全部迁移；这里没有恢复语义，应该失败退出。</li>
+  <li><code>psql -t</code> 仍可能输出对齐空白；若继续采用逐行比较，还要使用无对齐输出并准确比较整行，例如 <code>-At</code> 与 <code>grep -Fxq --</code>。</li>
   <li>执行迁移和写入记录是两次独立的 <code>psql</code> 调用，中途失败会留下“数据库已改、记录未写”的状态；还没有并发锁。</li>
   <li>文件名直接拼进 SQL 字符串，存在引号与 SQL 注入问题；<code>direction</code> 参数也没有真正控制任何行为。</li>
+  <li>脚本没有定义迁移文件名规则和排序环境；数据库迁移顺序不能依赖未经约束的 glob 与 locale。</li>
 </ul>
 
 <div class="pitfall">这段脚本是代码审查练习，不是迁移工具模板。真实服务优先采用成熟迁移工具，并明确事务支持、并发锁、不可事务化语句和回滚策略。</div>
 
 <div class="insight">
-<b>这就是四遍法的价值所在。</b> 如果你从第 1 行逐字读，读到第 50 行时早忘了第 20 行在干什么。但先建骨架、再追主干、最后查细节——你能在 15 分钟内理解一个 200 行的脚本，并且发现潜在的逻辑问题。
+<b>四遍法的价值是把“理解”和“验证”分开。</b>先建骨架、再追主干、最后查细节和构造失败用例；所需时间取决于脚本副作用、外部依赖和领域规则，不能由行数直接推断。
 </div>
 
 <div class="exercise">
 <h3>动手练习（5 分钟）</h3>
 <p>用四遍法分析下面这段故意带缺陷的脚本。除了正常路径，重点检查：相对路径在 <code>cd</code> 后指向哪里、报告的生命周期、管道的子 Shell 是否真的影响结果，以及被忽略的错误是否有恢复语义。</p>
 <pre><code><span class="comment"># 这个脚本在干什么？用四遍法分析</span>
-<span class="prompt"></span>cat > /tmp/mystery-script.sh &lt;&lt; 'EOF'
+<span class="prompt"></span>exercise_dir=$(mktemp -d) || exit 1
+<span class="prompt"></span>mystery_script="$exercise_dir/mystery-script.sh"
+<span class="prompt"></span>cat &gt; "$mystery_script" &lt;&lt; 'EOF'
 #!/bin/bash
 set -euo pipefail
 
-readonly BASE="${1:?用法: $0 <目录>}"
+readonly BASE="${1:?用法: $0 &lt;目录&gt;}"
 readonly OUT="${2:-report.txt}"
 
 tmp=$(mktemp -d)
@@ -304,7 +309,7 @@ cd "$tmp" || exit 1
 
 find "$BASE" -type f -name '*.log' | while IFS= read -r f; do
     bn=$(basename "$f")
-    grep -c 'ERROR' "$f" > /dev/null 2>&1 || continue
+    grep -c 'ERROR' "$f" &gt; /dev/null 2&gt;&amp;1 || continue
     cp "$f" "${bn}.bak" 2>/dev/null || true
     sort -t' ' -k2 "$f" | awk '{print $1, $4, $5}' > "${bn}.parsed"
 done
@@ -313,18 +318,29 @@ echo "=== 报告 ===" > "$OUT"
 for f in *.parsed; do
     [[ -f "$f" ]] || continue
     name="${f%.parsed}"
-    wc -l < "$f" >> "$OUT"
+    wc -l &lt; "$f" &gt;&gt; "$OUT"
 done
 
 echo "报告已生成: $OUT"
 EOF
-<span class="prompt"></span>chmod +x /tmp/mystery-script.sh
+<span class="prompt"></span>chmod +x "$mystery_script"
 
 <span class="comment"># 试着回答：
 # 1. 第一遍：骨架——有哪些部分？
 # 2. 第二遍：主干——正常路径是什么？
 # 3. 第三遍：哪些写法需要查？管道子 Shell 在这里是否真的改变结果？
-# 4. 第四遍：有什么潜在问题？</span></code></pre>
+# 4. 第四遍：有什么潜在问题？
+# 完成后：rm -rf -- "$exercise_dir"</span></code></pre>
+
+<details>
+<summary>完成后展开复核要点</summary>
+<ul>
+  <li><code>BASE</code> 和 <code>OUT</code> 若是相对路径，会在 <code>cd "$tmp"</code> 后改变含义；报告还会随临时目录被删除。</li>
+  <li><code>grep -c ... || continue</code> 把“没有匹配”和“无法读取”都当成跳过；<code>cp ... || true</code> 则隐藏了备份失败。</li>
+  <li>不同目录中的同名日志会写入同一个 <code>${bn}.parsed</code>；报告计算了 <code>name</code> 却没有输出它。</li>
+  <li>管道确实让 <code>while</code> 在子 Shell 中运行，但本例没有依赖循环修改外层变量；这不是当前故障根因。</li>
+</ul>
+</details>
 </div>
 
 <div class="quiz">
@@ -373,7 +389,7 @@ EOF
 
 <div class="session-footer">
   <p>
-    📖 <strong>推荐阅读</strong>：<a href="https://www.gnu.org/software/bash/manual/" target="_blank">GNU Bash 官方手册</a>；<a href="https://www.shellcheck.net/" target="_blank">ShellCheck</a>（本仓库使用固定版本的本地命令）<br>
+    📖 <strong>一手资料</strong>：<a href="https://www.gnu.org/software/bash/manual/bash.html" target="_blank">GNU Bash 官方手册</a>；<a href="https://github.com/koalaman/shellcheck" target="_blank">ShellCheck 仓库</a>（本仓库使用固定版本的本地命令）<br>
     📋 <strong>速查参考</strong>：<a href="../reference/expansion-and-quoting.html">变量展开与引用速查表</a><br>
     📝 <strong>上一课</strong>：<a href="0011-json-api-curl-jq.html">第 11 课 — Bash 中处理 JSON/API</a><br>
     📝 <strong>下一课预告</strong>：第 13 课 — 日志分析脚本的逐步实现与审查<br>

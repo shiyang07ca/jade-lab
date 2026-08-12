@@ -5,17 +5,8 @@
 
 ## 内容去向
 
-- 学习使命、课程、资料和已经由表现证明的学习结果进入 `learning/`。
-- 由其他代码导入、链接或声明为依赖的稳定模块进入 `packages/`。
-- OJ 尝试进入 `problems/`；这里允许未完成实现。
-- 围绕明确问题且需要独立环境的验证进入 `labs/`。
-- 由人、CI 或定时任务直接启动、完成一个命名的重复工作流程的程序进入 `tools/`。
-- 需要长期重复阅读的第三方源码以固定 submodule 进入 `references/`。
-- 一次性验证、机器状态、缓存和完整日志进入 `.scratch/`。
-
-不能证明用途或行为的占位实现直接删除，由 Git 历史承担恢复职责。课程中产生的代码仍按代码本身的调用方式归类，
-不复制到 `learning/`。`packages/` 与 `tools/` 的准入条件见
-[`docs/project/architecture.md`](docs/project/architecture.md)，各目录 README 只保存模块清单和本目录特有说明。
+目录职责、准入和迁移统一见 [`docs/project/architecture.md`](docs/project/architecture.md)。同一实现只保留一个真实
+位置；课程与文档使用链接，不复制代码。不能证明用途或行为的占位实现删除，由 Git 历史承担恢复职责。
 
 ## 检查
 

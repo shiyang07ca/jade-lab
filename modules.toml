@@ -14,6 +14,7 @@ path = "learning/go"
 kind = "learning"
 status = "active"
 summary = "Go 语言、后端工程与固定开源案例课程"
+checks = [["sh", "check.sh"]]
 
 [[modules]]
 id = "learning-bash"

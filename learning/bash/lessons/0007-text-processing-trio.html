@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第 7 课：文本处理三剑客</title>
+<title>第 7 课：grep、sed 与 awk</title>
 <meta name="course-audit" content="2026-08-12; GNU Bash 5.3.15">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -18,8 +18,8 @@
   <span class="duration">⏱ 约 22 分钟</span>
 </div>
 
-<h1>文本处理三剑客</h1>
-<p class="subtitle">grep 搜索、sed 编辑、awk 切分——部署脚本里处理文本的三件兵器</p>
+<h1>grep、sed 与 awk</h1>
+<p class="subtitle">先明确输入格式，再用小工具筛选、转换和聚合文本</p>
 
 <div class="mission-tie">
 部署脚本经常需要文本处理：<code>grep ERROR app.log | tail -20</code> 查错误、<code>sed</code> 生成修改后的文本、<code>awk '{print $1}' access.log | sort | uniq -c</code> 统计列值。本课先掌握高频接口；遇到复杂格式、转义或多层状态时，优先使用结构化格式及其专用解析器。
@@ -48,11 +48,10 @@
 
 <h3>三种正则口味：基本、扩展、Perl</h3>
 
-<pre><code><span class="prompt"></span>grep   "a\|b"      <span class="comment"># 基本正则（默认）：| 和 + 需要反斜杠转义</span>
-<span class="prompt"></span>grep -E "a|b"      <span class="comment"># 扩展正则（推荐）：|、+、(、) 可以直接用</span>
-<span class="prompt"></span>grep -P "\d{3}"    <span class="comment"># Perl 正则：支持 \d、\w、\s 等（部分系统不支持）</span>
+<pre><code><span class="prompt"></span>grep   "error"      <span class="comment"># 基本正则（默认）；语法以 POSIX BRE 为基线</span>
+<span class="prompt"></span>grep -E "a|b"      <span class="comment"># 扩展正则：|、+、(、) 可直接使用</span>
 
-<span class="comment"># 日常使用建议：-E（扩展正则）是甜点位置</span>
+<span class="comment"># 脚本需要分支、分组或重复时，显式使用可移植的 -E</span>
 <span class="prompt"></span>grep -E "ERROR|FATAL|PANIC" app.log                        <span class="comment"># 匹配三种级别</span>
 <span class="prompt"></span>grep -E "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"   <span class="comment"># 仅匹配 IPv4 外形，不校验 0-255</span>
 <span class="prompt"></span>grep -E "2026-07-2[2-5] .*ERROR" app.log                   <span class="comment"># 日期范围 + ERROR</span></code></pre>
@@ -77,6 +76,10 @@ fi
 <div class="insight">
 <b>grep 最常和管道配合。</b> 先 grep 筛选出感兴趣的行，然后传给 sed 或 awk 做进一步处理，最后可能再用一个管道传给 sort/uniq/wc——这就是经典的"管道处理链"。
 </div>
+
+<div class="pitfall"><code>grep -c</code> 在没有匹配时会输出 <code>0</code>，但状态是 1；读取或语法错误通常返回 2。
+自动化不能只解析数字输出，还要按调用目的处理状态。GNU <code>grep -q</code> 找到匹配后可能立即返回 0，
+即使后续输入发生错误；需要证明所有输入均成功读取时，不应依赖 <code>-q</code>。</div>
 
 <h2>2. sed：流编辑器——改内容</h2>
 
@@ -133,6 +136,8 @@ sed '/^$/d' config.ini            <span class="comment"># 删除所有空行</sp
 <span class="comment"># 在匹配行后追加</span>
 sed '/\[server\]/a port=8080' config.ini</code></pre>
 
+<div class="pitfall">最后一种把追加文本写在同一行的形式按 GNU sed 讲解；POSIX 形式要求在 <code>a</code> 后使用反斜杠和换行。跨平台脚本应按目标系统手册验证，或改用专用配置解析器。</div>
+
 <h2>3. awk：列处理器——切分和计算</h2>
 
 <p>awk 是一门记录与字段处理语言。先掌握按列筛选和聚合，再按实际需求查数组、函数和控制流。</p>
@@ -160,7 +165,7 @@ awk 默认按<strong>任意空白</strong>（空格/Tab）切分——连续的�
 <pre><code><span class="prompt"></span>echo "alice:developer:85000" | awk -F: '{print $2}'
 <span class="output">developer</span>                        <span class="comment"># -F: 用冒号做分隔符</span>
 
-<span class="prompt"></span>grep "^[^#]" /etc/passwd | awk -F: '{print $1, $7}' | head -3
+<span class="prompt"></span>awk -F: '$0 !~ /^#/ {print $1, $7; if (++seen == 3) exit}' /etc/passwd
 <span class="output">root /bin/zsh
 daemon /usr/sbin/nologin
 bin /usr/sbin/nologin</span>            <span class="comment"># 用户名 + Shell 类型</span></code></pre>
@@ -179,18 +184,19 @@ bin /usr/sbin/nologin</span>            <span class="comment"># 用户名 + Shel
 
 <span class="comment"># 模式 3：计算——求和、求平均、计数</span>
 <span class="prompt"></span>awk '{sum += $3} END {print sum}' data.txt        <span class="comment"># 第 3 列求和</span>
-<span class="prompt"></span>awk '{sum += $1; count++} END {print sum/count}'  <span class="comment"># 第 1 列平均值</span></code></pre>
+<span class="prompt"></span>awk '{sum += $1; count++} END {if (count) print sum/count}'  <span class="comment"># 第 1 列平均值；空输入不除零</span></code></pre>
 
-<p>awk 的完整能力可以写一本书——它有变量、循环、函数、数组。<strong>但对于部署脚本，你只需要上面这些。</strong> 看到更复杂的 awk 用法时，把它理解成"一个在管道里处理列的小程序"即可。</p>
+<p>awk 还有变量、循环、函数和数组。本课程先要求能验证按列筛选与聚合；遇到复杂 awk 时，把它当作一个独立小程序，
+先确认输入格式和状态，再查对应实现的手册。</p>
 
-<h2>4. 组合三剑客：经典的管道处理链</h2>
+<h2>4. 组合工具：让每一步只做一件事</h2>
 
 <pre><code><span class="comment"># 场景：分析 Nginx 访问日志，找出请求量 Top 5 的 IP</span>
 <span class="prompt"></span>awk '{print $1}' /var/log/nginx/access.log \
     | sort \
     | uniq -c \
     | sort -rn \
-    | head -5
+    | awk 'NR &lt;= 5'
 
 <span class="comment"># 场景：检查磁盘使用率，列出将要满的挂载点</span>
 <span class="prompt"></span>df -h | awk 'NR>1 &amp;&amp; $5+0 > 80 {print $6, $5}'
@@ -200,6 +206,9 @@ bin /usr/sbin/nologin</span>            <span class="comment"># 用户名 + Shel
 <span class="prompt"></span>grep -Eo "(Error|Warn|Fatal) [A-Za-z]+" app.log \
     | awk '{print $2}' \
     | sort | uniq -c | sort -rn</code></pre>
+
+<div class="pitfall"><code>df -h</code> 和 <code>ps aux</code> 是面向人的显示，字段会受实现、locale 和数据内容影响。
+需要自动判定时优先使用目标平台提供的机器接口；若只能解析命令输出，固定实现与 locale，并用真实边界夹具测试。</div>
 
 <h2>5. 三元对照：什么时候用哪个？</h2>
 
@@ -215,9 +224,9 @@ bin /usr/sbin/nologin</span>            <span class="comment"># 用户名 + Shel
     <td><code>grep 'ERROR' file</code></td>
   </tr>
   <tr style="border-bottom:1px solid var(--border);">
-    <td>把配置文件的 old 改成 new</td>
+    <td>预览配置文件的 old→new 变换</td>
     <td><code>sed</code></td>
-    <td><code>sed -i 's/old/new/' file</code></td>
+    <td><code>sed 's/old/new/' file</code></td>
   </tr>
   <tr style="border-bottom:1px solid var(--border);">
     <td>提取日志第 3 列（IP）</td>
@@ -240,17 +249,18 @@ bin /usr/sbin/nologin</span>            <span class="comment"># 用户名 + Shel
     <td><code>awk -F: '{print $1, $5}' /etc/passwd</code></td>
   </tr>
   <tr>
-    <td>过滤 ps 输出的特定进程</td>
-    <td><code>grep</code></td>
-    <td><code>ps aux | grep '[n]ginx'</code>（巧妙的"不匹配自己"写法）</td>
+    <td>按名称查找进程</td>
+    <td><code>pgrep</code></td>
+    <td><code>pgrep -af nginx</code>（选项依实现而异）</td>
   </tr>
 </table>
 
 <div class="exercise">
 <h3>动手练习（5 分钟）</h3>
-<p>先创建测试数据，然后逐条试验三剑客的用法：</p>
+<p>先创建测试数据，再逐条观察筛选、转换和聚合的边界：</p>
 <pre><code><span class="comment"># 创建模拟日志</span>
-<span class="prompt"></span>cat &gt; /tmp/sample.log &lt;&lt; 'EOF'
+<span class="prompt"></span>workdir=$(mktemp -d)
+<span class="prompt"></span>cat &gt; "$workdir/sample.log" &lt;&lt; 'EOF'
 2026-07-27 10:01:23 INFO  Server started on port 8080
 2026-07-27 10:02:15 ERROR Connection refused from 192.168.1.100
 2026-07-27 10:02:16 WARN  Retry attempt 1 for 192.168.1.100
@@ -262,23 +272,24 @@ bin /usr/sbin/nologin</span>            <span class="comment"># 用户名 + Shel
 EOF
 
 <span class="comment"># === grep 练习 ===</span>
-<span class="prompt"></span>grep ERROR /tmp/sample.log                          <span class="comment"># 只看 ERROR 行</span>
-<span class="prompt"></span>grep -c ERROR /tmp/sample.log                       <span class="comment"># 统计 ERROR 数量</span>
-<span class="prompt"></span>grep -E "ERROR|FATAL" /tmp/sample.log                <span class="comment"># ERROR 或 FATAL</span>
-<span class="prompt"></span>grep -v INFO /tmp/sample.log                         <span class="comment"># 排除 INFO 行</span>
+<span class="prompt"></span>grep ERROR "$workdir/sample.log"                          <span class="comment"># 只看 ERROR 行</span>
+<span class="prompt"></span>grep -c ERROR "$workdir/sample.log"                       <span class="comment"># 统计 ERROR 数量</span>
+<span class="prompt"></span>grep -E "ERROR|FATAL" "$workdir/sample.log"                <span class="comment"># ERROR 或 FATAL</span>
+<span class="prompt"></span>grep -v INFO "$workdir/sample.log"                         <span class="comment"># 排除 INFO 行</span>
 
 <span class="comment"># === sed 练习 ===</span>
-<span class="prompt"></span>sed 's/ERROR/!!ERROR!!/' /tmp/sample.log             <span class="comment"># 高亮 ERROR</span>
-<span class="prompt"></span>sed 's/192\.168\.1\.100/192.168.1.200/g' /tmp/sample.log  <span class="comment"># 替换 IP</span>
+<span class="prompt"></span>sed 's/ERROR/!!ERROR!!/' "$workdir/sample.log"             <span class="comment"># 高亮 ERROR</span>
+<span class="prompt"></span>sed 's/192\.168\.1\.100/192.168.1.200/g' "$workdir/sample.log"  <span class="comment"># 替换 IP</span>
 
 <span class="comment"># === awk 练习 ===</span>
-<span class="prompt"></span>awk '{print $1, $2, $3, $5}' /tmp/sample.log         <span class="comment"># 提取日期时间级别+消息碎片</span>
-<span class="prompt"></span>awk '$3 == "ERROR" {print $0}' /tmp/sample.log       <span class="comment"># 筛选 ERROR 行</span>
-<span class="prompt"></span>awk '{print $3}' /tmp/sample.log | sort | uniq -c    <span class="comment"># 统计每种级别出现次数</span>
+<span class="prompt"></span>awk '{print $1, $2, $3, $5}' "$workdir/sample.log"         <span class="comment"># 提取日期时间级别+消息碎片</span>
+<span class="prompt"></span>awk '$3 == "ERROR" {print $0}' "$workdir/sample.log"       <span class="comment"># 筛选 ERROR 行</span>
+<span class="prompt"></span>awk '{print $3}' "$workdir/sample.log" | sort | uniq -c    <span class="comment"># 统计每种级别出现次数</span>
 
 <span class="comment"># === 经典组合技 ===</span>
-<span class="prompt"></span>grep -E "ERROR|FATAL" /tmp/sample.log \
-    | awk '{print $NF}' | sort | uniq -c | sort -rn</span></code></pre>
+<span class="prompt"></span>grep -E "ERROR|FATAL" "$workdir/sample.log" \
+    | awk '{print $NF}' | sort | uniq -c | sort -rn
+<span class="prompt"></span>rm -rf -- "$workdir"</code></pre>
 </div>
 
 <h2>总结</h2>
@@ -286,13 +297,13 @@ EOF
 <div class="diagram">
 <pre>
 ┌──────────────────────────────────────────────────────────┐
-│              文本处理三剑客 速查                            │
+│              grep、sed 与 awk 速查                         │
 │                                                          │
 │  <strong>grep</strong> — 搜索行       <strong>sed</strong> — 改内容        <strong>awk</strong> — 切分列    │
 │                                                          │
 │  grep PAT file          sed 's/old/new/'   awk '{print $1}'
 │  -i  忽略大小写          s/old/new/<strong>g</strong>     全局  $0     整行
-│  -v  反选               -i        原地修改  $1..$N 第 N 列
+│  -v  反选               -i        原地修改* $1..$N 第 N 列
 │  -r  递归搜索           -i.bak    改前备份  $NF   最后一列
 │  -n  显示行号           /PAT/d     删除行   NR    行号
 │  -c  只计数                                            │
@@ -300,7 +311,7 @@ EOF
 │  -q  安静（只判退出码）     分隔符可换：s|old|new|       -F:    冒号分隔
 │  -o  只输出匹配部分                                    │
 │                                                          │
-│  管道经典链：grep → awk → sort → uniq -c → sort -rn → head │
+│  * -i 接口依 sed 实现而异；组合前确认格式、状态和空输入      │
 └──────────────────────────────────────────────────────────┘
 </pre>
 </div>
@@ -339,11 +350,11 @@ EOF
 </div>
 
 <div class="question" id="q4">
-  <p><strong>Q4:</strong> 要把配置文件里所有 <code>host=localhost</code> 改成 <code>host=db.internal</code> 并直接保存，命令是？</p>
+  <p><strong>Q4:</strong> 要跨 GNU/BSD sed 预览配置变换，且不修改原文件，应该先运行哪条命令？</p>
   <div class="options">
-    <span class="option" data-q="q4" data-a="a">sed -i 's/host=localhost/host=db.internal/' config.ini</span>
-    <span class="option" data-q="q4" data-a="b">sed 's/host=localhost/host=db.internal/' > config.ini</span>
-    <span class="option" data-q="q4" data-a="c">grep -l 'host=localhost' config.ini | sed -i 's/host=localhost/host=db.internal/'</span>
+    <span class="option" data-q="q4" data-a="a">sed 's/host=localhost/host=db.internal/g' config.ini</span>
+    <span class="option" data-q="q4" data-a="b">sed 's/host=localhost/host=db.internal/g' config.ini &gt; config.ini</span>
+    <span class="option" data-q="q4" data-a="c">grep -l 'host=localhost' config.ini | sed 's/host=localhost/host=db.internal/g'</span>
   </div>
   <div class="feedback" id="q4-fb"></div>
 </div>
@@ -351,9 +362,9 @@ EOF
 
 <div class="session-footer">
   <p>
-    📖 <strong>推荐阅读</strong>：<a href="https://www.grymoire.com/Unix/Sed.html" target="_blank">Grymoire Sed Tutorial</a>；<a href="https://www.grymoire.com/Unix/Awk.html" target="_blank">Grymoire Awk Tutorial</a>——这两篇是经典中的经典<br>
+    📖 <strong>一手资料</strong>：<a href="https://www.gnu.org/software/grep/manual/grep.html" target="_blank">GNU grep Manual</a>；<a href="https://www.gnu.org/software/sed/manual/sed.html" target="_blank">GNU sed Manual</a>；<a href="https://www.gnu.org/software/gawk/manual/gawk.html" target="_blank">GNU Awk Manual</a><br>
     📝 <strong>上一课</strong>：<a href="0006-functions-and-script-structure.html">第 6 课 — 函数与脚本结构</a><br>
-    📝 <strong>下一课预告</strong>：第 8 课 — 错误处理与调试（set -e、trap、信号——让脚本出错了不再默默崩溃）<br>
+    📝 <strong>下一课预告</strong>：第 8 课 — 失败语义、清理与调试<br>
     ❓ <strong>有疑问？</strong>在对话中直接问我。贴一段你看不懂的 grep/sed/awk 命令，我可以逐段拆解。
   </p>
 </div>
@@ -362,9 +373,9 @@ EOF
 (function() {
   const answers = {
     q1: { correct: 'a', fb: {
-      a: '正确！-i 忽略大小写（Timeout、TIMEOUT、timeout 都匹配），-c 输出匹配行数而不是内容。一行搞定，效率最高。',
+      a: '正确！-i 忽略大小写（Timeout、TIMEOUT、timeout 都匹配），-c 直接输出匹配行数；没有匹配时输出 0 且状态为 1。',
       b: '不对。-v 是反向选择——输出不包含 timeout 的行。wc -c 统计的是字节数，不是行数。',
-      c: '能达到同样效果，但绕了远路。grep -i -c 一行就能办到。不过这说明你理解了 awk 可以做计数器——也是对的思路。'
+      c: '不对。这条命令没有 -i，因而不会忽略大小写；即使补上 -i，也没有必要再用 awk 计数。'
     }},
     q2: { correct: 'b', fb: {
       b: '正确！不带 g 时，sed 处理每行时只替换第一次出现的 foo。带 g（global）时，替换该行中所有 foo。比如 "foo foo" → sed "s/foo/bar/" → "bar foo"，sed "s/foo/bar/g" → "bar bar"。',
@@ -372,14 +383,14 @@ EOF
       c: '不对。两者都可以用正则表达式。g 是"global"标志，控制替换次数，和是否用正则无关。'
     }},
     q3: { correct: 'c', fb: {
-      c: '正确！$NF 是 awk 的内置变量，代表"最后一列"（Number of Fields）。输入 a:b:c:d 按冒号切分后得到 4 列，$NF = $4 = d。这个技巧在提取各种路径的文件名、URL 最后一段等场景中极其常用。',
+      c: '正确！NF 是当前记录的字段数，因此 $NF 是最后一个字段。输入按冒号切成 4 个字段，$NF 等于 $4，也就是 d。',
       a: '$1 才是 a。$NF 是最后一列。',
       b: '$0 才是整行。$NF 是最后一列。'
     }},
     q4: { correct: 'a', fb: {
-      a: '正确！sed -i 表示 in-place——直接修改原文件。这是修改配置文件的标准做法。macOS 上需要用 sed -i "" 注意兼容性。',
-      b: '不对。这个写法是用 > 重定向——但 sed 输出的内容和被 > 覆盖的 config.ini 是同一个文件，结果会是空文件（Shell 先截断文件，sed 再读它，什么都读不到）。',
-      c: '-l 参数是列出文件名，然后管道传来的文件名无法和 sed -i 配合使用。绕了远路。'
+      a: '正确！不带 -i 时，sed 把转换结果写到 stdout，原文件不变；先预览或重定向到另一个临时文件，再验证和替换。',
+      b: '危险！Shell 在 sed 启动前就会清空 config.ini，sed 随后只能读到空文件。',
+      c: '不对。grep -l 输出的是文件名，后面的 sed 处理的是这个文件名文本，不是 config.ini 的内容。'
     }}
   };
   document.querySelectorAll('.quiz .option').forEach(opt => {

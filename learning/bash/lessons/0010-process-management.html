@@ -19,7 +19,7 @@
 </div>
 
 <h1>进程管理</h1>
-<p class="subtitle">后台任务、信号、等待——脚本里管理多进程的正确姿势</p>
+<p class="subtitle">明确子进程归属，保存 PID，收集状态，并为终止过程设置期限</p>
 
 <div class="mission-tie">
 部署脚本里经常需要：后台启动服务然后等它就绪、同时部署到多台机器、给某个命令设置超时、优雅地杀掉旧进程再启新的。这些操作的本质都是<b>进程管理</b>——理解 <code>&amp;</code>、<code>wait</code>、<code>kill</code> 和信号，你就能看懂并编写这些关键逻辑。
@@ -35,19 +35,27 @@
 <span class="prompt"></span>echo "我不用等 sleep"    <span class="comment"># 立即执行</span>
 <span class="output">我不用等 sleep</span></code></pre>
 
-<p>部署脚本里最典型的用法——启动服务然后继续做别的事：</p>
+<p>下面是本地集成测试启动临时服务的最小模式；长期服务应交给后文的服务管理器：</p>
 
 <pre><code><span class="comment"># 启动服务后立即开始健康检查</span>
 ./myapp &amp;
-APP_PID=$!                      <span class="comment"># $! = 最后一个后台进程的 PID</span>
+APP_PID=$!                      <span class="comment"># $! = 最近放入后台的作业 PID</span>
 echo "应用已启动，PID: $APP_PID"
+
+cleanup_child() {
+    kill -TERM "$APP_PID" 2&gt;/dev/null || true
+    wait "$APP_PID" 2&gt;/dev/null || true
+}
+trap cleanup_child EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 <span class="comment"># 有期限地轮询；同时确认子进程没有提前退出</span>
 deadline=$((SECONDS + 30))
 until curl -fsS --connect-timeout 1 --max-time 2 http://localhost:8080/health >/dev/null; do
     kill -0 "$APP_PID" 2>/dev/null || { wait "$APP_PID"; exit $?; }
-    (( SECONDS < deadline )) || { kill "$APP_PID"; exit 1; }
-    sleep 0.5
+    (( SECONDS &lt; deadline )) || { kill "$APP_PID" 2>/dev/null || true; exit 1; }
+    sleep 0.5 || { kill "$APP_PID" 2>/dev/null || true; exit 1; }
 done
 echo "服务就绪！"</code></pre>
 
@@ -61,13 +69,13 @@ echo "服务就绪！"</code></pre>
   </tr>
   <tr style="border-bottom:1px solid var(--border);">
     <td><code>$!</code></td>
-    <td>最后一个后台进程的 PID</td>
+    <td>最近后台作业的 PID；异步管道时为末尾命令的 PID</td>
     <td><code>myapp &amp; PID=$!</code></td>
   </tr>
   <tr style="border-bottom:1px solid var(--border);">
     <td><code>$$</code></td>
-    <td>当前 Shell/脚本自身的 PID</td>
-    <td><code>printf 'pid=%s\n' "$$"</code>（日志关联）</td>
+    <td>调用当前 Shell 的进程 ID；在 <code>(...)</code> 内仍保持原值</td>
+    <td>需要当前 Bash 进程 ID 时使用 <code>$BASHPID</code></td>
   </tr>
   <tr style="border-bottom:1px solid var(--border);">
     <td><code>wait PID</code></td>
@@ -95,8 +103,11 @@ info "并行部署中... PID: $PID1 $PID2 $PID3"
 <span class="comment"># 分别 wait，不能只看最后一个 PID 的状态</span>
 failed=0
 for pid in "$PID1" "$PID2" "$PID3"; do
-    if ! wait "$pid"; then
-        error "部署子进程失败: $pid"
+    if wait "$pid"; then
+        :
+    else
+        status=$?
+        error "部署子进程失败: $pid（状态: $status）"
         failed=1
     fi
 done
@@ -104,14 +115,14 @@ done
 info "三台服务器全部部署完成"</code></pre>
 
 <div class="insight">
-并行部署最大的好处是<b>耗时由最慢的那台决定</b>而非三者之和。三台各需 5 分钟，串行 15 分钟，并行 5 分钟。但要注意——`wait` 返回最后一个参数的退出码，要检查每个进程的成败还需要各自捕获。
+任务彼此独立且资源没有争用时，并行耗时通常接近最慢任务的耗时加调度开销，而不是各项之和。真实结果还受网络、CPU、目标限流和并发上限影响。要判断整体成败，保存每个 PID 并逐一 <code>wait</code>。
 </div>
 
 <h2>3. 子 Shell：<code>( )</code> 分组命令</h2>
 
 <p><code>(cmd1; cmd2)</code> 在一个子 Shell 中执行——里面的 `cd`、变量赋值不会影响外层：</p>
 
-<pre><code><span class="prompt"></span>pwd && (cd /tmp && pwd) && pwd
+<pre><code><span class="prompt"></span>pwd &amp;&amp; (cd /tmp &amp;&amp; pwd) &amp;&amp; pwd
 <span class="output">/home/alice
 /tmp
 /home/alice</span>               <span class="comment"># ← 回到原目录！子 Shell 的 cd 不影响外层</span>
@@ -145,13 +156,13 @@ info "三台服务器全部部署完成"</code></pre>
     <td>SIGINT</td><td>2</td><td>Ctrl+C</td><td>中断——"请停下来"</td>
   </tr>
   <tr style="border-bottom:1px solid var(--border);">
-    <td>SIGTERM</td><td>15</td><td><code>kill PID</code>（默认）</td><td>终止——"请优雅退出"（进程可以清理后退出）</td>
+    <td>SIGTERM</td><td>15</td><td><code>kill PID</code>（默认）</td><td>请求终止；进程可捕获、忽略或按默认动作退出</td>
   </tr>
   <tr style="border-bottom:1px solid var(--border);">
     <td>SIGKILL</td><td>9</td><td><code>kill -9 PID</code></td><td>强制杀死——操作系统直接干掉进程，无法被捕获</td>
   </tr>
   <tr style="border-bottom:1px solid var(--border);">
-    <td>SIGHUP</td><td>1</td><td>终端关闭</td><td>挂断——"你的终端没了"（常用于让守护进程重载配置）</td>
+    <td>SIGHUP</td><td>1</td><td>终端挂断或显式发送</td><td>默认动作是终止；部分程序约定用它重载配置</td>
   </tr>
   <tr>
     <td>SIGUSR1/USR2</td><td>因平台而异</td><td><code>kill -USR1 PID</code></td><td>用户自定义——含义由应用定义</td>
@@ -179,18 +190,20 @@ cleanup() {
     info "收到退出信号，正在清理..."
 
     <span class="comment"># 这里只处理由当前脚本启动并记录的子进程</span>
-    if [[ -n "${APP_PID:-}" ]] && kill -0 "$APP_PID" 2>/dev/null; then
-        kill -TERM "$APP_PID"
+    if [[ -n "${APP_PID:-}" ]] &amp;&amp; kill -0 "$APP_PID" 2&gt;/dev/null; then
+        kill -TERM "$APP_PID" 2&gt;/dev/null || true
         local attempt
         for attempt in {1..50}; do
             kill -0 "$APP_PID" 2>/dev/null || break
-            sleep 0.1
+            sleep 0.1 || break
         done
-        kill -0 "$APP_PID" 2>/dev/null && kill -KILL "$APP_PID"
+        if kill -0 "$APP_PID" 2&gt;/dev/null; then
+            kill -KILL "$APP_PID" 2&gt;/dev/null || true
+        fi
         wait "$APP_PID" 2>/dev/null || true
     fi
 
-    exec 200>&- 2>/dev/null || true
+    exec 200&gt;&amp;- 2&gt;/dev/null || true
     info "清理完成（退出码: $exit_code）"
     return "$exit_code"
 }
@@ -202,7 +215,7 @@ trap 'exit 143' TERM</code></pre>
 
 <p>终端挂断、交互式 Shell 的作业控制选项和进程的会话关系都会影响 SIGHUP。<code>nohup</code> 与 <code>disown</code> 能改变其中一部分行为，但不等于服务管理：</p>
 
-<pre><code><span class="comment"># 方式 1：nohup —— 启动时就"免疫" SIGHUP</span>
+<pre><code><span class="comment"># 方式 1：nohup —— 让目标忽略 SIGHUP，并处理连接终端的标准流</span>
 <span class="prompt"></span>nohup ./long-task.sh &gt; task.log 2&gt;&amp;1 &amp;
 <span class="comment">#  本例已显式写 task.log；未重定向且连接终端时 nohup 才选择 nohup.out</span>
 
@@ -221,12 +234,14 @@ trap 'exit 143' TERM</code></pre>
 
 <pre><code><span class="comment"># GNU coreutils timeout：5 秒发 TERM，再给 2 秒清理时间</span>
 if timeout --signal=TERM --kill-after=2s 5s \
-    curl -fsS --connect-timeout 2 https://slow-api.example.com; then
+    curl -fsS --connect-timeout 2 --max-time 10 https://slow-api.example.com; then
     info "请求成功"
 else
     status=$?
     if [[ $status -eq 124 ]]; then
-        error "请求超时"
+        error "请求在期限到达时被 TERM 终止"
+    elif [[ $status -eq 137 ]]; then
+        error "请求在宽限期后被 KILL 终止"
     else
         error "请求失败（状态: $status）"
     fi
@@ -246,19 +261,19 @@ systemctl stop myapp</code></pre>
 <div class="exercise">
 <h3>动手练习（5 分钟）</h3>
 <pre><code><span class="comment"># 1. 体验后台进程 + $! + wait</span>
-<span class="prompt"></span>sleep 3 &amp; PID=$!; echo "后台 PID: $PID"; wait $PID; echo "退出码: $?"
+<span class="prompt"></span>sleep 3 &amp; PID=$!; echo "后台 PID: $PID"; wait "$PID"; echo "退出码: $?"
 
 <span class="comment"># 2. 并行执行三个任务</span>
-<span class="prompt"></span>for i in 1 2 3; do (sleep $i && echo "任务$i 完成") & done; wait; echo "全部完成"
+<span class="prompt"></span>for i in 1 2 3; do (sleep "$i" &amp;&amp; echo "任务$i 完成") &amp; done; wait; echo "全部完成"
 
 <span class="comment"># 3. 体验子 Shell 的隔离效果</span>
 <span class="prompt"></span>X=100; (X=200; echo "子Shell内: $X"); echo "子Shell外: $X"
 
-<span class="comment"># 4. trap 捕获 Ctrl+C</span>
-<span class="prompt"></span>trap 'echo "  → 捕获到中断信号"; trap - INT' INT; echo "按 Ctrl+C 试试..."; sleep 30
+<span class="comment"># 4. 在隔离的 Bash 中体验 trap，不修改当前交互 Shell</span>
+<span class="prompt"></span>bash -c 'trap '\''echo "  → 捕获到 SIGINT"; exit 130'\'' INT; echo "按 Ctrl+C 试试..."; sleep 30'
 
 <span class="comment"># 5. kill -0 检查进程是否存在</span>
-<span class="prompt"></span>sleep 60 &amp; SPID=$!; kill -0 $SPID && echo "进程 $SPID 存活"; kill $SPID</span></code></pre>
+<span class="prompt"></span>sleep 60 &amp; SPID=$!; kill -0 "$SPID" &amp;&amp; echo "进程 $SPID 可接收信号"; kill "$SPID"; wait "$SPID" || true</code></pre>
 </div>
 
 <h2>总结</h2>
@@ -270,7 +285,7 @@ systemctl stop myapp</code></pre>
   │                                                          │
   │  <strong>后台与等待</strong>                                              │
   │  cmd &amp;              后台运行，立刻返回提示符               │
-  │  $!                  最后一个后台进程的 PID                 │
+  │  $!                  最近放入后台的作业 PID                 │
   │  wait PID            等待指定后台进程结束                   │
   │  wait                等待所有后台子进程结束                  │
   │                                                          │
@@ -279,10 +294,10 @@ systemctl stop myapp</code></pre>
   │  { cmd; cmd; }       当前 Shell 分组——不隔离                │
   │                                                          │
   │  <strong>信号</strong>                                                  │
-  │  SIGTERM (15)        优雅退出（可被捕获）                     │
+  │  SIGTERM (15)        请求终止（可捕获或忽略）                 │
   │  SIGKILL (9)         强制杀死（不可被捕获，不可被忽略）        │
   │  SIGINT  (2)         Ctrl+C 中断                           │
-  │  SIGHUP  (1)         终端关闭 / 重载配置                     │
+  │  SIGHUP  (1)         挂断；部分程序约定为重载配置             │
   │                                                          │
   │  <strong>有期限的终止策略</strong>                                        │
   │  验证身份 → TERM → 轮询等待 → 按恢复策略决定是否 KILL      │
@@ -327,8 +342,8 @@ systemctl stop myapp</code></pre>
   <p><strong>Q4:</strong> 部署脚本里 `wait`（无参数）的典型用途是？</p>
   <div class="options">
     <span class="option" data-q="q4" data-a="a">暂停脚本直到用户按回车</span>
-    <span class="option" data-q="q4" data-a="b">等待所有之前用 & 启动的后台任务全部完成</span>
-    <span class="option" data-q="q4" data-a="c">等待上一条命令完成，等价于没有 & 的效果</span>
+    <span class="option" data-q="q4" data-a="b">等待所有之前用 &amp; 启动的后台任务全部完成</span>
+    <span class="option" data-q="q4" data-a="c">等待上一条命令完成，等价于没有 &amp; 的效果</span>
   </div>
   <div class="feedback" id="q4-fb"></div>
 </div>
@@ -336,9 +351,9 @@ systemctl stop myapp</code></pre>
 
 <div class="session-footer">
   <p>
-    📖 <strong>推荐阅读</strong>：<a href="https://mywiki.wooledge.org/SignalTrap" target="_blank">Signal Trap 完整参考</a>；<a href="https://mywiki.wooledge.org/ProcessManagement" target="_blank">BashGuide — Process Management</a><br>
+    📖 <strong>一手资料</strong>：<a href="https://www.gnu.org/software/bash/manual/bash.html#Job-Control-Basics" target="_blank">Bash Job Control</a>；<a href="https://www.gnu.org/software/bash/manual/bash.html#Signals" target="_blank">Bash Signals</a>；<a href="https://www.gnu.org/software/coreutils/manual/html_node/timeout-invocation.html" target="_blank">GNU timeout</a><br>
     📝 <strong>上一课</strong>：<a href="0009-deployment-patterns.html">第 9 课 — 部署脚本常见模式</a><br>
-    📝 <strong>下一课预告</strong>：第 11 课 — Bash 中处理 JSON/API（curl + jq——现代部署脚本必备的数据交互技能）<br>
+    📝 <strong>下一课预告</strong>：第 11 课 — 用 curl 和 jq 处理 HTTP/JSON 边界<br>
     ❓ <strong>有疑问？</strong>在对话中直接问我。
   </p>
 </div>
@@ -353,8 +368,8 @@ systemctl stop myapp</code></pre>
     }},
     q2: { correct: 'a', fb: {
       a: '正确！SIGTERM 可以被进程捕获、忽略或按默认动作处理；SIGKILL 不能被捕获或忽略。是否能优雅清理取决于应用实现。',
-      b: '两者都是 POSIX 标准。所有类 Unix 系统都支持。',
-      c: '反了。SIGKILL 是立即杀死——操作系统内核直接释放进程资源，不等待任何 I/O。进程也来不及做任何事。'
+      b: 'SIGTERM 和 SIGKILL 都由 POSIX 定义；可移植脚本仍应使用信号名，不依赖这里列出的常见编号。',
+      c: '反了。SIGKILL 强制终止进程且不能被捕获；应用没有机会执行清理，外部系统中的操作也不会因此自动回滚。'
     }},
     q3: { correct: 'a', fb: {
       a: '正确！`(X=2)` 在子 Shell 中执行——子进程有自己独立的环境，`X=2` 修改的是子 Shell 里的 X。子 Shell 退出后，外层的 X 仍然是 1。`( )` 的隔离性在你想临时切换目录或修改变量而不影响外层时非常有用。',

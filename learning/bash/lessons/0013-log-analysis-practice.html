@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第 13 课：实战——日志分析与监控脚本</title>
+<title>第 13 课：日志分析器综合实践</title>
 <meta name="course-audit" content="2026-08-12; GNU Bash 5.3.15">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -15,358 +15,147 @@
 
 <div class="lesson-meta">
   <span class="number">第 13 课</span>
-  <span class="duration">⏱ 约 25 分钟</span>
+  <span class="duration">⏱ 约 35–50 分钟</span>
 </div>
 
-<h1>实战：日志分析与监控脚本</h1>
-<p class="subtitle">从零构建一个经过离线测试的日志分析练习——综合前 12 课知识</p>
+<h1>日志分析器综合实践</h1>
+<p class="subtitle">以真实脚本、离线测试和明确输入格式整合前 12 课</p>
 
 <div class="mission-tie">
-日志分析是部署脚本之外第二高频的 Bash 使用场景。报错时你需要：快速找出最近的错误、统计错误类型分布、判断是否在恶化。本课带你从 0 行代码起步，逐步迭代出一个完整的 <code>analyze-log.sh</code>——每一行代码都标注了对应的知识来源课。
+本课不再复制一份容易漂移的“最终代码”。仓库中的
+<a href="../exercises/log-analyzer/analyze-log.sh"><code>analyze-log.sh</code></a>
+是唯一实现，<a href="../exercises/log-analyzer/test.sh"><code>test.sh</code></a>
+是可重复证据。目标是解释它的输入、输出、状态和失败路径，并在测试保护下完成一次接口变更。
 </div>
 
-<h2>1. 准备：创建模拟日志数据</h2>
+<h2>1. 完成标准</h2>
 
-<pre><code><span class="comment"># 先创建一份有足够内容的模拟日志——后续所有分析都基于它</span>
-<span class="prompt"></span>cat > /tmp/app.log &lt;&lt; 'EOF'
-2026-08-10 08:00:01 [INFO]  Server started on port 8080
-2026-08-10 08:01:15 [INFO]  Health check passed
-2026-08-10 08:03:22 [WARN]  Connection pool at 85% capacity (pool=main, used=85, max=100)
-2026-08-10 08:05:41 [ERROR] Connection refused: db-primary:5432 (attempt 1/3)
-2026-08-10 08:05:42 [WARN]  Retrying connection to db-primary:5432
-2026-08-10 08:05:43 [INFO]  Reconnected to db-primary:5432
-2026-08-10 08:10:05 [ERROR] Timeout: /api/users exceeded 5000ms (actual=7845ms, ip=192.168.1.100)
-2026-08-10 08:12:30 [INFO]  Request handled: GET /api/health 200 12ms
-2026-08-10 08:15:00 [WARN]  Memory usage at 82% (used=6.6G, total=8G)
-2026-08-10 08:18:45 [ERROR] Connection refused: db-primary:5432 (attempt 1/3)
-2026-08-10 08:18:46 [ERROR] Connection refused: db-primary:5432 (attempt 2/3)
-2026-08-10 08:18:47 [WARN]  All retries exhausted for db-primary:5432
-2026-08-10 08:20:00 [FATAL] Database unavailable after 3 retries, shutting down
-2026-08-10 08:20:01 [INFO]  Graceful shutdown initiated
-2026-08-10 08:20:03 [INFO]  Server stopped
-EOF
+<p>完成本课后，你应该能做到：</p>
 
-<span class="prompt"></span>wc -l /tmp/app.log
-<span class="output">      15 /tmp/app.log</span></code></pre>
+<ul>
+  <li>不用逐行翻译，先画出参数解析、统计、报告和通知的执行路径。</li>
+  <li>说明 stdout、stderr 和退出状态分别承载什么，以及 webhook 为什么不改变分析结果。</li>
+  <li>解释日志格式假设、阈值边界、空文件、带空格路径和管道状态如何被测试。</li>
+  <li>先写失败测试，再为工具添加一个小功能，并通过模块检查。</li>
+</ul>
 
-<h2>2. 版本 1：最简错误扫描（第 7 课：grep）</h2>
+<div class="pitfall">
+通过页面测验只证明能识别概念，不证明能维护脚本。课程证据是：测试先失败、实现后通过、ShellCheck/shfmt 通过，以及你能解释一次失败的根因。
+</div>
 
-<pre><code><span class="comment"># analyze-log.sh v1 — 最简单的版本</span>
-<span class="prompt"></span>cat > /tmp/analyze-log-v1.sh &lt;&lt; 'EOF'
-#!/bin/bash
-set -euo pipefail                                    <span class="comment"># L8</span>
+<h2>2. 先运行，再阅读</h2>
 
-LOG_FILE="${1:?用法: $0 <日志文件>}"                  <span class="comment"># L4: 参数展开 + ${:?}</span>
+<pre><code><span class="comment"># 从仓库根目录执行</span>
+<span class="prompt"></span>mise run bash learning/bash/exercises/log-analyzer/test.sh
+<span class="prompt"></span>mise run check learning-bash
 
-echo "=== 日志分析：$(basename "$LOG_FILE") ==="
-echo ""
+<span class="comment"># 查看用户接口；--help 不需要日志路径</span>
+<span class="prompt"></span>mise run bash learning/bash/exercises/log-analyzer/analyze-log.sh --help
 
-echo "--- ERROR 和 FATAL ---"
-grep -E "\[ERROR\]|\[FATAL\]" "$LOG_FILE" || echo "  (无)"
-echo ""
+<span class="comment"># 再读实现和测试，先列函数名，不急着进入函数体</span>
+<span class="prompt"></span>rg -n '^[a-z_]+\(\)' learning/bash/exercises/log-analyzer/*.sh</code></pre>
 
-echo "--- 统计各级别数量 ---"
-<span class="comment"># L7: awk 提取级别列 + sed 去括号；反斜杠后不能再放注释</span>
-awk '{print $3}' "$LOG_FILE" | sed 's/\[//;s/\]//' \
-    | sort | uniq -c | sort -rn
+<p>如果基线失败，先记录命令、退出状态和第一条有因果价值的诊断；不要在未知基线上继续改代码。</p>
 
-echo ""
-echo "--- 最近的 5 条 WARN/ERROR/FATAL ---"
-grep -E "\[WARN\]|\[ERROR\]|\[FATAL\]" "$LOG_FILE" \
-    | tail -5 \
-    || printf '  (无)\n'
-EOF
-<span class="prompt"></span>bash /tmp/analyze-log-v1.sh /tmp/app.log</code></pre>
+<h2>3. 从第一性原理定义工具</h2>
+
+<table style="width:100%; margin:1rem 0;">
+  <tr><th style="text-align:left;">问题</th><th style="text-align:left;">本练习的明确答案</th></tr>
+  <tr><td>输入是什么？</td><td>一个可读普通文件；每行以空白分隔，第三个字段是已知级别。</td></tr>
+  <tr><td>输出是什么？</td><td>stdout 输出报告；stderr 输出参数、阈值和可选通知的诊断。</td></tr>
+  <tr><td>成功意味着什么？</td><td>日志被读取并生成报告。达到阈值仍是成功分析，不自动变成程序失败。</td></tr>
+  <tr><td>哪些失败必须传播？</td><td>参数无效、日志不可读、解析所需的本地命令失败。</td></tr>
+  <tr><td>哪些失败允许降级？</td><td>webhook 是显式的 best-effort 附加通知；失败写 stderr，但不否定报告。</td></tr>
+</table>
+
+<p>这里没有“通用日志格式”。如果输入改成 JSON Lines、字段顺序变化或消息允许多行，必须先改接口说明与测试夹具，再选择 jq、awk 或更合适的语言。</p>
+
+<h2>4. 四遍走读</h2>
+
+<ol>
+  <li><strong>扫结构：</strong>找到配置变量、<code>parse_args</code>、统计函数、<code>send_alert</code> 和 <code>main</code>。</li>
+  <li><strong>追主干：</strong><code>main</code> 先解析与验证输入，再统计、输出报告、比较密度和阈值。</li>
+  <li><strong>查边界：</strong>重点读前导零归一化、<code>awk 'NR &lt;= 5'</code>、稳定排序和 webhook 降级。</li>
+  <li><strong>用测试证伪：</strong>为你认为会失败的输入增加用例，确认它先失败，再决定是否属于公开接口。</li>
+</ol>
+
+<h3>几个必须能解释的设计点</h3>
+
+<pre><code><span class="comment"># 正则同时限制范围并去掉前导零；10# 明确使用十进制</span>
+[[ $ALERT_THRESHOLD =~ ^0*([0-9]{1,9})$ ]] || exit 1
+ALERT_THRESHOLD=$((10#${BASH_REMATCH[1]}))
+
+<span class="comment"># 不用 head 提前关闭管道；在 pipefail 下，上游可能因 SIGPIPE 变成失败</span>
+... | awk 'NR &lt;= 5'
+
+<span class="comment"># 零匹配仍输出 0；文件读取失败不会被宽泛的 “|| true” 隐藏</span>
+awk -v expected="[$level]" '
+  $3 == expected { count++ }
+  END { print count + 0 }
+' "$LOG_FILE"</code></pre>
 
 <div class="insight">
-<b>v1 已经是一个可用的工具了。</b> 20 行代码，但涵盖了严格模式、参数检查、管道、grep/awk/sed。最重要的是——<b>它不是写出来的，是迭代出来的</b>。你先在终端手动敲一条 grep，好用就放进去；需要计数就加 awk+sort+uniq。脚本就是这样成长起来的。
+“后半段密度更高”只比较文件前后两段中某级别占行数的比例。它没有解析时间戳，所以不能推断单位时间错误率，更不能称为趋势预测。
 </div>
 
-<h2>3. 版本 2：加上时间段过滤和结构化报告</h2>
+<h2>5. 已完成的真实改动：<code>--top N</code></h2>
 
-<pre><code><span class="comment"># analyze-log.sh v2 — 支持时间范围过滤，输出更结构化</span>
-<span class="prompt"></span>cat > /tmp/analyze-log-v2.sh &lt;&lt; 'SCRIPT'
-#!/bin/bash
-set -euo pipefail                                    <span class="comment"># L8</span>
+<p>本轮重构已按下面顺序为“高频严重消息”增加数量限制。请通过实现和测试复核每项，而不是只相信这份说明：</p>
 
-<span class="comment"># ===== 参数解析 =====</span>
-LOG_FILE="${1:?用法: $0 <日志文件> [开始时间] [结束时间]}"  <span class="comment"># L4</span>
-START_TIME="${2:-}"                                    <span class="comment"># L4: 参数展开默认值</span>
-END_TIME="${3:-}"
+<ol>
+  <li>先在 <code>test.sh</code> 增加用例，证明旧实现不支持 <code>--top</code>。</li>
+  <li>定义接口：默认 5；只接受 1–100 的十进制整数；缺值、0、负数、过大和非数字都失败。</li>
+  <li>更新 <code>usage</code> 和参数解析，再把固定的 5 改为经过验证的变量。</li>
+  <li>增加至少 7 种不同严重消息，断言 <code>--top 3</code> 只输出 3 项。</li>
+  <li>运行 <code>mise run check learning-bash</code>，阅读全部输出。</li>
+</ol>
 
-<span class="comment"># ===== 工具函数 =====</span>
-die() { echo "[FATAL] $*" >&2; exit 1; }               <span class="comment"># L8 + L6</span>
-
-<span class="comment"># ===== 数据准备 =====</span>
-[[ -f "$LOG_FILE" ]] || die "文件不存在: $LOG_FILE"   <span class="comment"># L5: [[ -f ]]</span>
-
-<span class="comment"># 如果指定了时间范围，先用 awk 过滤（L7: awk 按条件筛选行）</span>
-if [[ -n "$START_TIME" || -n "$END_TIME" ]]; then      <span class="comment"># L4 + L5</span>
-    <span class="comment"># L7: awk -v 传变量；这里只比较固定宽度 HH:MM，不是通用时间解析</span>
-    FILTERED=$(awk -v start="${START_TIME:-00:00}" \
-                    -v end="${END_TIME:-23:59}" '
-        { split($2, t, ":"); time = t[1]":"t[2] }
-        time >= start && time <= end
-    ' "$LOG_FILE")
-else
-    FILTERED=$(<"$LOG_FILE")
-fi
-
-<span class="comment"># ===== 核心分析 =====</span>
-TOTAL=$(printf '%s' "$FILTERED" | awk 'END { print NR + 0 }')
-ERROR_COUNT=$(printf '%s' "$FILTERED" | awk '/\[ERROR\]/ { n++ } END { print n + 0 }')
-WARN_COUNT=$(printf '%s' "$FILTERED" | awk '/\[WARN\]/ { n++ } END { print n + 0 }')
-FATAL_COUNT=$(printf '%s' "$FILTERED" | awk '/\[FATAL\]/ { n++ } END { print n + 0 }')
-
-<span class="comment"># ===== 输出报告 =====</span>
-cat &lt;&lt; REPORT                                         <span class="comment"># L3: heredoc</span>
-╔══════════════════════════════════════════╗
-║       日志分析报告                        ║
-╠══════════════════════════════════════════╣
-║  文件:  $(basename "$LOG_FILE")                   ║
-║  总行数: $TOTAL                                   ║
-║  时间范围: ${START_TIME:-全部} — ${END_TIME:-全部} ║
-╠══════════════════════════════════════════╣
-║  ERROR: $ERROR_COUNT  |  WARN: $WARN_COUNT  |  FATAL: $FATAL_COUNT  ║
-╚══════════════════════════════════════════╝
-REPORT
-
-echo ""
-echo "=== 错误详情（最近 10 条）==="
-printf '%s\n' "$FILTERED" | grep -E "\[ERROR\]|\[FATAL\]" | tail -10 \
-    || printf '  (无)\n'
-
-echo ""
-echo "=== 趋势分析 ==="
-echo "$FILTERED" | awk '{print $3}' | sed 's/\[//;s/\]//' \
-    | sort | uniq -c | sort -rn \
-    | awk '{printf "  %-6s  %s\n", $2, $1}'             <span class="comment"># L7: awk printf 格式化</span>
-SCRIPT
-<span class="prompt"></span>bash /tmp/analyze-log-v2.sh /tmp/app.log "08:05" "08:19"</code></pre>
-
-<h2>4. 版本 3：加异常检测和告警</h2>
-
-<p>最终版以仓库中的 <a href="../exercises/log-analyzer/analyze-log.sh">可执行脚本</a> 为准，并由 <a href="../exercises/log-analyzer/test.sh">离线测试</a> 覆盖正常输入和参数失败。下面保留核心实现用于走读。</p>
-
-<pre><code><span class="comment"># analyze-log.sh v3 — 最终版：异常检测 + 阈值告警 + 可复用函数</span>
-<span class="prompt"></span>cat > /tmp/analyze-log.sh &lt;&lt; 'SCRIPT'
-#!/bin/bash
-set -euo pipefail                                    <span class="comment"># L8</span>
-
-<span class="comment"># ===== 工具函数必须先定义，参数错误才能调用 =====</span>
-die()   { echo "[FATAL] $*" >&2; exit 1; }
-info()  { echo "[$(date '+%H:%M:%S')] $*"; }
-warn()  { echo "[WARN] $*" >&2; }
-
-[[ $# -ge 1 ]] || die "用法: $0 <日志文件> [--alert-threshold N] [--webhook URL]"
-readonly LOG_FILE="$1"
-shift                                                 <span class="comment"># L5: shift 移走 $1</span>
-
-<span class="comment"># ===== 参数解析 =====</span>                               <span class="comment"># L5: while + case</span>
-ALERT_THRESHOLD=10
-WEBHOOK_URL=""
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --alert-threshold)
-            [[ $# -ge 2 ]] || die "--alert-threshold 缺少值"
-            ALERT_THRESHOLD="$2"; shift 2 ;;
-        --webhook)
-            [[ $# -ge 2 ]] || die "--webhook 缺少值"
-            WEBHOOK_URL="$2"; shift 2 ;;
-        *) die "未知参数: $1" ;;
-    esac
-done
-[[ $ALERT_THRESHOLD =~ ^[0-9]+$ ]] || die "阈值必须是非负整数"
-
-<span class="comment"># ===== 核心分析函数 =====</span>
-scan_errors() {                                       <span class="comment"># L6: 函数返回字符串</span>
-    awk '$3 == "[ERROR]" || $3 == "[FATAL]"' "$LOG_FILE"
-}
-
-count_by_level() {                                    <span class="comment"># L7: awk + sort + uniq</span>
-    awk '{print $3}' "$LOG_FILE" | sed 's/\[//;s/\]//' \
-        | sort | uniq -c | sort -rn
-}
-
-is_second_half_denser() {                             <span class="comment"># 按行数归一化的密度启发式</span>
-    local level="$1"
-    local total midpoint
-    total=$(awk 'END { print NR + 0 }' "$LOG_FILE")
-    (( total >= 2 )) || return 1
-    midpoint=$((total / 2))
-    awk -v expected="[$level]" -v midpoint="$midpoint" '
-        NR &lt;= midpoint && $3 == expected { first++ }
-        NR > midpoint && $3 == expected { second++ }
-        END {
-            first_lines = midpoint; second_lines = NR - midpoint
-            exit !((second + 0) * first_lines > (first + 0) * second_lines)
-        }
-    ' "$LOG_FILE"
-}
-
-<span class="comment"># ===== 告警 =====</span>                                   <span class="comment"># L11: curl webhook</span>
-send_alert() {
-    [[ -z "$WEBHOOK_URL" ]] && return 0
-    local msg="$1"
-    command -v jq >/dev/null || { warn "缺少 jq，跳过通知"; return 0; }
-    command -v curl >/dev/null || { warn "缺少 curl，跳过通知"; return 0; }
-    local payload
-    payload=$(jq -n --arg text "[日志告警] $msg" '{text: $text}') \
-        || { warn "JSON 构造失败"; return 0; }
-    curl -fsS --connect-timeout 3 --max-time 10 \
-        -H 'Content-Type: application/json' \
-        --data "$payload" "$WEBHOOK_URL" > /dev/null \
-        || warn "通知发送失败"
-}
-
-<span class="comment"># ===== 主入口 =====</span>
-main() {
-    [[ -f "$LOG_FILE" ]] || die "文件不存在: $LOG_FILE"
-
-    info "开始分析: $(basename "$LOG_FILE")"
-
-    <span class="comment"># 1. 基本统计</span>
-    local total errors warns fatals
-    total=$(awk 'END { print NR + 0 }' "$LOG_FILE")
-    errors=$(awk '$3 == "[ERROR]" { n++ } END { print n + 0 }' "$LOG_FILE")
-    warns=$(awk '$3 == "[WARN]" { n++ } END { print n + 0 }' "$LOG_FILE")
-    fatals=$(awk '$3 == "[FATAL]" { n++ } END { print n + 0 }' "$LOG_FILE")
-
-    <span class="comment"># 2. 输出报告</span>
-    cat &lt;&lt; REPORT
-═══════════════════════════════════════
-  日志分析: $(basename "$LOG_FILE")
-═══════════════════════════════════════
-  总行数:  $total
-  ERROR:   $errors
-  WARN:    $warns
-  FATAL:   $fatals
-  严重率:  $(( (errors + fatals) * 100 / (total > 0 ? total : 1) ))%
-═══════════════════════════════════════
-REPORT
-
-    <span class="comment"># 3. 级别分布</span>
-    echo ""; echo "--- 级别分布 ---"
-    count_by_level
-
-    <span class="comment"># 4. 高频错误模式</span>
-    echo ""; echo "--- 高频错误消息 ---"
-    scan_errors | awk '{$1=$2=$3=""; sub(/^ +/, ""); print}' \
-        | sort | uniq -c | sort -rn | head -5
-
-    <span class="comment"># 5. 趋势检查 (L5: if)</span>
-    echo ""
-    for level in ERROR WARN FATAL; do
-        local count
-        count=$(awk -v expected="[$level]" '$3 == expected { n++ } END { print n + 0 }' "$LOG_FILE")
-        [[ $count -eq 0 ]] && continue
-
-        if is_second_half_denser "$level"; then
-            echo "⚠️  $level 在文件后半段的行密度更高"
-        fi
-    done
-
-    <span class="comment"># 6. 阈值告警 (L5: if + L11: webhook)</span>
-    if [[ $(( errors + fatals )) -ge $ALERT_THRESHOLD ]]; then
-        echo ""
-        echo "🚨 错误数 ($(( errors + fatals ))) 超过阈值 ($ALERT_THRESHOLD)！"
-        send_alert "错误数 $(( errors + fatals )) 超过阈值 $ALERT_THRESHOLD（文件: $LOG_FILE）"
-    fi
-
-    info "分析完成"
-}
-main
-SCRIPT
-<span class="prompt"></span>chmod +x /tmp/analyze-log.sh
-<span class="prompt"></span>/tmp/analyze-log.sh /tmp/app.log
-<span class="prompt"></span>/tmp/analyze-log.sh /tmp/app.log --alert-threshold 3</code></pre>
-
-<h2>5. 知识地图：每行代码从哪来</h2>
-
-<div class="diagram">
-<pre>
-  analyze-log.sh 知识图谱
-  ─────────────────────────────
-  L1 + L2   set -euo pipefail + 退出码    → 第 1、8 课
-  L3        管道链 (| sort | uniq -c)      → 第 3 课
-  L4        ${VAR:?}、${VAR:-}、"" 引用    → 第 4 课
-  L5        if [[ ]], for, while, case    → 第 5 课
-  L6        函数定义、local、返回值模式     → 第 6 课
-  L7        grep -cEo, awk '$1', sed s//  → 第 7 课
-  L8        die(), trap, 防御性检查        → 第 8 课
-  L11       curl POST webhook             → 第 11 课
-  L12       迭代开发 + 四遍阅读法          → 第 12 课
-</pre>
+<div class="pitfall">
+不要用 <code>eval</code> 拼接 awk，也不要把未验证的 N 直接嵌入程序文本。用 <code>awk -v limit="$TOP" 'NR &lt;= limit'</code> 把数据作为参数传入。
 </div>
 
-<div class="exercise">
-<h3>动手练习（8 分钟）——扩展脚本</h3>
-<p>先运行 <code>mise run bash learning/bash/exercises/log-analyzer/test.sh</code>，再基于练习脚本添加功能；每次先补失败或边界测试：</p>
-<pre><code><span class="comment"># 任务 1：添加"最活跃的 IP"分析（第 7 课 awk）</span>
-<span class="comment"># 提示：日志中 IP 格式如 ip=192.168.1.100，用 grep -oE 提取</span>
-<span class="comment"># 在 main() 的"高频错误消息"之后添加：</span>
-echo ""; echo "--- 高频 IP ---"
-grep -oE 'ip=[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' "$LOG_FILE" \
-    | sort | uniq -c | sort -rn | head -5
+<h2>6. 迁移检验</h2>
 
-<span class="comment"># 任务 2：添加"输出到文件"功能（第 3 课 tee + 第 4 课变量）</span>
-<span class="comment"># 加一个参数 --output report.txt，分析结果同时写到文件
-# 提示：在 while case 里加 --output) REPORT_FILE="$2"; shift 2 ;;
-#       然后在 main() 里用 exec > >(tee "$REPORT_FILE")  或 直接 | tee</span>
+<p>选一份已脱敏的真实日志，先回答以下问题，再决定是否修改脚本：</p>
 
-<span class="comment"># 任务 3：修改 scan_errors 让它支持可选的行数限制</span>
-<span class="comment"># 提示：scan_errors() { local limit="${1:-0}"; ...; }</span>
-<span class="comment">#       如果 limit > 0 就 | tail -$limit</span></code></pre>
-</div>
+<ul>
+  <li>一条事件是否总是一行？时间、级别和消息的准确字段在哪里？</li>
+  <li>未知级别和畸形行应忽略、计数还是使分析失败？</li>
+  <li>“严重率”的分母应是全部行、有效事件还是请求数？</li>
+  <li>相同消息如何归一化：请求 ID、IP、数字和路径是否应被视为变量？</li>
+</ul>
 
-<h2>总结</h2>
+<p>把答案写成一个最小夹具和断言。若规则开始包含多行事件、复杂时间窗口或多个输入源，应把 Bash 留作启动入口，把分析移到更适合的数据处理程序。</p>
 
-<div class="diagram">
-<pre>
-  ┌──────────────────────────────────────────────────────────┐
-  │        从零到日志分析脚本——迭代路径                         │
-  │                                                          │
-  │  v1 (10 行)        v2 (35 行)        v3 (80 行)          │
-  │  grep 扫描     →   时间范围过滤  →   异常检测+告警          │
-  │  awk 计数          结构化报告         趋势分析              │
-  │  sort|uniq         参数化             阈值 + webhook       │
-  │                                                          │
-  │  核心原则：<strong>不要一次写出完整脚本</strong>                              │
-  │  在终端手动验证 → 好用就写入脚本 → 重复                       │
-  │  脚本是一步一步"长"出来的，不是一次"写"出来的                 │
-  └──────────────────────────────────────────────────────────┘
-</pre>
-</div>
+<h2>快速自检</h2>
 
 <div class="quiz">
-<h3>快速自检</h3>
-
 <div class="question" id="q1">
-  <p><strong>Q1:</strong> 最终版为什么用 <code>awk '... { n++ } END { print n + 0 }'</code> 计数，而不直接用 <code>grep -c ... || true</code>？</p>
+  <p><strong>Q1:</strong> 达到告警阈值时，脚本为什么仍可以返回 0？</p>
   <div class="options">
-    <span class="option" data-q="q1" data-a="a">因为 awk 总是比 grep 快</span>
-    <span class="option" data-q="q1" data-a="b">零匹配时明确输出 0，同时不把所有读取错误都用 true 掩盖</span>
-    <span class="option" data-q="q1" data-a="c">因为 grep 不能匹配方括号</span>
+    <span class="option" data-q="q1" data-a="a">因为阈值只是报告中的业务信号，分析本身仍成功</span>
+    <span class="option" data-q="q1" data-a="b">因为 Bash 不能返回非零</span>
+    <span class="option" data-q="q1" data-a="c">因为 stderr 会自动清除错误</span>
   </div>
   <div class="feedback" id="q1-fb"></div>
 </div>
 
 <div class="question" id="q2">
-  <p><strong>Q2:</strong> v3 的 <code>shift</code> 在参数解析中的作用是什么？</p>
+  <p><strong>Q2:</strong> 为什么不能把“后半段密度更高”称为时间错误率上升？</p>
   <div class="options">
-    <span class="option" data-q="q2" data-a="a">删除脚本的第一个参数，让后续参数解析指向后面的内容</span>
-    <span class="option" data-q="q2" data-a="b">改变 shift 键的功能</span>
-    <span class="option" data-q="q2" data-a="c">重命名脚本的参数变量</span>
+    <span class="option" data-q="q2" data-a="a">函数只按行切半，没有验证时间戳或时间跨度</span>
+    <span class="option" data-q="q2" data-a="b">因为 awk 不能处理数字</span>
+    <span class="option" data-q="q2" data-a="c">因为日志不能包含时间</span>
   </div>
   <div class="feedback" id="q2-fb"></div>
 </div>
 
 <div class="question" id="q3">
-  <p><strong>Q3:</strong> <code>is_second_half_denser()</code> 实际判断的是什么？</p>
+  <p><strong>Q3:</strong> 修改公开参数时，最有价值的第一步是什么？</p>
   <div class="options">
-    <span class="option" data-q="q3" data-a="a">计算每行的时间戳差值——如果间隔越来越短就是上升</span>
-    <span class="option" data-q="q3" data-a="b">按两段行数归一化后，比较某级别在后半段的行密度是否更高</span>
-    <span class="option" data-q="q3" data-a="c">用机器学习模型预测错误趋势</span>
+    <span class="option" data-q="q3" data-a="a">先写一个会失败的接口测试，明确输入、输出和状态</span>
+    <span class="option" data-q="q3" data-a="b">先复制整个脚本作为 v4</span>
+    <span class="option" data-q="q3" data-a="c">先增加更多全局变量</span>
   </div>
   <div class="feedback" id="q3-fb"></div>
 </div>
@@ -374,38 +163,38 @@ grep -oE 'ip=[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' "$LOG_FILE" \
 
 <div class="session-footer">
   <p>
-    📖 <strong>推荐实践</strong>：把你项目里的一个真实日志文件拿过来，用 v3 脚本跑一下看看效果。然后修改 <code>find_patterns()</code> 来匹配你日志中的特定错误模式。<br>
+    📖 <strong>依据</strong>：<a href="https://www.gnu.org/software/bash/manual/bash.html" target="_blank">GNU Bash 5.3 手册</a>；<a href="https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html" target="_blank">POSIX Shell Command Language</a><br>
+    📋 <strong>课程资料</strong>：<a href="../RESOURCES.md">一手资料与版本范围</a>；<a href="../exercises/log-analyzer/README.md">练习接口说明</a><br>
     📝 <strong>上一课</strong>：<a href="0012-reading-and-debugging-scripts.html">第 12 课 — 系统化阅读与调试脚本</a><br>
-    📝 <strong>下一步</strong>：把练习脚本用于一份脱敏真实日志，先为日志格式补测试，再修改解析规则<br>
-    ❓ <strong>有疑问？</strong>在对话中直接问我。把你在练习中写的扩展贴过来，我可以帮你 code review。
+    📝 <strong>下一步</strong>：解释 <code>--top N</code> 的测试与实现，再用一份脱敏真实日志做迁移检验<br>
+    ❓ <strong>需要反馈？</strong>把失败测试、实现差异或脱敏夹具发到对话中审查。
   </p>
 </div>
 
 <script>
 (function() {
   const answers = {
-    q1: { correct: 'b', fb: {
-      b: '正确！awk 的 END 块在零匹配时仍输出 0；文件读取失败仍可作为真实错误传播。宽泛的 || true 会把未匹配和其他失败混在一起。',
-      a: '不对。性能取决于输入和实现，这里的首要目标是明确区分零匹配与读取失败。',
-      c: '不对。grep 可以转义方括号或使用固定字符串模式；问题是退出状态的语义处理。'
+    q1: { correct: 'a', fb: {
+      a: '正确。程序退出状态表达工具是否完成约定工作；阈值是否要映射为非零必须由调用接口明确决定。',
+      b: '不对。Bash 命令可以返回 0–255 的状态。',
+      c: '不对。stderr 是输出通道，不会改变退出状态。'
     }},
     q2: { correct: 'a', fb: {
-      a: '正确！shift 把位置参数左移——$1 被丢弃，$2 变成新的 $1，$3 变成新的 $2……脚本用 `${1:?}` 读了日志文件路径后，shift 把它移走，这样后面的 while/case 循环中 $1 就是第一个可选参数（--alert-threshold 等）了。',
-      b: '不对。shift 是一个 Bash 内置命令，和键盘上的 Shift 键毫无关系。',
-      c: '不对。shift 不重命名任何东西——它改变位置参数 $1、$2……的内容，把旧的移走，让新的顶上来。'
+      a: '正确。两段可能覆盖完全不同的时间长度；函数只比较事件行占比。',
+      b: '不对。awk 能做数值运算，问题是输入和指标定义。',
+      c: '不对。日志可以有时间；这里的问题是实现没有解析和验证它。'
     }},
-    q3: { correct: 'b', fb: {
-      b: '正确！它比较按行数归一化后的两段密度，只能作为文件分布启发式，不能称为时间错误率。',
-      a: '不是。函数没有解析或验证时间戳，因此不能得出单位时间变化。',
-      c: '不是。这里没有预测模型，也没有足够的时间序列特征。'
+    q3: { correct: 'a', fb: {
+      a: '正确。失败测试先固定公开行为，也证明后续通过来自实现改动。',
+      b: '不对。复制实现会产生两个容易漂移的来源。',
+      c: '不对。全局变量不会自动明确边界行为。'
     }}
   };
   document.querySelectorAll('.quiz .option').forEach(opt => {
     opt.addEventListener('click', function() {
       const qid = this.dataset.q, aid = this.dataset.a, fb = document.getElementById(qid+'-fb'), qa = answers[qid];
       document.querySelectorAll('[data-q="'+qid+'"]').forEach(o => o.classList.remove('selected','correct','wrong'));
-      this.classList.add('selected');
-      this.classList.add(aid===qa.correct?'correct':'wrong');
+      this.classList.add('selected', aid===qa.correct?'correct':'wrong');
       if(aid!==qa.correct) document.querySelector('[data-q="'+qid+'"][data-a="'+qa.correct+'"]').classList.add('correct');
       fb.className = 'feedback '+(aid===qa.correct?'correct':'wrong')+' show';
       fb.textContent = qa.fb[aid];

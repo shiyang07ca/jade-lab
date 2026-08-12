@@ -6,11 +6,13 @@
 - 不在 submodule 工作树中记录个人笔记或本地研究结论。
 - 个人研究记录统一位于 `docs/open-source/`。
 
-初始化或恢复所有参考源码：
+只初始化当前要研究的项目：
 
 ```bash
-git submodule update --init --recursive
+git submodule update --init --recursive references/codeforces-go
 ```
+
+准备完整研究工作站时才省略路径初始化全部 submodule。
 
 检查当前固定版本：
 

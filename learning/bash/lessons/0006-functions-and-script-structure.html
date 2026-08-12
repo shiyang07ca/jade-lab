@@ -48,27 +48,31 @@ function say_hello {
 
 <h2>2. 函数的参数：用位置参数 <code>$1</code>、<code>$2</code> 接收</h2>
 
-<p>这是最容易困惑的地方：<strong>函数内部有一套独立的位置参数</strong>。脚本的 <code>$1</code> 和函数内的 <code>$1</code> 是两回事——函数调用时，传入的参数会"覆盖"掉脚本级的 <code>$1</code>、<code>$2</code>……</p>
+<p>这是最容易困惑的地方：<strong>函数调用期间会临时使用函数自己的位置参数</strong>。脚本的 <code>$1</code> 和函数内的 <code>$1</code> 来自不同的调用层级；函数返回后，脚本级位置参数仍保持原值。</p>
 
-<pre><code><span class="prompt"></span>cat &gt; /tmp/func-args.sh &lt;&lt; 'EOF'
+<pre><code><span class="prompt"></span>workdir=$(mktemp -d)
+<span class="prompt"></span>cat &gt; "$workdir/func-args.sh" &lt;&lt; 'EOF'
 #!/bin/bash
 
 deploy() {
     echo "    函数 deploy 的第 1 个参数: $1"
     echo "    函数 deploy 的第 2 个参数: $2"
-    echo "    函数 deploy 的所有参数: $@"
+    printf '    函数 deploy 的所有参数:'
+    printf ' &lt;%s&gt;' "$@"
+    printf '\n'
 }
 
 echo "脚本级的 \$1: $1"        <span class="comment"># ← 脚本的第一个参数</span>
 deploy staging v2.0          <span class="comment"># ← 调用函数，传入两个参数</span>
 echo "脚本级的 \$1 仍然是: $1"  <span class="comment"># ← 函数调用完毕后，$1 恢复原值</span>
 EOF
-<span class="prompt"></span>bash /tmp/func-args.sh production
+<span class="prompt"></span>bash "$workdir/func-args.sh" production
 <span class="output">脚本级的 $1: production
     函数 deploy 的第 1 个参数: staging
     函数 deploy 的第 2 个参数: v2.0
     函数 deploy 的所有参数: staging v2.0
-脚本级的 $1 仍然是: production</span></code></pre>
+脚本级的 $1 仍然是: production</span>
+<span class="prompt"></span>rm -rf -- "$workdir"</code></pre>
 
 <div class="insight">
 <b>记忆模型：</b>调用函数就像调用一个"迷你脚本"。函数内部 <code>$1</code> 是调用者传入的第一个参数，<code>$@</code> 是所有参数——和第 4 课学的特殊变量规则完全一致。函数一结束，脚本级的位置参数恢复原值。<b>脚本入口处习惯用 <code>main "$@"</code> 把脚本参数原样传进主函数。</b>
@@ -76,7 +80,9 @@ EOF
 
 <h2>3. <code>local</code>：防止变量"泄漏"</h2>
 
-<p>Bash 函数里定义的变量默认是<strong>全局的</strong>——函数一运行，外面的同名变量就被改了：</p>
+<p>Bash 函数赋值不会自动创建局部变量。名称按动态作用域解析：若调用链中没有同名的 <code>local</code>，赋值会
+修改或创建全局变量；若调用者有同名局部变量，被调用函数能看到并修改它。需要函数私有状态时显式使用
+<code>local</code>：</p>
 
 <pre><code><span class="prompt"></span>VERSION="v1"
 
@@ -105,15 +111,14 @@ echo "$VERSION"             <span class="comment"># → v2 —— 外面的变�
 <pre><code><span class="comment"># 机制 1：return N —— 返回退出码（0-255）</span>
 is_port_open() {
     nc -z localhost "$1" &gt; /dev/null 2&gt;&amp;1
-    return $?               <span class="comment"># 返回 nc 的退出码（0=开放，1=关闭）</span>
-    <span class="comment"># 实际上不需要手动 return $?——函数默认返回最后一条命令的退出码</span>
+    <span class="comment"># 函数自然返回最后一条命令的状态；0 表示探测成功，非 0 表示失败</span>
 }
 
 <span class="comment"># 机制 2：echo + 命令替换 —— "返回"字符串数据</span>
 get_timestamp() {
     local ts
     ts=$(date +%Y%m%d_%H%M%S)
-    echo "$ts"              <span class="comment"># stdout 输出 = 函数的"返回值"</span>
+    printf '%s\n' "$ts"     <span class="comment"># stdout 输出作为调用者读取的数据</span>
 }
 
 <span class="comment"># 使用这两种函数</span>
@@ -125,12 +130,12 @@ BACKUP_FILE="backup_$(get_timestamp).tar.gz"  <span class="comment"># ← 捕获
 echo "备份文件: $BACKUP_FILE"</code></pre>
 
 <div class="insight">
-<b>一条原则分清楚：</b>需要判断成功/失败 → 用退出码（函数内部最后一条命令的退出码自然流出，或手动 <code>return N</code>）。需要拿到一段数据 → 用 stdout（函数内部 <code>echo</code> 输出，外部 <code>$(func)</code> 捕获）。注意：函数内部所有 echo 都会被调用者捕获，所以调试信息要用 <code>echo "debug" &gt;&amp;2</code> 输出到 stderr 避免干扰。
+<b>一条原则分清楚：</b>需要判断成功/失败 → 用退出状态（函数默认采用最后一条命令的状态，也可显式 <code>return N</code>）。需要传出文本数据 → 写 stdout，外部用 <code>$(func)</code> 捕获。诊断信息写 stderr，例如 <code>printf '%s\n' "debug" &gt;&amp;2</code>，避免污染数据输出。
 </div>
 
 <h2>5. 脚本结构：一个成熟的部署脚本长什么样？</h2>
 
-<p>有经验的工程师写的脚本通常遵循一个清晰的结构模式：</p>
+<p>下面是一种适合中等规模脚本的结构。它用于展示职责分区，不是可以原样复制到所有项目的“万能模板”：</p>
 
 <pre><code>#!/bin/bash
 <span class="comment"># ============================================================
@@ -138,13 +143,13 @@ echo "备份文件: $BACKUP_FILE"</code></pre>
 # 用法: ./deploy.sh [staging|production] [版本号]
 # ============================================================</span>
 
-<span class="comment"># ---- 1. 严格模式 ----</span>
+<span class="comment"># ---- 1. 错误处理选项（语义和例外见第 8 课） ----</span>
 set -euo pipefail
 
 <span class="comment"># ---- 2. 全局配置 ----</span>
 readonly APP_NAME="myapp"
 readonly APP_HOME="/opt/${APP_NAME}"
-readonly BACKUP_DIR="${APP_HOME}/backups"
+readonly BACKUP_DIR="/var/backups/${APP_NAME}"
 
 <span class="comment"># ---- 3. 工具函数 ----</span>
 die() {
@@ -153,7 +158,9 @@ die() {
 }
 
 log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S') || return 1
+    printf '[%s] %s\n' "$timestamp" "$*" &gt;&amp;2
 }
 
 <span class="comment"># ---- 4. 业务函数 ----</span>
@@ -171,20 +178,22 @@ check_prereqs() {
 do_backup() {
     local timestamp="$1"
     local backup_path="${BACKUP_DIR}/${APP_NAME}_${timestamp}.tar.gz"
-    log "创建备份: $backup_path"
+    mkdir -p "$BACKUP_DIR" || die "无法创建备份目录: $BACKUP_DIR"
+    log "创建备份: $backup_path" || die "无法写入备份日志"
     tar -czf "$backup_path" -C "$APP_HOME" . || die "备份失败"
-    echo "$backup_path"   <span class="comment"># ← "返回"备份路径</span>
+    printf '%s\n' "$backup_path"   <span class="comment"># ← stdout 只输出备份路径</span>
 }
 
 deploy_new_version() {
     local env="$1"
     local version="$2"
     local timestamp
-    timestamp=$(date +%Y%m%d_%H%M%S)
+    [[ "$version" =~ ^[A-Za-z0-9._-]+$ ]] || die "无效版本标识: $version"
+    timestamp=$(date +%Y%m%d_%H%M%S) || die "无法生成备份时间"
 
     log "开始部署 $version 到 $env 环境"
     local backup_file
-    backup_file=$(do_backup "$timestamp")  <span class="comment"># ← 捕获函数 stdout 作为"返回值"</span>
+    backup_file=$(do_backup "$timestamp") || die "备份步骤失败"
 
     if rsync -avz "./releases/$version/" "$APP_HOME/"; then
         log "部署成功，备份位于: $backup_file"
@@ -206,8 +215,10 @@ main() {
     log "全部完成！"
 }
 
-<span class="comment"># ---- 6. 执行入口 ----</span>
-main "$@"</code></pre>
+<span class="comment"># ---- 6. 仅在直接执行时进入 main；被 source 时只加载函数 ----</span>
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+    main "$@"
+fi</code></pre>
 
 <p>这是适合中等规模 Bash 脚本的一种可维护结构，不是唯一模板。短小脚本可以减少层次；状态多、并发复杂或需要强类型时，应改用更适合的语言：</p>
 
@@ -218,7 +229,7 @@ set -euo pipefail        ← ② 组合错误策略（有重要例外，第 8 �
 readonly CONFIG="..."    ← ③ 全局常量：配置集中管理
 log() / die() { ... }   ← ④ 工具函数：日志、错误处理
 deploy() / backup() {}  ← ⑤ 业务函数：具体的部署逻辑
-main "$@"               ← ⑥ 主入口：把脚本参数传入 main</pre>
+入口保护 + main "$@"    ← ⑥ 直接执行时把脚本参数传入 main</pre>
 </div>
 
 <h2>6. 脚本的两种运行方式：执行 vs 引入</h2>
@@ -242,7 +253,7 @@ main "$@"               ← ⑥ 主入口：把脚本参数传入 main</pre>
   </tr>
   <tr style="border-bottom:1px solid var(--border);">
     <td>新进程？</td>
-    <td>是（fork + exec）</td>
+    <td>是；由当前 Shell 启动独立执行环境</td>
     <td>否（当前 Shell 直接执行）</td>
   </tr>
   <tr style="border-bottom:1px solid var(--border);">
@@ -263,10 +274,10 @@ main "$@"               ← ⑥ 主入口：把脚本参数传入 main</pre>
 </table>
 
 <div class="pitfall">
-部署脚本里的一个常见模式：如果你看到 <code>SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &amp;&amp; pwd)"</code> 然后 <code>source "${SCRIPT_DIR}/lib/utils.sh"</code>——这是脚本在引入同一目录下的函数库。<code>${BASH_SOURCE[0]}</code> 比 <code>$0</code> 更可靠（source 进来的脚本里，<code>$0</code> 是调用者的名字，不是自己的名字）。
+部署脚本里的一个常见模式：如果你看到 <code>SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &amp;&amp; pwd)"</code> 然后 <code>source "${SCRIPT_DIR}/lib/utils.sh"</code>，脚本是在引入同一目录下的函数库。只 source 受信任的文件，并给同时支持“执行/引入”的脚本加上前面的入口保护。<code>${BASH_SOURCE[0]}</code> 能在被 source 时指向当前文件，而 <code>$0</code> 仍是调用者的名字。
 </div>
 
-<h2>7. 实战模式：几个你马上用得上的函数</h2>
+<h2>7. 实践模式：等待、临时目录与确认</h2>
 
 <pre><code><span class="comment"># 模式 1：等待一个服务就绪（超时保护）</span>
 wait_for_service() {
@@ -274,18 +285,23 @@ wait_for_service() {
     local port="$2"
     local timeout="${3:-30}"
     local elapsed=0
+    [[ -n "$host" &amp;&amp; "$host" != -* ]] || die "host 格式无效"
+    [[ "$port" =~ ^[0-9]{1,5}$ ]] \
+        &amp;&amp; (( 10#$port &gt;= 1 &amp;&amp; 10#$port &lt;= 65535 )) \
+        || die "port 必须是 1..65535"
+    [[ "$timeout" =~ ^[1-9][0-9]{0,5}$ ]] || die "timeout 必须是 1..999999 的整数秒"
     while [[ $elapsed -lt $timeout ]]; do
         if nc -z "$host" "$port" &gt; /dev/null 2&gt;&amp;1; then
             log "$host:$port 已就绪"
             return 0
         fi
-        sleep 1
-        ((elapsed++))
+        sleep 1 || die "等待被中断"
+        ((elapsed += 1))   <span class="comment"># 在 set -e 下避免 elapsed++ 首次返回状态 1</span>
     done
     die "$host:$port 在 ${timeout}s 内未就绪"
 }
 
-<span class="comment"># 模式 2：安全地在临时目录中工作（退出后自动清理）</span>
+<span class="comment"># 模式 2：在唯一临时目录中工作（普通 EXIT 路径执行清理）</span>
 work_in_temp() (
     local temp_dir
     temp_dir=$(mktemp -d) || die "无法创建临时目录"
@@ -298,7 +314,7 @@ work_in_temp() (
 confirm() {
     local prompt="${1:-确定继续？(yes/no) }"
     local answer
-    read -r -p "$prompt" answer
+    read -r -p "$prompt" answer || return 1
     [[ "$answer" = "yes" ]]
 }
 
@@ -310,7 +326,7 @@ confirm() {
 <div class="exercise">
 <h3>动手练习（5 分钟）</h3>
 <pre><code><span class="comment"># 1. 写一个函数并调用——感受参数传递</span>
-<span class="prompt"></span>greet() { echo "你好, ${1:-匿名用户}！你正在 $(pwd) 目录"; }
+<span class="prompt"></span>greet() { printf '你好, %s！你正在 %s 目录\n' "${1:-匿名用户}" "$PWD"; }
 <span class="prompt"></span>greet alice
 <span class="prompt"></span>greet
 
@@ -331,27 +347,31 @@ confirm() {
 <span class="prompt"></span>outer_v2; echo "外部 X=$X"     <span class="comment"># X 没变</span>
 
 <span class="comment"># 4. 写一个带 main 入口的小脚本</span>
-<span class="prompt"></span>cat &gt; /tmp/demo-structure.sh &lt;&lt; 'EOF'
+<span class="prompt"></span>workdir=$(mktemp -d)
+<span class="prompt"></span>cat &gt; "$workdir/demo-structure.sh" &lt;&lt; 'EOF'
 #!/bin/bash
 set -euo pipefail
 
-die() { echo "[FATAL] $*" >&2; exit 1; }
+die() { echo "[FATAL] $*" &gt;&amp;2; exit 1; }
 
-count_lines() { wc -l < "$1"; }
+count_lines() { wc -l &lt; "$1"; }
 
 main() {
     local target="${1:-}"
-    [[ -z "$target" ]] && die "用法: $0 <文件路径>"
-    [[ ! -f "$target" ]] && die "文件不存在: $target"
+    [[ -z "$target" ]] &amp;&amp; die "用法: $0 &lt;文件路径&gt;"
+    [[ ! -f "$target" ]] &amp;&amp; die "文件不存在: $target"
     local count
     count=$(count_lines "$target")
-    echo "文件 $target 有 $count 行"
+    printf '文件 %s 有 %s 行\n' "$target" "$count"
 }
-main "$@"
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+    main "$@"
+fi
 EOF
-<span class="prompt"></span>chmod +x /tmp/demo-structure.sh
-<span class="prompt"></span>/tmp/demo-structure.sh /etc/passwd
-<span class="prompt"></span>/tmp/demo-structure.sh                <span class="comment"># 不传参数，看错误提示</span></span></code></pre>
+<span class="prompt"></span>chmod +x "$workdir/demo-structure.sh"
+<span class="prompt"></span>"$workdir/demo-structure.sh" /etc/passwd
+<span class="prompt"></span>"$workdir/demo-structure.sh"                <span class="comment"># 不传参数，看错误提示</span>
+<span class="prompt"></span>rm -rf -- "$workdir"</code></pre>
 </div>
 
 <h2>总结</h2>
@@ -364,15 +384,15 @@ EOF
     │  name() { ... }          函数定义（推荐）               │
     │  function name { ... }   函数定义（Bash 专属）          │
     │                                                      │
-    │  $1 $2 $@                函数内部的参数（独立）          │
+    │  $1 $2 "$@"              函数内部的参数（独立）          │
     │  local VAR=val           局部变量，防止泄漏              │
     │  return N                返回退出码（0=成功）            │
-    │  echo + $(func)          "返回"字符串数据               │
+    │  stdout + $(func)        向调用者传出文本数据             │
     │                                                      │
     │  ./script.sh             执行：新进程，变量不保留         │
     │  . script.sh             引入：当前 Shell，变量保留      │
     │                                                      │
-    │  <strong>中等脚本的常用 6 层结构</strong>                          │
+    │  <strong>中等脚本的一种常用结构</strong>                            │
     │  Shebang → 错误策略 → 常量 → 工具函数 → 业务逻辑 → main │
     └──────────────────────────────────────────────────────┘
 </pre>
@@ -430,9 +450,9 @@ echo "$VERSION"  # 期望：v1，实际：v2</code></pre>
 
 <div class="session-footer">
   <p>
-    📖 <strong>推荐阅读</strong>：<a href="https://mywiki.wooledge.org/BashGuide/CompoundCommands#Functions" target="_blank">BashGuide — Functions</a>；<a href="https://betterdev.blog/minimal-safe-bash-script-template/" target="_blank">Minimal Safe Bash Script Template</a>（一个高质量的脚本模板）<br>
+    📖 <strong>一手资料</strong>：<a href="https://www.gnu.org/software/bash/manual/bash.html#Shell-Functions" target="_blank">Bash Shell Functions</a>；<a href="https://www.gnu.org/software/bash/manual/bash.html#Bourne-Shell-Builtins" target="_blank">Bash Builtins</a><br>
     📝 <strong>上一课</strong>：<a href="0005-control-flow.html">第 5 课 — 控制流</a><br>
-    📝 <strong>下一课预告</strong>：第 7 课 — 文本处理三剑客（grep、sed、awk——深入日志分析和文本处理的核心武器）<br>
+    📝 <strong>下一课预告</strong>：第 7 课 — 使用 grep、sed 与 awk 处理文本<br>
     ❓ <strong>有疑问？</strong>在对话中直接问我。如果手头有实际部署脚本，贴过来我可以帮你分析它的函数结构。
   </p>
 </div>
@@ -446,17 +466,17 @@ echo "$VERSION"  # 期望：v1，实际：v2</code></pre>
       c: '不对。result=sum 3 5 会被 Bash 解析为：设置 result=sum，然后执行命令 3 并传参 5（报错）。'
     }},
     q2: { correct: 'a', fb: {
-      a: '正确！Bash 函数内变量默认是全局的。set_version 函数直接给 VERSION 赋值，覆盖了外面的 VERSION="v1"。加 local VERSION="$1" 就能把变量限定在函数内，不影响外部。这是 Bash 脚本里最常踩的坑之一。',
+      a: '正确！函数赋值不会自动创建局部变量；这里没有调用者局部变量，因此 set_version 修改了全局 VERSION。加 local VERSION="$1" 才把这个名称限定在本次函数调用的动态作用域内。',
       b: '不对。函数名可以有下划线，完全合法。',
       c: '不对。函数参数完全可以赋给变量——问题是没加 local，不是赋值语法本身的问题。'
     }},
     q3: { correct: 'a', fb: {
-      a: '正确！. (source) 是在当前 Shell 进程里直接执行脚本内容——脚本里定义的函数和变量执行完后继续存在。./ 是启动一个全新的子 Shell 进程——脚本执行完，它的变量、函数、工作目录等一切随进程消失。这是引入函数库（用 .）和运行独立脚本（用 ./）的本质区别。',
+      a: '正确！. (source) 在当前 Shell 进程中执行文件内容，因此变量、函数、目录和选项修改可能保留。执行 ./script.sh 时，操作系统按 shebang 启动独立解释器；Bash 脚本中的这些修改不会回写调用 Shell。',
       b: '反了。./script 需要执行权限，. script 不需要。',
       c: '不对。它们有本质区别——是不是新进程、变量是否保留、是否需要执行权限，都不一样。'
     }},
     q4: { correct: 'a', fb: {
-      a: '正确！$@ 展开为脚本的所有命令行参数（每个保持独立，双引号保护）。main "$@" 把脚本收到的参数原封不动传给 main 函数——在 main 内部，$1 就是脚本的第一个参数，$2 就是第二个。这是标准脚本结构的核心一行。',
+      a: '正确！$@ 展开为脚本的所有命令行参数；放在双引号中时，每个参数仍保持独立。main "$@" 把脚本收到的参数原样传给 main 函数。',
       b: '不对。$@ 是参数的内容本身，不是计数。$# 才是参数个数。',
       c: '不对。函数的返回值（退出码）通过 $? 获取，不是通过 $@。'
     }}

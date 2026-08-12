@@ -22,7 +22,8 @@
 <p class="subtitle">理解 Bash 在运行命令之前对你的文字做了什么</p>
 
 <div class="mission-tie">
-部署脚本里最常见的困惑：为什么 <code>DIR=/opt/app</code> 等号两边不能有空格？为什么变量要写 <code>"${LOG_DIR}"</code> 而不只是 <code>$LOG_DIR</code>？单引号和双引号到底有什么区别？这节课让你彻底搞明白。
+本课解释三个直接影响脚本行为的问题：赋值为什么不能在等号两侧加空格，变量展开何时需要引用，
+以及单引号、双引号和未引用上下文分别允许哪些展开。
 </div>
 
 <h2>1. Bash 在运行命令前做了什么？</h2>
@@ -36,19 +37,19 @@
               ▼  Bash 展开处理
               │  1. 大括号展开  {a,b,c} → a b c
               │  2. 波浪号展开  ~ → /home/you
-              │  3. <strong>变量展开    $USER → alice</strong>
-              │  4. <strong>命令替换    $(pwd) → /opt/app</strong>
-              │  5. 单词分割    按 IFS 切分
-              │  6. 文件名通配  *.txt → a.txt b.txt
-              │  7. 引用移除    去掉引号
+              │  3. <strong>参数/变量、算术、命令和进程替换</strong>
+              │     $USER → alice；$(pwd) → /opt/app
+              │  4. 对未被双引号保护的结果做单词分割
+              │  5. 对未被引用的模式做文件名展开
+              │  6. 引用移除    去掉语法引号
               ▼
 命令看到：echo 当前用户是 alice，路径是 /opt/app</pre>
 </div>
 
-<p>这个过程叫 <strong>expansion</strong>（展开）。变量、引号和命令替换都在这个阶段处理。<strong>命令本身永远看不到你写的原始文本——它只看到展开后的结果。</strong></p>
+<p>这个过程叫 <strong>expansion</strong>（展开）。参数、引用和命令替换会影响最终参数。被调用命令收到的是展开后形成的参数，而不是一份可重新解析的原始命令行文本。</p>
 
 <div class="insight">
-这解释了为什么 Bash 和 Python/JS 的变量行为完全不同。在 Python 里，变量是运行时的概念；在 Bash 里，变量替换发生在命令启动<strong>之前</strong>，由 Shell 完成。命令（如 <code>echo</code>）收到的已经是替换后的纯字符串。
+Python 函数通常直接接收对象；Bash 则先由 Shell 展开参数，再调用命令、函数或内置命令。外部命令最终收到字符串参数和环境，不知道哪些字符原来来自变量。
 </div>
 
 <h2>2. 变量赋值：三条铁律</h2>
@@ -58,7 +59,7 @@
 <span class="prompt"></span>GREETING="hello world"   # ✅ 引号把含空格的值作为一个赋值词
 
 <span class="prompt"></span>NAME = "alice"           # ❌ Bash 以为 NAME 是个命令，"=" 和 "alice" 是参数
-<span class="prompt"></span>NAME= alice              # ❌ 把 NAME 设成空字符串，然后运行 alice 命令</code></pre>
+<span class="prompt"></span>NAME= alice              # ❌ 以临时空 NAME 尝试运行名为 alice 的命令</code></pre>
 
 <table style="width:100%; margin:1rem 0;">
   <tr style="border-bottom:1px solid var(--border);">
@@ -81,9 +82,8 @@
 
 <h2>3. 读取变量：<code>$VAR</code> 还是 <code>${VAR}</code>？</h2>
 
-<pre><code><span class="prompt"></span>echo $NAME            # → alice（最简写法）
-<span class="prompt"></span>echo ${NAME}          # → alice（带大括号，更安全）
-<span class="prompt"></span>echo "$NAME"          # → alice（双引号内照样展开）</code></pre>
+<pre><code><span class="prompt"></span>printf '%s\n' "$NAME"       # → alice（参数位置默认引用展开）
+<span class="prompt"></span>printf '%s\n' "${NAME}"     # → alice（大括号明确变量名边界）</code></pre>
 
 <p>那什么时候<strong>必须</strong>用大括号？</p>
 
@@ -113,13 +113,13 @@
 </pre>
 </div>
 
-<h3>单引号：一切按字面来</h3>
+<h3>单引号：保留所含字符</h3>
 
 <pre><code><span class="prompt"></span>echo '$USER says $(date) and *.txt'
 <span class="output">$USER says $(date) and *.txt</span>
 
-# 单引号里面，美元符号、反引号、星号……全部失去特殊含义
-# 你写了什么，就是什么。一个字都不会变。</code></pre>
+# 单引号里面，美元符号、反引号、星号失去特殊含义
+# 单引号本身不能直接出现在一对单引号内部</code></pre>
 
 <h3>双引号：展开变量，但保护结构</h3>
 
@@ -128,7 +128,7 @@
 
 # $VAR 和 $(cmd) 正常展开，但空格和通配符不会造成额外的分割或匹配</code></pre>
 
-<h3>无引号：危险！</h3>
+<h3>无引号：只有确实需要分割或通配时使用</h3>
 
 <pre><code><span class="prompt"></span>FILES="*.txt"
 <span class="prompt"></span>echo $FILES       # → a.txt b.txt c.txt（展开了通配符）
@@ -156,7 +156,7 @@
 <span class="prompt"></span>echo "日志共 $LINE_COUNT 行"</code></pre>
 
 <div class="pitfall">
-你可能见过反引号写法：<code>`date`</code>。它的嵌套与转义规则更难读，新增脚本优先使用 <code>$(...)</code>。命令替换可以嵌套，例如 <code>name=$(basename "$PWD")</code>；仍需按所在上下文正确引用展开结果。
+你可能见过反引号写法：<code>`date`</code>。它的嵌套与转义规则更难读，新增脚本优先使用 <code>$(...)</code>。命令替换会删除输出末尾连续的换行；它也在子 Shell 环境执行，因此不要依赖其中的变量或目录修改影响外层。
 </div>
 
 <h2>6. 特殊变量：Bash 给你的"免费变量"</h2>
@@ -172,11 +172,11 @@
   <tr style="border-bottom:1px solid var(--border);">
     <td><code>$?</code></td>
     <td>上一条命令的退出码</td>
-    <td><code>if [ $? -ne 0 ]; then echo "失败"; fi</code></td>
+    <td><code>if command; then ...; else ...; fi</code> 通常比稍后读取 <code>$?</code> 清楚</td>
   </tr>
   <tr style="border-bottom:1px solid var(--border);">
     <td><code>$0</code></td>
-    <td>脚本自身的名字</td>
+    <td>Shell 被调用时使用的名称；被 source 的文件不能依靠它定位自身</td>
     <td><code>echo "用法: $0 &lt;参数&gt;"</code></td>
   </tr>
   <tr style="border-bottom:1px solid var(--border);">
@@ -197,7 +197,7 @@
   <tr>
     <td><code>"$*"</code></td>
     <td>所有参数（用 <code>IFS</code> 首字符连接成一个字符串）</td>
-    <td>几乎不用，优先用 <code>"$@"</code></td>
+    <td>仅在明确需要连接成一个字符串时使用；转发参数用 <code>"$@"</code></td>
   </tr>
 </table>
 
@@ -223,11 +223,12 @@ ENV=<strong>"${1:-production}"</strong>        <span class="comment"># ← 第 8
 cd <strong>"$APP_DIR"</strong> || exit 1
 
 <span class="comment"># 4. 组合路径时花括号定界</span>
-BACKUP_FILE=<strong>"${APP_DIR}/backups/${APP_NAME}_${TIMESTAMP}.tar.gz"</strong>
+BACKUP_DIR=<strong>"/var/backups/${APP_NAME}"</strong>  <span class="comment"># 备份放在被备份目录之外</span>
+BACKUP_FILE=<strong>"${BACKUP_DIR}/${APP_NAME}_${TIMESTAMP}.tar.gz"</strong>
+mkdir -p "$BACKUP_DIR" || exit 1
 
-<span class="comment"># 5. 检查退出码</span>
-tar -czf "$BACKUP_FILE" "$APP_DIR"
-if [ <strong>$?</strong> -eq 0 ]; then
+<span class="comment"># 5. 直接在 if 中检查命令状态，避免 $? 被下一条命令覆盖</span>
+if tar -czf "$BACKUP_FILE" .; then
     echo "备份成功：$BACKUP_FILE"
 else
     echo "备份失败！" &gt;&amp;2
@@ -240,8 +241,8 @@ fi</code></pre>
 
 <pre><code><span class="prompt"></span>echo ${VAR:-default}    # 如果 VAR 未设置或为空，用 "default"
 <span class="prompt"></span>echo ${VAR:=default}    # 同上，但还会把 VAR 赋值为 "default"
-<span class="prompt"></span>echo ${VAR:?错误消息}   # 如果 VAR 未设置，打印错误并退出脚本
-<span class="prompt"></span>echo ${VAR:+replaced}   # 如果 VAR 已设置，用 "replaced" 代替原值
+<span class="prompt"></span>echo ${VAR:?错误消息}   # 如果 VAR 未设置或为空，打印错误；非交互式 Shell 通常退出
+<span class="prompt"></span>echo ${VAR:+replaced}   # 如果 VAR 已设置且非空，用 "replaced" 代替原值
 
 <span class="prompt"></span>FILE="backup.tar.gz"
 <span class="prompt"></span>echo ${FILE%.*}         # → backup.tar  (去掉最短匹配的 .* 后缀)
@@ -270,16 +271,20 @@ fi</code></pre>
 <span class="prompt"></span>echo "backup_$(date +%Y%m%d_%H%M%S).tar.gz"
 
 <span class="comment"># 5. 特殊变量——先写个小脚本试试</span>
-<span class="prompt"></span>cat &gt; /tmp/test-vars.sh &lt;&lt; 'EOF'
+<span class="prompt"></span>workdir=$(mktemp -d)
+<span class="prompt"></span>cat &gt; "$workdir/test-vars.sh" &lt;&lt; 'EOF'
 #!/bin/bash
 echo "脚本名: $0"
 echo "参数个数: $#"
 echo "第一个参数: $1"
-echo "所有参数: $@"
-echo "上条命令退出码: $?"
+printf '参数: &lt;%s&gt;\n' "$@"
+false
+status=$?
+echo "false 的退出状态: $status"
 EOF
-<span class="prompt"></span>chmod +x /tmp/test-vars.sh
-<span class="prompt"></span>/tmp/test-vars.sh deploy production v2</span></code></pre>
+<span class="prompt"></span>chmod +x "$workdir/test-vars.sh"
+<span class="prompt"></span>"$workdir/test-vars.sh" deploy production v2
+<span class="prompt"></span>rm -rf -- "$workdir"</code></pre>
 </div>
 
 <h2>总结</h2>
@@ -292,14 +297,14 @@ EOF
          │  VAR=value         赋值（等号两边<strong>无空格</strong>）    │
          │  ${VAR}            安全取值（花括号定界）        │
          │  "$VAR"            双引号保护（展开但不分割）     │
-         │  '$VAR'            单引号字面（一字不变）        │
+         │  '$VAR'            单引号保留所含字符            │
          │  $(cmd)            命令替换（现代写法）          │
          │  $?                上一条命令的退出码            │
          │  $1..$9            命令行参数                   │
-         │  $@                所有参数（保持独立）          │
+         │  "$@"              所有参数（逐项保持独立）        │
          │  $#                参数个数                     │
          │                                              │
-         │  <strong>黄金法则：变量引用永远加双引号 "${VAR}"</strong>      │
+         │  <strong>参数位置默认引用展开；赋值、算术和 [[ ]] 另行判断</strong>  │
          └──────────────────────────────────────────────┘
 </pre>
 </div>
@@ -308,7 +313,7 @@ EOF
 <h3>快速自检</h3>
 
 <div class="question" id="q1">
-  <p><strong>Q1:</strong> 下面哪一行会导致错误？</p>
+  <p><strong>Q1:</strong> 下面哪一行不会作为普通变量赋值解析，而会尝试执行额外命令？</p>
   <div class="options">
     <span class="option" data-q="q1" data-a="a">NAME="alice"</span>
     <span class="option" data-q="q1" data-a="b">NAME= "alice"</span>
@@ -318,7 +323,7 @@ EOF
 </div>
 
 <div class="question" id="q2">
-  <p><strong>Q2:</strong> <code>MSG="hello world"; echo $MSG</code> 和 <code>echo "$MSG"</code> 的输出有什么不同？</p>
+  <p><strong>Q2:</strong> <code>MSG="hello   world"; echo $MSG</code> 和 <code>echo "$MSG"</code> 的输出有什么不同？</p>
   <div class="options">
     <span class="option" data-q="q2" data-a="a">完全一样，没有区别</span>
     <span class="option" data-q="q2" data-a="b">无引号会把多个空格压成一个，双引号会保留原始空格</span>
@@ -350,10 +355,10 @@ EOF
 
 <div class="session-footer">
   <p>
-    📖 <strong>推荐阅读</strong>：<a href="https://mywiki.wooledge.org/BashGuide/Parameters" target="_blank">BashGuide — Parameters</a>（Greg Wooledge 的参数展开指南，写得极好）<br>
+    📖 <strong>一手资料</strong>：<a href="https://www.gnu.org/software/bash/manual/bash.html#Shell-Expansions" target="_blank">Bash Shell Expansions</a>；<a href="https://www.gnu.org/software/bash/manual/bash.html#Quoting" target="_blank">Bash Quoting</a><br>
     📋 <strong>速查参考</strong>：<a href="../reference/expansion-and-quoting.html">变量展开与引用速查表</a><br>
     📝 <strong>上一课</strong>：<a href="0003-pipes-and-redirections.html">第 3 课 — 管道与重定向</a><br>
-    📝 <strong>下一课预告</strong>：第 5 课 — 控制流（if/for/while/case——脚本终于开始"长脑子"了）<br>
+    📝 <strong>下一课预告</strong>：第 5 课 — 条件、循环与多路分支<br>
     ❓ <strong>有疑问？</strong>在对话中直接问我。试试把你见过的某个部署脚本贴过来，我可以帮你逐行分析其中的变量用法。
   </p>
 </div>
@@ -362,7 +367,7 @@ EOF
 (function() {
   const answers = {
     q1: { correct: 'b', fb: {
-      b: '正确！NAME= 和 "alice" 中间有空格，Bash 会把 NAME 设为空字符串，然后尝试把 "alice" 当成一个命令来执行——这肯定报错。记住：等号两边不能有空格。',
+      b: '正确！NAME= 和 "alice" 中间有空格，Bash 会把 NAME= 当作命令前的赋值，并尝试执行名为 alice 的命令。该命令是否恰好存在不影响解析结论。',
       a: '这一行是正确的。赋值等号两边没有空格，值用双引号包裹。',
       c: '这一行也是正确的。单引号包裹值也可以赋值，效果和双引号一样。'
     }},
@@ -372,13 +377,13 @@ EOF
       c: '不对。双引号内变量照样展开——你可以自己试试 echo "$MSG"。双引号阻止的是单词分割和通配展开，但不阻止变量展开。'
     }},
     q3: { correct: 'c', fb: {
-      c: '正解！这里的定界符是 /——它不属于变量名的合法字符（只含字母、数字、下划线），所以 Bash 知道变量名到 APP_HOME 就结束了，$APP_HOME/logs 也能得出正确结果。但 ${APP_HOME}/logs 确实更清晰，强烈推荐。如果后面跟的是下划线——比如 $APP_HOME_logs——那花括号就是必需的了，否则 Bash 会去读 HOME_logs 这个变量。',
+      c: '正解！这里的定界符是 /——它不属于变量名的合法字符，所以 Bash 知道变量名到 APP_HOME 就结束了。若写 $APP_HOME_logs，Bash 会读取 APP_HOME_logs；要拼接下划线必须写 ${APP_HOME}_logs。',
       a: '效果确实一样（因为 / 不是合法变量名字符），但花括号让代码更清晰，是推荐写法。',
       b: '不对。/ 不是合法变量名字符（只有字母数字下划线），Bash 会正确识别变量名的边界。'
     }},
     q4: { correct: 'b', fb: {
-      b: '正确！$(date) 执行 date 命令，把它的 stdout 输出（当前时间字符串）捕获并赋值给 NOW。这是现代 Bash 脚本的标准写法。',
-      a: '不行。单引号里面一切按字面来——NOW 的值会是字符串 "date" 三个字母，不是当前时间。',
+      b: '正确！$(date) 执行 date 命令，删除末尾换行后把 stdout 捕获并赋值给 NOW。这是推荐的新代码写法。',
+      a: '不行。单引号禁止命令替换——NOW 的值会是字符串 "date" 三个字母，不是当前时间。',
       c: '不行。$DATE 是读取 DATE 变量的值（它大概率没被设置过，所以是空字符串）。这不是执行 date 命令。'
     }}
   };

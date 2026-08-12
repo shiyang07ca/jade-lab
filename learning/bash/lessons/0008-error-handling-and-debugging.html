@@ -19,7 +19,7 @@
 </div>
 
 <h1>错误处理与调试</h1>
-<p class="subtitle">让脚本出错了不再默默崩溃——严格模式、信号捕获和调试技巧</p>
+<p class="subtitle">先定义失败语义，再选择 Shell 选项、显式分支、清理和诊断手段</p>
 
 <div class="mission-tie">
 可靠脚本必须先定义失败语义：哪些非零状态是预期分支，哪些必须停止，退出前需要清理什么，以及如何定位根因。<code>set -euo pipefail</code> 可以辅助发现部分错误，但不能代替显式检查和测试。
@@ -30,11 +30,11 @@
 <p>先看一个反面教材——这段代码有一个 bug，但 Bash 会若无其事地跑完：</p>
 
 <pre><code>#!/bin/bash
-<span class="comment"># ⚠️ 危险脚本——没有错误处理</span>
+<span class="comment"># 反例：没有检查 cd 的结果</span>
 
 cd /nonexistent           <span class="comment"># 这行失败了！cd 报错</span>
 echo "当前目录: $(pwd)"   <span class="comment"># 但脚本继续执行——你还在原来的目录</span>
-rm -rf *                  <span class="comment"># 😱 你以为在 /nonexistent，实际在当前目录！</span>
+printf '将会操作错误目录: %s\n' "$PWD"  <span class="comment"># 实际仍在原目录；真实清理命令会造成破坏</span>
 echo "清理完成"</code></pre>
 
 <div class="pitfall">
@@ -45,16 +45,18 @@ Bash 默认不会因为简单命令返回非零就自动终止脚本，而且命
 
 <p><code>-e</code>（errexit）会让 Shell 在特定上下文中的命令返回非零时退出。先看一个不处于例外上下文的简单情况：</p>
 
-<pre><code><span class="prompt"></span>cat &gt; /tmp/test-e.sh &lt;&lt; 'EOF'
+<pre><code><span class="prompt"></span>script=$(mktemp)
+<span class="prompt"></span>cat &gt; "$script" &lt;&lt; 'EOF'
 #!/bin/bash
 set -e
 echo "第一步：正常执行"
 cd /nonexistent          <span class="comment"># 失败！退出码 ≠ 0 → 脚本在这里终止</span>
 echo "第二步：永远不会执行到这里"
 EOF
-<span class="prompt"></span>bash /tmp/test-e.sh
+<span class="prompt"></span>bash "$script"
 <span class="output">第一步：正常执行
-/tmp/test-e.sh: line 4: cd: /nonexistent: No such file or directory</span></code></pre>
+&lt;temp-script&gt;: line 4: cd: /nonexistent: No such file or directory</span>
+<span class="prompt"></span>rm -f -- "$script"</code></pre>
 
 <p><strong>但 <code>set -e</code> 有几个"安全阀"——以下场景命令失败不会触发退出：</strong></p>
 
@@ -66,8 +68,8 @@ fi
 <span class="comment"># 2. 管道中除最后一项之外的命令（除非启用 pipefail）</span>
 false | true                     <span class="comment"># false 失败，但管道整体以 true 的退出码为准</span>
 
-<span class="comment"># 3. && / || 列表中除最后一项外的命令，以及 ! 反转的命令</span>
-false && echo "不会执行"         <span class="comment"># false 用来决定是否执行右侧</span>
+<span class="comment"># 3. &amp;&amp; / || 列表中除最后一项外的命令，以及 ! 反转的命令</span>
+false &amp;&amp; echo "不会执行"         <span class="comment"># false 用来决定是否执行右侧</span>
 ! false                           <span class="comment"># ! 把状态反转为 0</span></code></pre>
 
 <div class="insight">
@@ -76,15 +78,18 @@ false && echo "不会执行"         <span class="comment"># false 用来决定�
 
 <h2>3. <code>set -u</code>：用了未定义的变量？报错退出</h2>
 
-<p><code>-u</code> = <strong>u</strong>nset。引用一个没有定义过的变量时，立即报错退出：</p>
+<p><code>-u</code> = <strong>u</strong>nset。在本课的非交互式脚本中，展开未设置变量会打印诊断并使 Shell 退出；
+位置参数、数组和交互式 Shell 还有手册规定的细节：</p>
 
-<pre><code><span class="prompt"></span>cat &gt; /tmp/test-u.sh &lt;&lt; 'EOF'
+<pre><code><span class="prompt"></span>script=$(mktemp)
+<span class="prompt"></span>cat &gt; "$script" &lt;&lt; 'EOF'
 #!/bin/bash
 set -u
 echo "部署到: $DEPLOY_TARGET"
 EOF
-<span class="prompt"></span>bash /tmp/test-u.sh
-<span class="output">/tmp/test-u.sh: line 3: DEPLOY_TARGET: unbound variable</span></code></pre>
+<span class="prompt"></span>bash "$script"
+<span class="output">&lt;temp-script&gt;: line 3: DEPLOY_TARGET: unbound variable</span>
+<span class="prompt"></span>rm -f -- "$script"</code></pre>
 
 <p>这能防止因变量名打错（`$CONFG` 而不是 `$CONFIG`）导致的静默错误。如果你确实需要"变量可能未设置"的行为，用参数展开提供默认值：</p>
 
@@ -94,22 +99,22 @@ EOF
 
 <p>默认情况下，管道的退出码是<strong>最后一个命令的退出码</strong>：</p>
 
-<pre><code><span class="prompt"></span>cat huge.log | grep "ERROR" | wc -l
-<span class="comment">#   ↑ 失败了     ↑ 成功了         ↑ 成功了</span>
-<span class="comment"># 管道退出码 = wc -l 的退出码 = 0（成功！）——cat 的失败被吞掉了</span>
+<pre><code><span class="prompt"></span>cat missing.log | wc -l
+<span class="comment">#   ↑ 失败了         ↑ 仍成功输出 0</span>
+<span class="comment"># 管道状态 = wc -l 的状态 = 0——cat 的失败没有体现在管道状态中</span>
 <span class="prompt"></span>echo $?
 <span class="output">0</span></code></pre>
 
 <p>开启 <code>pipefail</code> 后，管道返回最右侧非零命令的状态；全部成功时返回 0：</p>
 
 <pre><code><span class="prompt"></span>set -o pipefail
-<span class="prompt"></span>cat huge.log | grep "ERROR" | wc -l
-<span class="output">cat: huge.log: No such file or directory</span>
+<span class="prompt"></span>cat missing.log | wc -l
+<span class="output">cat: missing.log: No such file or directory</span>
 <span class="output">       0</span>
 <span class="prompt"></span>echo $?
 <span class="output">1</span>    <span class="comment"># ← 本例只有 cat 返回非零，因此状态来自 cat</span></code></pre>
 
-<h2>5. 严格模式三合一</h2>
+<h2>5. 常见错误处理选项组合</h2>
 
 <p>许多以 Bash 为明确运行时的自动化脚本使用这个组合，但是否启用应由脚本的失败语义决定：</p>
 
@@ -119,10 +124,7 @@ EOF
 <span class="comment"># -u: 未定义变量 → 退出</span>
 <span class="comment"># -o pipefail: 管道返回最右侧非零状态</span></code></pre>
 
-<p>有些脚本会缩小 <code>IFS</code> 来改变未引用展开和 <code>read</code> 的分割规则。这不是严格模式的固定组成，最好只在确有需要的局部设置：</p>
-
-<pre><code>set -euo pipefail
-IFS=$'\n\t'    <span class="comment"># 只把换行和 Tab 当作分隔符（空格不再是分隔符，防止意外单词分割）</span></code></pre>
+<p><code>IFS</code> 控制部分分词和 <code>read</code> 的字段拆分，不是这组选项的一部分。不要全局修改；只在读取特定格式时局部指定，例如 <code>while IFS=: read -r user _ uid _; do ...; done</code>。</p>
 
 <div class="pitfall">
 <code>set -e</code> 的规则来自 Shell 语法上下文：函数调用位于条件中时，函数体可能不受 errexit 影响；<code>let</code> 或 <code>(( ))</code> 的算术结果为 0 时状态也是非零。不要用覆盖率百分比描述它，应针对脚本真实分支编写测试，并以 GNU Bash 手册的 <code>The Set Builtin</code> 为准。
@@ -130,40 +132,44 @@ IFS=$'\n\t'    <span class="comment"># 只把换行和 Tab 当作分隔符（空
 
 <h2>6. <code>trap</code>：注册退出时的清理逻辑</h2>
 
-<p><code>trap</code> 让你在脚本退出（正常或异常）时自动执行清理代码。它是 Bash 的"finally"块：</p>
+<p><code>trap</code> 为指定信号或 Shell 的 <code>EXIT</code> 事件注册命令。它可以集中清理，但不是异常系统中的完整
+<code>finally</code>：哪些路径触发、处理器如何继承以及原状态是否保留，都要按 Bash 规则验证。</p>
 
 <h3>最常用的三种 trap</h3>
 
 <pre><code><span class="comment"># trap '命令' 信号</span>
 
-<span class="comment"># EXIT  —— Shell 按正常退出流程终止时</span>
-trap 'rm -rf "$TEMP_DIR"' EXIT
+<span class="comment"># EXIT  —— Shell 按普通退出流程终止时</span>
+trap 'rm -rf -- "$TEMP_DIR"' EXIT
 
-<span class="comment"># ERR   —— 遵循与 errexit 相近的语法例外；不是“任何失败”</span>
-trap 'echo "脚本在第 $LINENO 行失败" >&2' ERR
+<span class="comment"># ERR   —— 遵循与 errexit 相近的语法例外；set -E 扩展其继承范围</span>
+trap 'echo "脚本在第 $LINENO 行失败" &gt;&amp;2' ERR
 
 <span class="comment"># INT/TERM —— 用户按 Ctrl+C (SIGINT) 或被 kill (SIGTERM) 时</span>
-trap 'echo "收到中断信号，正在清理..."; exit 1' INT TERM</code></pre>
+trap 'echo "收到 SIGINT" &gt;&amp;2; exit 130' INT
+trap 'echo "收到 SIGTERM" &gt;&amp;2; exit 143' TERM</code></pre>
 
 <h3>部署脚本里的 trap 模式</h3>
 
 <pre><code>#!/bin/bash
-set -euo pipefail
+set -Eeuo pipefail
 
 TEMP_DIR=$(mktemp -d)
 
 <span class="comment"># 无论如何退出都要清理</span>
 cleanup() {
     local exit_code=$?
-    echo "清理中..."
-    rm -rf "$TEMP_DIR"
-    echo "退出码: $exit_code"
+    trap - EXIT
+    printf '清理中...\n' &gt;&amp;2
+    rm -rf -- "$TEMP_DIR" || printf '清理失败: %s\n' "$TEMP_DIR" &gt;&amp;2
+    printf '退出状态: %s\n' "$exit_code" &gt;&amp;2
+    exit "$exit_code"
 }
 trap cleanup EXIT
 
 <span class="comment"># 出错时额外记录</span>
 on_error() {
-    echo "[ERROR] 脚本在第 ${1:-?} 行失败" >&2
+    echo "[ERROR] 脚本在第 ${1:-?} 行失败" &gt;&amp;2
 }
 trap 'on_error $LINENO' ERR
 
@@ -176,13 +182,14 @@ echo "部署开始，工作目录: $TEMP_DIR"
 <b>EXIT trap 适合集中清理当前 Shell 创建的临时资源。</b> 它覆盖正常结束、显式 <code>exit</code> 和常见错误退出；但 SIGKILL、主机崩溃或 <code>exec</code> 成功替换当前 Shell 等路径不会执行它。清理操作应保持幂等，并且不能把临时文件清理误写成业务回滚。
 </div>
 
-<h2>7. <code>set -x</code>：打印每条命令——最强调试手段</h2>
+<h2>7. <code>set -x</code>：查看展开后执行的命令</h2>
 
 <p>当你面对一个脚本不理解它的行为时，<code>set -x</code> 是最直接有效的调试工具：</p>
 
-<pre><code><span class="prompt"></span>cat &gt; /tmp/debug-demo.sh &lt;&lt; 'EOF'
+<pre><code><span class="prompt"></span>script=$(mktemp)
+<span class="prompt"></span>cat &gt; "$script" &lt;&lt; 'EOF'
 #!/bin/bash
-set -euo pipefail
+set -Eeuo pipefail
 
 NAME="alice"
 GREETING="Hello, ${NAME}"
@@ -193,7 +200,7 @@ echo "$GREETING"
 ls -la
 EOF
 
-<span class="prompt"></span>bash -x /tmp/debug-demo.sh
+<span class="prompt"></span>bash -x "$script"
 <span class="output">+ NAME=alice
 + GREETING='Hello, alice'
 + DIR=/home/alice/projects
@@ -201,7 +208,8 @@ EOF
 + echo 'Hello, alice'
 Hello, alice
 + ls -la
-...（文件列表）</span></code></pre>
+...（文件列表）</span>
+<span class="prompt"></span>rm -f -- "$script"</code></pre>
 
 <p>每一行前面有 <code>+</code> 号的都是 Bash 实际执行的命令（变量已展开），你可以逐行追踪脚本到底执行了什么。也可以只在脚本的某一段开启：</p>
 
@@ -222,17 +230,17 @@ set +x              <span class="comment"># 关闭追踪</span></code></pre>
 <pre><code>#!/bin/bash
 set -euo pipefail
 
-readonly SCRIPT_NAME="$(basename "$0")"
+readonly SCRIPT_NAME="${0##*/}"
 
 <span class="comment"># 致命错误：打印消息并退出</span>
 die() {
-    echo "[${SCRIPT_NAME}] FATAL: $*" >&2
+    echo "[${SCRIPT_NAME}] FATAL: $*" &gt;&amp;2
     exit 1
 }
 
 <span class="comment"># 仅警告</span>
 warn() {
-    echo "[${SCRIPT_NAME}] WARN: $*" >&2
+    echo "[${SCRIPT_NAME}] WARN: $*" &gt;&amp;2
 }
 
 <span class="comment"># 信息日志</span>
@@ -273,12 +281,14 @@ check_health() {
         if curl -fsS --connect-timeout 2 --max-time 5 https://api.example.com/health; then
             return 0
         fi
-        warn "健康检查失败，重试 $i/3..."
-        sleep 2
+        if [[ $i -lt 3 ]]; then
+            warn "第 $i/3 次探测失败，2 秒后再次尝试"
+            sleep 2 || return 1
+        fi
     done
     return 1
 }
-check_health || die "健康检查在 3 次重试后仍然失败"
+check_health || die "健康检查连续 3 次尝试均失败"
 
 <span class="comment"># 模式 4：锁文件防重复执行</span>
 LOCK_FILE="/var/run/deploy.lock"
@@ -286,7 +296,7 @@ exec 200>"$LOCK_FILE"                        <span class="comment"># 打开文�
 if ! flock -n 200; then
     die "另一个部署进程正在运行"
 fi
-trap 'exec 200>&-' EXIT   <span class="comment"># 关闭描述符释放锁；不要删除仍可能被锁定的 inode</span></code></pre>
+trap 'exec 200&gt;&amp;-' EXIT   <span class="comment"># 关闭描述符释放锁；不要删除仍可能被锁定的 inode</span></code></pre>
 
 <div class="exercise">
 <h3>动手练习（5 分钟）</h3>
@@ -297,37 +307,41 @@ trap 'exec 200>&-' EXIT   <span class="comment"># 关闭描述符释放锁；不
 <span class="prompt"></span>bash -c 'set -u; echo "$UNDEFINED_VAR"'
 
 <span class="comment"># 3. 体验 trap EXIT</span>
-<span class="prompt"></span>cat &gt; /tmp/trap-demo.sh &lt;&lt; 'EOF'
+<span class="prompt"></span>workdir=$(mktemp -d)
+<span class="prompt"></span>cat &gt; "$workdir/trap-demo.sh" &lt;&lt; 'EOF'
 #!/bin/bash
-TEMP=$(mktemp -d)
-trap 'echo "清理 $TEMP"; rm -rf "$TEMP"; echo "清理完成"' EXIT
+TEMP=$(mktemp -d) || exit 1
+trap 'echo "清理 $TEMP"; rm -rf -- "$TEMP"; echo "清理完成"' EXIT
 echo "工作目录: $TEMP"
 echo "做一些事情..."
 <span class="comment"># 无论正常退出还是 exit 1，trap 都会执行</span>
 EOF
-<span class="prompt"></span>bash /tmp/trap-demo.sh
+<span class="prompt"></span>bash "$workdir/trap-demo.sh"
 
 <span class="comment"># 4. 开启 set -x 追踪一个复杂命令</span>
 <span class="prompt"></span>bash -x -c '
 NAME=alice
 DIR="/home/${NAME}/projects"
-cd "$DIR" && echo "当前目录: $(pwd)" && ls | head -3
+if cd "$DIR"; then printf '当前目录: %s\n' "$PWD"; fi
 '
 
 <span class="comment"># 5. 写一个完整的防御性脚本骨架</span>
-<span class="prompt"></span>cat > /tmp/safe-script.sh << 'EOF'
+<span class="prompt"></span>cat &gt; "$workdir/safe-script.sh" &lt;&lt; 'EOF'
 #!/bin/bash
 set -euo pipefail
 
-SCRIPT_NAME="$(basename "$0")"
-die() { echo "[${SCRIPT_NAME}] FATAL: $*" >&2; exit 1; }
+SCRIPT_NAME="${0##*/}"
+die() { echo "[${SCRIPT_NAME}] FATAL: $*" &gt;&amp;2; exit 1; }
 info() { echo "[${SCRIPT_NAME}] $(date '+%H:%M:%S') $*"; }
 
 cleanup() {
     local ec=$?
+    trap - EXIT
     info "清理中（退出码: $ec）..."
-    [ -n "${TEMP_DIR:-}" ] && rm -rf "$TEMP_DIR"
-    exit $ec
+    if [ -n "${TEMP_DIR:-}" ]; then
+        rm -rf -- "$TEMP_DIR" || printf 'cleanup failed: %s\n' "$TEMP_DIR" &gt;&amp;2
+    fi
+    exit "$ec"
 }
 trap cleanup EXIT
 
@@ -340,8 +354,9 @@ echo "Hello from safe script!"
 
 info "脚本正常结束"
 EOF
-<span class="prompt"></span>chmod +x /tmp/safe-script.sh
-<span class="prompt"></span>/tmp/safe-script.sh</span></code></pre>
+<span class="prompt"></span>chmod +x "$workdir/safe-script.sh"
+<span class="prompt"></span>"$workdir/safe-script.sh"
+<span class="prompt"></span>rm -rf -- "$workdir"</code></pre>
 </div>
 
 <h2>总结</h2>
@@ -353,7 +368,7 @@ EOF
   │                                                          │
   │  <strong>常用 Shell 选项（按失败语义选择）</strong>                       │
   │  set -e          在规定上下文遇到非零状态时退出             │
-  │  set -u          未定义变量 → 报错退出                     │
+  │  set -u          非交互脚本展开未设置变量 → 报错退出         │
   │  set -o pipefail 管道返回最右侧非零状态                    │
   │                                                          │
   │  <strong>清理与恢复</strong>                                           │
@@ -397,7 +412,7 @@ EOF
 </div>
 
 <div class="question" id="q3">
-  <p><strong>Q3:</strong> 你怀疑一个部署脚本在某行做了奇怪的操作，最快的排查方式是什么？</p>
+  <p><strong>Q3:</strong> 在隔离环境中，你想先观察脚本展开后实际执行的命令，应使用什么？</p>
   <div class="options">
     <span class="option" data-q="q3" data-a="a">在脚本里到处加 echo 语句</span>
     <span class="option" data-q="q3" data-a="b">用 bash -x 运行脚本，追踪每条命令</span>
@@ -407,7 +422,7 @@ EOF
 </div>
 
 <div class="question" id="q4">
-  <p><strong>Q4:</strong> 什么是"严格模式三合一"的正确写法？</p>
+  <p><strong>Q4:</strong> 下面哪条命令启用了本课讨论的三个常见错误处理选项？</p>
   <div class="options">
     <span class="option" data-q="q4" data-a="a">set -eux</span>
     <span class="option" data-q="q4" data-a="b">set -euo pipefail</span>
@@ -419,8 +434,8 @@ EOF
 
 <div class="session-footer">
   <p>
-    📖 <strong>推荐阅读</strong>：<a href="https://mywiki.wooledge.org/BashFAQ/105" target="_blank">BashFAQ 105 — set -e 的行为细节</a>（深入理解为什么有时 set -e 不触发）；<a href="https://mywiki.wooledge.org/SignalTrap" target="_blank">Signal Trap 完整参考</a><br>
-    📝 <strong>上一课</strong>：<a href="0007-text-processing-trio.html">第 7 课 — 文本处理三剑客</a><br>
+    📖 <strong>一手资料</strong>：<a href="https://www.gnu.org/software/bash/manual/bash.html#The-Set-Builtin" target="_blank">Bash set builtin</a>；<a href="https://www.gnu.org/software/bash/manual/bash.html#Bourne-Shell-Builtins" target="_blank">Bash trap builtin</a>；另见 <a href="https://mywiki.wooledge.org/BashFAQ/105" target="_blank">BashFAQ 105</a> 的反例<br>
+    📝 <strong>上一课</strong>：<a href="0007-text-processing-trio.html">第 7 课 — grep、sed 与 awk</a><br>
     📝 <strong>下一课预告</strong>：第 9 课 — 部署脚本常见模式（日志记录、锁文件、健康检查、回滚策略——真实部署脚本的完整套路）<br>
     ❓ <strong>有疑问？</strong>在对话中直接问我。
   </p>
@@ -437,10 +452,10 @@ EOF
     q2: { correct: 'b', fb: {
       b: '正确！EXIT trap 覆盖正常结束、显式 exit 和常见错误退出，但 SIGKILL、主机崩溃或 exec 成功替换 Shell 等路径不会执行。',
       a: '不对。EXIT trap 不只覆盖 exit 0，也会覆盖多种非零退出路径；但它仍不是所有终止方式的保证。',
-      c: '不对。trap 捕获的是信号（signal），不是变量修改。变量修改触发钩子是另一个概念（比如 DEBUG trap 或者某些 shell 的变量 watch 功能），EXIT trap 只关心脚本退出这件事。'
+      c: '不对。trap 为信号以及 EXIT 等 Shell 伪条件注册处理器，不会因为普通变量赋值而自动运行；EXIT 处理器只在手册规定的 Shell 退出路径执行。'
     }},
     q3: { correct: 'b', fb: {
-      b: '正确！bash -x 会在每条命令执行前打印它（变量已展开）——你不需要改一行代码就能看到脚本到底执行了什么、变量的值是什么、分支走向了哪里。输出到 stderr，可以用 bash -x script.sh 2>log 保存慢慢分析。这是 Bash 调试的第一利器。',
+      b: '正确！bash -x 会在命令执行前输出展开后的形式，适合在隔离环境验证变量和分支。输出写 stderr；其中可能含敏感值，必须控制日志。',
       a: '有效但低效。加 echo 需要猜测哪里有问题、改了还要删、还可能漏掉关键信息。bash -x 不需要改任何代码，而且能看到所有命令的实际执行情况。',
       c: '完全没必要。重写解决不了"排查当前脚本行为"的需求，而且可能引入新的 bug。'
     }},

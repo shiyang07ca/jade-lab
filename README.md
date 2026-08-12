@@ -57,32 +57,11 @@ mise run doctor                           # 诊断完整工具集和所有 submo
 修改单个模块时先运行其检查；修改根目录规则、模块索引或公共文档时再运行 `mise run policy`。准备提交公共变更时
 运行 `mise run policy && mise run check`。
 
-## 目录职责
+## 工作入口
 
-| 目录 | 唯一职责 |
-| --- | --- |
-| [`learning/`](learning/) | 学习使命、课程顺序、筛选资料和已经由表现证明的学习结果 |
-| [`packages/`](packages/) | 被其他代码导入、链接或声明为依赖的稳定软件包 |
-| [`problems/`](problems/) | 按平台与题目标识符保存的 OJ 解答和未完成尝试 |
-| [`labs/`](labs/) | 围绕明确问题、可以独立重做的实验 |
-| [`tools/`](tools/) | 由人、CI 或定时任务直接启动，用来完成一个命名的重复工作流程的程序 |
-| [`references/`](references/) | 以 Git submodule 固定 commit、按需初始化的外部源码 |
-| [`docs/`](docs/) | 跨模块规则、研究结论和架构决定 |
-| `.scratch/` | 本机票据、临时 clone、日志、缓存和其他可重建状态 |
+- 学习主题从 [`learning/`](learning/) 选择；Go 课程从 [`learning/go/README.md`](learning/go/README.md) 开始。
+- 目录职责、模块准入和迁移只在 [`docs/project/architecture.md`](docs/project/architecture.md) 定义。
+- 修改、验证和提交要求见 [`CONTRIBUTING.md`](CONTRIBUTING.md)。
 
-`packages/` 与 `tools/` 的分界取决于调用方式：其他代码依赖前者，人或自动化系统作为进程启动后者。课程和题解
-产生的代码不会因“以后可能有用”自动进入这两个目录；详细准入与迁移规则见
-[`docs/project/architecture.md`](docs/project/architecture.md)。
-
-## 推荐工作流
-
-一次 20–50 分钟的学习或研究只处理一个模块：
-
-1. 从 `mise run modules` 或 `learning/<topic>/README.md` 找到下一项任务。
-2. 写下可以被测试推翻的问题和预期结果，运行最窄检查。
-3. 一次性验证放 `.scratch/`；需要独立依赖或保留实验条件时进入 `labs/`。
-4. 只阅读回答当前问题所需的调用方、测试和实现，不顺序通读大型仓库。
-5. 结束前重跑模块检查，记录版本、命令、结果和下一步。
-
-工程修改规则见 [`CONTRIBUTING.md`](CONTRIBUTING.md)，Go 课程从
-[`learning/go/README.md`](learning/go/README.md) 开始。
+一次只处理一个模块：先运行最窄检查，修改后重跑；只有根规则、模块索引或公共文档变化才额外运行
+`mise run policy`。完整日志、缓存和一次性验证留在 `.scratch/`。

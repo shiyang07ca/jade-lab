@@ -25,9 +25,9 @@
 本课把前 8 课的语法组合为 8 个常见模式，并明确平台、失败和恢复条件。示例用于学习 Linux 自动化，不是可以直接复制到生产环境的通用部署系统；真实服务还要处理权限、持久化数据、兼容性和业务恢复。
 </div>
 
-<h2>模式 1：结构化日志</h2>
+<h2>模式 1：可解析的文本日志</h2>
 
-<p>前 8 课我们一直用 `echo`——真实的部署脚本需要更结构化的日志：时间戳、级别、输出到文件的同时不干扰 stdout 的数据流。</p>
+<p>自动化脚本至少需要稳定的文本格式：时间戳、级别和消息写入 stderr，并按明确策略追加到文件。这仍不是 JSON 等结构化日志；字段中若允许换行，还要先定义转义规则。</p>
 
 <pre><code><span class="comment"># 知识点回顾：函数（L6）+ 重定向（L3）+ 命令替换（L4）+ 变量（L4）</span>
 
@@ -36,10 +36,9 @@ log() {
     local msg="$*"
     local ts
     ts=$(date '+%Y-%m-%d %H:%M:%S')
-    echo "[$ts] [$level] $msg" | tee -a "$LOG_FILE" &gt;&amp;2
-    <span class="comment">#                     │             │
-    #                     tee→同时写文件和 stderr
-    #                     LOG_FILE→来自全局配置</span>
+    local line="[$ts] [$level] $msg"
+    printf '%s\n' "$line" &gt;&amp;2
+    printf '%s\n' "$line" &gt;&gt; "$LOG_FILE"  <span class="comment"># 文件写入失败时返回非零</span>
 }
 
 info()  { log "INFO"  "$@"; }
@@ -52,7 +51,7 @@ info "开始部署 ${VERSION} 到 ${ENV}"
 # [2026-07-31 14:30:01] [INFO] 开始部署 v2.0 到 production</span></code></pre>
 
 <div class="insight">
-<b>日志三原则：</b> ① 日志消息输出到 stderr（`>&2`），保持 stdout 通道干净给数据/返回值；② 每条日志带时间戳和级别，方便事后 grep 分析；③ 用 `tee -a` 追加（不是覆盖）写入日志文件。
+<b>先定义三件事：</b>① stdout 是否保留给机器可读数据；② 日志文件写失败是否导致任务失败；③ 消息里的换行、敏感值和并发写入如何处理。本例把日志写 stderr 和文件，并把文件写入失败暴露给调用者。
 </div>
 
 <h2>模式 2：锁文件——防止并发执行</h2>
@@ -73,7 +72,7 @@ fi
 
 <span class="comment"># 描述符关闭时内核释放锁；锁文件本身可以稳定保留</span>
 cleanup() {
-    exec 200>&-
+    exec 200&gt;&amp;-
 }
 trap cleanup EXIT</code></pre>
 
@@ -91,17 +90,25 @@ wait_for_http() {
     local url="${1:-http://localhost:8080/health}"
     local timeout="${2:-60}"
     local interval="${3:-2}"
-    local elapsed=0
+    local started=$SECONDS
 
-    info "等待 $url 就绪（超时: ${timeout}s）..."
+    case "$url" in
+        http://*|https://*) ;;
+        *) error "健康检查只接受 http/https URL: $url"; return 2 ;;
+    esac
+    [[ "$timeout" =~ ^[1-9][0-9]{0,5}$ ]] \
+        || { error "timeout 必须是 1..999999 的整数秒"; return 2; }
+    [[ "$interval" =~ ^([1-9][0-9]{0,3}(\.[0-9]+)?|0\.[0-9]*[1-9][0-9]*)$ ]] \
+        || { error "interval 必须是正秒数"; return 2; }
 
-    while [[ $elapsed -lt $timeout ]]; do
-        if curl -sf --max-time 5 "$url" > /dev/null 2>&1; then
-            info "$url 已就绪（耗时 ${elapsed}s）"
+    info "等待 $url 就绪（超时: ${timeout}s）..." || return 1
+
+    while (( SECONDS - started &lt; timeout )); do
+        if curl -fsS --connect-timeout 2 --max-time 5 --url "$url" &gt; /dev/null; then
+            info "$url 已就绪（耗时 $((SECONDS - started))s）" || return 1
             return 0
         fi
-        sleep "$interval"
-        elapsed=$((elapsed + interval))
+        sleep "$interval" || { error "健康检查等待被中断"; return 1; }
     done
 
     error "$url 在 ${timeout}s 内未就绪"
@@ -109,10 +116,13 @@ wait_for_http() {
 }
 
 <span class="comment"># 使用</span>
-systemctl restart myapp
+systemctl restart myapp || die "服务重启失败"
 wait_for_http "http://localhost:8080/health" 120 || die "服务启动超时"</code></pre>
 
-<p>变体——等待 TCP 端口（不依赖 HTTP，通用性更强）：</p>
+<div class="pitfall">这里的 <code>timeout</code> 限制何时开始下一次尝试，不是严格墙钟期限。一次已开始的 curl
+最多还会运行 5 秒，随后 sleep 也可能越过边界；需要严格截止时间时，应按剩余时间缩短单次请求和等待。</div>
+
+<p>变体——等待 TCP 端口。连接成功只证明端口接受连接，不证明数据库已完成恢复、认证可用或应用已经就绪：</p>
 
 <pre><code>wait_for_port() {
     local host="${1:-localhost}"
@@ -120,12 +130,19 @@ wait_for_http "http://localhost:8080/health" 120 || die "服务启动超时"</co
     local timeout="${3:-30}"
     local elapsed=0
 
+    [[ -n "$host" &amp;&amp; "$host" != -* ]] \
+        || { error "host 不能为空或以 - 开头"; return 2; }
+    [[ "$port" =~ ^[0-9]{1,5}$ ]] &amp;&amp; (( 10#$port &gt;= 1 &amp;&amp; 10#$port &lt;= 65535 )) \
+        || { error "port 必须是 1..65535"; return 2; }
+    [[ "$timeout" =~ ^[1-9][0-9]{0,5}$ ]] \
+        || { error "timeout 必须是 1..999999 的整数秒"; return 2; }
+
     while [[ $elapsed -lt $timeout ]]; do
-        if nc -z "$host" "$port" > /dev/null 2>&1; then
+        if nc -z "$host" "$port" &gt; /dev/null 2&gt;&amp;1; then
             return 0
         fi
-        sleep 1
-        ((elapsed++))
+        sleep 1 || { error "端口等待被中断"; return 1; }
+        ((elapsed += 1))
     done
     return 1
 }
@@ -139,38 +156,51 @@ wait_for_port localhost 5432 30 || die "PostgreSQL 未就绪"</code></pre>
 <pre><code><span class="comment"># ❌ 危险：直接覆盖——写到一半崩溃会留下不完整文件</span>
 sed 's/port=80/port=8080/' config.ini > config.ini
 
-<span class="comment"># ✅ 安全：先写临时文件，写完了再原子替换</span>
-safe_replace() {
+<span class="comment"># ✅ 先验证目标，再在同目录生成完整的新文件</span>
+replace_port() {
     local target="$1"
     local temp_file
+    [[ -f "$target" &amp;&amp; ! -L "$target" ]] || die "目标必须是普通文件: $target"
     temp_file=$(mktemp "${target}.XXXXXX") || die "无法创建临时文件"
 
-    <span class="comment"># 从 stdin 读内容写到临时文件</span>
-    cat > "$temp_file" || { rm -f "$temp_file"; die "写入临时文件失败"; }
-
-    <span class="comment"># 备份旧内容；失败必须停止，不能假装可恢复</span>
-    if [[ -f "$target" ]]; then
-        cp -p "$target" "${target}.bak" || {
-            rm -f "$temp_file"
-            die "备份原文件失败"
-        }
+    <span class="comment"># 直接检查转换命令；不要用 producer | safe_replace 隐藏上游失败</span>
+    if ! sed 's/port=80/port=8080/g' "$target" &gt; "$temp_file"; then
+        rm -f -- "$temp_file"
+        die "生成新配置失败"
     fi
 
+    <span class="comment"># 本例限定 GNU chmod；所有者、ACL、xattr 仍需项目单独定义</span>
+    chmod --reference="$target" "$temp_file" || {
+        rm -f -- "$temp_file"
+        die "复制文件模式失败"
+    }
+    cp -p -- "$target" "${target}.bak" || {
+        rm -f -- "$temp_file"
+        die "备份原文件失败"
+    }
+
     <span class="comment"># 临时文件与目标同目录；rename 可提供原子可见性</span>
-    mv "$temp_file" "$target" || { rm -f "$temp_file"; die "替换文件失败"; }
+    mv -f -- "$temp_file" "$target" || {
+        rm -f -- "$temp_file"
+        die "替换文件失败"
+    }
     info "已更新: $target"
 }
 
-<span class="comment"># 使用——通过管道传入新内容</span>
-sed 's/port=80/port=8080/' config.ini | safe_replace config.ini</code></pre>
+replace_port config.ini</code></pre>
 
 <div class="insight">
 当临时文件与目标位于同一文件系统，且目标是普通文件时，底层 <code>rename</code> 可提供原子可见性：观察者看到旧文件或新文件，而不是半截内容。这不等于崩溃后的持久性；断电保证还需要对文件和目录执行适合平台的同步操作。临时文件的模式、所有者、ACL 和扩展属性也必须按业务要求单独处理。
 </div>
 
+<div class="pitfall">本例还假定目标目录只由可信主体写入。检查目标后再创建临时文件和替换仍存在路径竞态；
+在共享或攻击者可写目录中，应使用目录文件描述符等更强的系统接口，而不是继续扩展 Shell 片段。</div>
+
 <h2>模式 5：备份与受控恢复</h2>
 
-<p>“备份命令成功”不等于“可以恢复”。备份应写到被备份目录之外；恢复先解压到隔离目录并验证，再由服务的停机和数据迁移规则决定如何切换：</p>
+<p>“备份命令成功”不等于“可以恢复”。备份应写到被备份目录之外；恢复先解压到隔离目录并验证，
+再由服务的停机和数据迁移规则决定如何切换。示例只恢复本流程生成且访问控制可信的归档；
+外部归档还必须检查成员路径、链接及所有权等安全边界：</p>
 
 <pre><code><span class="comment"># 知识点回顾：命令替换（L4）+ if/退出码（L5）+ trap（L8）+ tar（L2）</span>
 
@@ -179,24 +209,37 @@ readonly BACKUP_DIR="/var/backups/myapp"
 BACKUP_FILE=""
 
 backup_current() {
-    mkdir -p "$BACKUP_DIR"
-    BACKUP_FILE="${BACKUP_DIR}/${APP_NAME}_$(date +%Y%m%d_%H%M%S).tar.gz"
-    info "创建备份: $BACKUP_FILE"
-    tar -czf "$BACKUP_FILE" -C "$(dirname "$APP_DIR")" "$(basename "$APP_DIR")" \
+    local timestamp app_parent app_name
+    timestamp=$(date +%Y%m%d_%H%M%S) || die "无法生成备份时间"
+    app_parent=$(dirname "$APP_DIR") || die "无法确定应用父目录"
+    app_name=$(basename "$APP_DIR") || die "无法确定应用目录名"
+    mkdir -p "$BACKUP_DIR" || die "无法创建备份目录: $BACKUP_DIR"
+    BACKUP_FILE="${BACKUP_DIR}/${APP_NAME}_${timestamp}.tar.gz"
+    info "创建备份: $BACKUP_FILE" || die "无法写入备份日志"
+    tar -czf "$BACKUP_FILE" -C "$app_parent" "$app_name" \
         || die "备份失败"
 }
 
 prepare_restore() {
     [[ -f "$BACKUP_FILE" ]] || die "备份不存在: $BACKUP_FILE"
-    local restore_dir
-    restore_dir=$(mktemp -d "$(dirname "$APP_DIR")/.restore.XXXXXX") \
+    local app_parent restore_dir
+    app_parent=$(dirname "$APP_DIR") || die "无法确定应用父目录"
+    restore_dir=$(mktemp -d "${app_parent}/.restore.XXXXXX") \
         || die "无法创建恢复目录"
     if ! tar -xzf "$BACKUP_FILE" -C "$restore_dir"; then
         rm -rf -- "$restore_dir"
         die "备份解压失败"
     fi
-    local restored_app="${restore_dir}/$(basename "$APP_DIR")"
-    [[ -d "$restored_app" ]] || die "备份结构无效: $restored_app"
+    local app_name restored_app
+    app_name=$(basename "$APP_DIR") || {
+        rm -rf -- "$restore_dir"
+        die "无法确定应用目录名"
+    }
+    restored_app="${restore_dir}/${app_name}"
+    if [[ ! -d "$restored_app" ]]; then
+        rm -rf -- "$restore_dir"
+        die "备份结构无效: $restored_app"
+    fi
     printf '%s\n' "$restored_app"
 }
 
@@ -205,7 +248,10 @@ deploy() {
     <span class="comment"># ... 部署步骤 ...</span>
     if ! rsync -avz ./release/ "$APP_DIR/"; then
         local restored_app
-        restored_app=$(prepare_restore)
+        restored_app=$(prepare_restore) || {
+            error "部署失败，且无法准备恢复目录"
+            return 1
+        }
         error "部署失败；已将备份解压到 $restored_app，验证后再按服务规则切换"
         return 1
     fi
@@ -224,20 +270,29 @@ notify() {
     local status="$1"
     local message="$2"
 
-    [[ -z "$WEBHOOK_URL" ]] && return 0    <span class="comment"># 没配 webhook 就跳过</span>
+    [[ -z "$WEBHOOK_URL" ]] &amp;&amp; return 0    <span class="comment"># 没配 webhook 就跳过</span>
     command -v jq >/dev/null || { warn "缺少 jq，跳过通知"; return 0; }
+    case "$WEBHOOK_URL" in
+        http://*|https://*) ;;
+        *) warn "webhook 只接受 http/https URL"; return 0 ;;
+    esac
 
-    local payload
+    local timestamp payload
+    timestamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ') \
+        || { warn "无法生成通知时间"; return 0; }
     payload=$(jq -n \
         --arg status "$status" --arg message "$message" \
-        --arg app "$APP_NAME" --arg env "$DEPLOY_ENV" --arg time "$(date -Iseconds)" \
-        '{text: ($status + ": " + $message), app: $app, environment: $env, time: $time}')
+        --arg app "$APP_NAME" --arg env "$DEPLOY_ENV" --arg time "$timestamp" \
+        '{text: ($status + ": " + $message), app: $app, environment: $env, time: $time}') \
+        || { warn "无法构造通知 JSON"; return 0; }
 
     if ! curl -fsS --connect-timeout 3 --max-time 10 \
-        -X POST -H 'Content-Type: application/json' --data "$payload" "$WEBHOOK_URL" \
+        --proto '=http,https' --header 'Content-Type: application/json' \
+        --data-binary "$payload" --url "$WEBHOOK_URL" \
         >/dev/null; then
         warn "通知发送失败"
     fi
+    return 0
 }
 
 <span class="comment"># 在关键节点调用</span>
@@ -249,7 +304,7 @@ deploy() {
     if deploy_new_version; then
         on_success "部署 ${VERSION} 已上线"
     else
-        on_failure "部署 ${VERSION} 失败，已自动回滚"
+        on_failure "部署 ${VERSION} 失败；请查看恢复状态和日志"
     fi
 }</code></pre>
 
@@ -261,7 +316,7 @@ load_config_file() {
     [[ -f "$file" ]] || return 0
 
     while IFS='=' read -r key value || [[ -n "$key" ]]; do
-        [[ -z "$key" || "$key" == #* ]] && continue
+        [[ -z "$key" || "$key" == \#* ]] &amp;&amp; continue
         case "$key" in
             APP_NAME|DEPLOY_ENV|APP_PORT|LOG_DIR|BACKUP_RETENTION_DAYS)
                 <span class="comment"># 只在调用者尚未提供该变量时采用文件值</span>
@@ -269,7 +324,7 @@ load_config_file() {
                 ;;
             *) die "配置键不受支持: $key" ;;
         esac
-    done < "$file"
+    done &lt; "$file"
 }
 
 load_config_file "${APP_DIR}/config.env"
@@ -280,68 +335,100 @@ load_config_file "${APP_DIR}/config.env"
 : "${BACKUP_RETENTION_DAYS:=7}"
 export APP_NAME DEPLOY_ENV APP_PORT LOG_DIR BACKUP_RETENTION_DAYS
 
-[[ -n "$APP_NAME" && -n "$DEPLOY_ENV" ]] || die "APP_NAME 和 DEPLOY_ENV 不能为空"
+[[ -n "$APP_NAME" &amp;&amp; -n "$DEPLOY_ENV" ]] || die "APP_NAME 和 DEPLOY_ENV 不能为空"
+[[ "$APP_NAME" =~ ^[A-Za-z0-9._-]+$ ]] || die "APP_NAME 格式无效"
+[[ "$APP_PORT" =~ ^[0-9]{1,5}$ ]] \
+    &amp;&amp; (( 10#$APP_PORT &gt;= 1 &amp;&amp; 10#$APP_PORT &lt;= 65535 )) \
+    || die "APP_PORT 必须是 1..65535"
+[[ "$BACKUP_RETENTION_DAYS" =~ ^(0|[1-9][0-9]{0,4})$ ]] \
+    || die "BACKUP_RETENTION_DAYS 必须是 0..99999"
 info "应用: ${APP_NAME}, 环境: ${DEPLOY_ENV}, 端口: ${APP_PORT}"</code></pre>
 
 <div class="pitfall"><code>source config.env</code> 会执行文件中的任意 Shell 代码，不只是读取数据。只有文件可信且明确采用 Shell 语法时才使用它。本例故意限定为不支持转义和多行值的简单 <code>KEY=VALUE</code> 格式；复杂配置应使用 JSON、TOML 等格式及专用解析器。</div>
 
 <h2>模式 8：目录布局——结构化部署的骨架</h2>
 
-<p>专业的部署不会把文件散得到处都是——它们遵循一个清晰的目录布局：</p>
+<p>目录应区分不可变发布、共享配置、运行数据和外部备份。下面只是传统 Linux 服务的一种布局，容器和编排平台会采用不同边界：</p>
 
 <pre><code>/opt/myapp/                    <span class="comment"># ← APP_HOME</span>
 ├── current -> releases/v2.0   <span class="comment"># 符号链接 → 当前版本（关键设计！）</span>
 ├── releases/                  <span class="comment"># 各版本的完整副本</span>
 │   ├── v1.0/
 │   └── v2.0/
-├── backups/                   <span class="comment"># 部署前的备份</span>
-│   └── myapp_20260731.tar.gz
 ├── config/                    <span class="comment"># 配置文件（独立于版本，部署不覆盖）</span>
 │   └── config.env
 ├── logs/                      <span class="comment"># 日志输出（独立于版本）</span>
 │   └── deploy.log
-└── shared/                    <span class="comment"># 跨版本共享数据（uploads、cache 等）</span></pre>
+└── shared/                    <span class="comment"># 跨版本共享数据（是否备份需单独定义）</span>
+
+/var/backups/myapp/            <span class="comment"># 放在 APP_HOME 外，避免随目标一起损坏</span></code></pre>
 
 <p>下面把“准备新链接”和“替换当前链接”分开。示例明确依赖 GNU coreutils 的 <code>mv -T</code>；同目录 rename 提供原子可见性，但服务是否无停机还取决于进程重载、连接排空、数据库兼容和健康检查：</p>
 
 <pre><code>switch_link() {
     local target="$1" link="$2"
     local next_link="${link}.next.$$"
-    [[ ! -e "$next_link" && ! -L "$next_link" ]] || die "临时链接已存在"
-    ln -s -- "$target" "$next_link" || die "创建临时链接失败"
-    mv -Tf -- "$next_link" "$link" || {
+    if [[ -e "$next_link" || -L "$next_link" ]]; then
+        error "临时链接已存在: $next_link"
+        return 1
+    fi
+    if ! ln -s -- "$target" "$next_link"; then
+        error "创建临时链接失败: $next_link"
+        return 1
+    fi
+    if ! mv -Tf -- "$next_link" "$link"; then
         rm -f -- "$next_link"
-        die "切换链接失败"
-    }
+        error "切换链接失败: $link"
+        return 1
+    fi
 }
 
 deploy_new_version() {
     local version="$1"
     local release_dir="${APP_HOME}/releases/${version}" current_link="${APP_HOME}/current"
     local previous=""
-    [[ -L "$current_link" ]] && previous=$(readlink "$current_link")
 
-    <span class="comment"># 1. 部署到版本目录</span>
-    mkdir -p "$release_dir"
-    rsync -avz --delete ./build/ "$release_dir/"
+    <span class="comment"># 1. 版本标识必须先通过项目规则校验，发布目录不得复用</span>
+    [[ "$version" =~ ^[A-Za-z0-9._-]+$ ]] \
+        || { error "无效版本标识: $version"; return 2; }
+    if [[ -L "$current_link" ]]; then
+        previous=$(readlink "$current_link") \
+            || { error "无法读取当前版本链接"; return 1; }
+    fi
+    [[ ! -e "$release_dir" ]] \
+        || { error "发布目录已存在: $release_dir"; return 1; }
+    mkdir -p "$release_dir" \
+        || { error "无法创建发布目录: $release_dir"; return 1; }
+    rsync -avz --delete ./build/ "$release_dir/" \
+        || { error "复制发布文件失败；保留目录供检查: $release_dir"; return 1; }
 
     <span class="comment"># 2. 链接共享目录</span>
-    ln -sfn "${APP_HOME}/config/config.env" "${release_dir}/.env"
-    ln -sfn "${APP_HOME}/logs"               "${release_dir}/logs"
-    ln -sfn "${APP_HOME}/shared"             "${release_dir}/shared"
+    ln -sfn "${APP_HOME}/config/config.env" "${release_dir}/.env" \
+        || { error "无法链接配置"; return 1; }
+    ln -sfn "${APP_HOME}/logs" "${release_dir}/logs" \
+        || { error "无法链接日志目录"; return 1; }
+    ln -sfn "${APP_HOME}/shared" "${release_dir}/shared" \
+        || { error "无法链接共享目录"; return 1; }
 
     <span class="comment"># 3. 用新链接 + rename 替换，而不是把 ln -sfn 当作原子接口</span>
-    switch_link "$release_dir" "$current_link"
-    info "已切换到版本: $version"
+    switch_link "$release_dir" "$current_link" || return 1
 
     <span class="comment"># 4. 重启失败时使用调用前记录的链接，而不是猜“上一个版本”</span>
     if ! systemctl restart myapp; then
+        error "新版本重启失败: $version"
         if [[ -n "$previous" ]]; then
-            switch_link "$previous" "$current_link"
-            systemctl restart myapp || error "恢复旧版本后重启仍失败"
+            switch_link "$previous" "$current_link" || return 1
+            if ! systemctl restart myapp; then
+                error "恢复旧版本后重启仍失败"
+                return 1
+            fi
+        else
+            error "没有可恢复的旧版本链接"
         fi
         return 1
     fi
+    info "已切换并启动版本: $version" || printf '%s\n' "部署成功，但写日志失败" &gt;&amp;2
+    return 0
 }</code></pre>
 
 <div class="insight">
@@ -350,26 +437,31 @@ deploy_new_version() {
 
 <div class="exercise">
 <h3>动手练习（5 分钟）</h3>
-<p>在 GNU <code>mv</code> 环境体验同目录链接替换；如果命令不支持 <code>-T</code>，先停止并查本机手册：</p>
+<p>在 GNU <code>mv</code> 环境体验同目录链接替换；练习使用唯一临时目录，退出时自动清理。如果命令不支持 <code>-T</code>，先停止并查本机手册：</p>
 <pre><code><span class="comment"># 1. 模拟先创建新链接、再通过 rename 替换</span>
-<span class="prompt"></span>mkdir -p /tmp/deploy-demo/releases/{v1,v2}
-<span class="prompt"></span>echo "v1 content" > /tmp/deploy-demo/releases/v1/index.html
-<span class="prompt"></span>echo "v2 content" > /tmp/deploy-demo/releases/v2/index.html
-<span class="prompt"></span>ln -s /tmp/deploy-demo/releases/v1 /tmp/deploy-demo/current.next
-<span class="prompt"></span>mv -Tf /tmp/deploy-demo/current.next /tmp/deploy-demo/current
-<span class="prompt"></span>cat /tmp/deploy-demo/current/index.html   <span class="comment"># → v1 content</span>
-<span class="prompt"></span>ln -s /tmp/deploy-demo/releases/v2 /tmp/deploy-demo/current.next
-<span class="prompt"></span>mv -Tf /tmp/deploy-demo/current.next /tmp/deploy-demo/current
-<span class="prompt"></span>cat /tmp/deploy-demo/current/index.html   <span class="comment"># → v2 content</span>
+<span class="prompt"></span>(
+<span class="prompt"></span>set -e
+<span class="prompt"></span>DEMO_DIR=$(mktemp -d)
+<span class="prompt"></span>trap 'rm -rf -- "$DEMO_DIR"' EXIT
+<span class="prompt"></span>mkdir -p "$DEMO_DIR"/releases/{v1,v2}
+<span class="prompt"></span>printf '%s\n' "v1 content" &gt; "$DEMO_DIR/releases/v1/index.html"
+<span class="prompt"></span>printf '%s\n' "v2 content" &gt; "$DEMO_DIR/releases/v2/index.html"
+<span class="prompt"></span>ln -s "$DEMO_DIR/releases/v1" "$DEMO_DIR/current.next"
+<span class="prompt"></span>mv -Tf "$DEMO_DIR/current.next" "$DEMO_DIR/current"
+<span class="prompt"></span>cat "$DEMO_DIR/current/index.html"   <span class="comment"># → v1 content</span>
+<span class="prompt"></span>ln -s "$DEMO_DIR/releases/v2" "$DEMO_DIR/current.next"
+<span class="prompt"></span>mv -Tf "$DEMO_DIR/current.next" "$DEMO_DIR/current"
+<span class="prompt"></span>cat "$DEMO_DIR/current/index.html"   <span class="comment"># → v2 content</span>
 
 <span class="comment"># 2. 体验原子写入——先写临时文件再 mv</span>
-<span class="prompt"></span>echo "new config" > /tmp/deploy-demo/config.tmp \
-    && mv /tmp/deploy-demo/config.tmp /tmp/deploy-demo/config.ini \
-    && echo "原子写入完成"
+<span class="prompt"></span>printf '%s\n' "new config" &gt; "$DEMO_DIR/config.tmp" \
+    &amp;&amp; mv "$DEMO_DIR/config.tmp" "$DEMO_DIR/config.ini" \
+    &amp;&amp; echo "原子写入完成"
 
 <span class="comment"># 3. 模拟健康检查等待模式</span>
-<span class="prompt"></span>cat > /tmp/health-check.sh << 'EOF'
+<span class="prompt"></span>cat &gt; "$DEMO_DIR/health-check.sh" &lt;&lt; 'EOF'
 #!/bin/bash
+set -u
 wait_for_file() {
     local file="$1"; local timeout="${2:-10}"; local elapsed=0
     echo "等待 $file 出现..."
@@ -378,119 +470,35 @@ wait_for_file() {
             echo "✅ 文件已出现！耗时 ${elapsed}s"
             return 0
         fi
-        sleep 1; ((elapsed++))
+        sleep 1
+        ((elapsed += 1))
     done
-    echo "❌ 超时" >&2; return 1
+    echo "❌ 超时" &gt;&amp;2; return 1
 }
-wait_for_file /tmp/health-ready 10 &
+ready_file="$1"
+wait_for_file "$ready_file" 10 &amp;
 bg_pid=$!
 echo "模拟 3 秒后创建标记文件..."
-sleep 3; touch /tmp/health-ready; wait $bg_pid
+sleep 3
+touch -- "$ready_file"
+wait "$bg_pid"
 EOF
-<span class="prompt"></span>bash /tmp/health-check.sh</span></code></pre>
+<span class="prompt"></span>bash "$DEMO_DIR/health-check.sh" "$DEMO_DIR/health-ready"
+<span class="prompt"></span>)</code></pre>
 </div>
 
-<h2>完整骨架——把所有模式拼起来</h2>
+<h2>接入真实服务前的验证清单</h2>
 
-<pre><code>#!/bin/bash
-<span class="comment"># deploy.sh — Linux 学习骨架；接入真实服务前必须补领域规则和测试</span>
-<span class="comment"># 用法: ./deploy.sh <staging|production> [版本号]</span>
-set -euo pipefail
-IFS=$'\n\t'
+<p>不要把八种模式机械拼成一个大脚本。先为目标服务逐项回答并测试：</p>
 
-<span class="comment"># ===== 配置加载 =====</span>
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-: "${APP_NAME:=myapp}"          : "${DEPLOY_ENV:=staging}"
-: "${APP_HOME:=/opt/${APP_NAME}}" : "${LOCK_FILE:=/var/run/deploy.lock}"
-: "${LOG_FILE:=${APP_HOME}/logs/deploy.log}"
-
-<span class="comment"># ===== 工具函数 =====</span>
-die()  { log "FATAL" "$@"; exit 1; }
-error(){ log "ERROR" "$@"; }
-warn() { log "WARN"  "$@"; }
-info() { log "INFO"  "$@"; }
-
-log() {
-    local level="$1"; shift
-    echo "[$(date '+%H:%M:%S')] [$$] [$level] $*" | tee -a "$LOG_FILE" >&2
-}
-
-prepare_dirs() {
-    mkdir -p "${APP_HOME}/releases" "${APP_HOME}/backups" "${APP_HOME}/logs" \
-        || die "无法创建部署目录"
-}
-
-<span class="comment"># ===== 锁 =====</span>
-acquire_lock() {
-    exec 200>"$LOCK_FILE"
-    flock -n 200 || die "另一个部署实例正在运行"
-}
-
-wait_for_http() {
-    local url="$1" timeout="$2" started=$SECONDS
-    while (( SECONDS - started < timeout )); do
-        curl -fsS --connect-timeout 2 --max-time 5 "$url" >/dev/null && return 0
-        sleep 2
-    done
-    return 1
-}
-
-switch_link() {
-    local target="$1" link="$2" next_link="${2}.next.$$"
-    ln -s -- "$target" "$next_link" || return 1
-    mv -Tf -- "$next_link" "$link" || {
-        rm -f -- "$next_link"
-        return 1
-    }
-}
-
-<span class="comment"># ===== 部署 =====</span>
-deploy() {
-    local version="${1:-latest}"
-
-    info "开始部署 ${version} 到 ${DEPLOY_ENV}"
-    local release_dir="${APP_HOME}/releases/${version}"
-    local current_link="${APP_HOME}/current" previous=""
-    [[ -L "$current_link" ]] && previous=$(readlink "$current_link")
-    mkdir -p "$release_dir"
-
-    <span class="comment"># 备份</span>
-    if [[ -L "$current_link" ]]; then
-        tar -chzf "${APP_HOME}/backups/$(date +%Y%m%d_%H%M%S).tar.gz" \
-            -C "$APP_HOME" current || die "备份失败"
-    fi
-
-    <span class="comment"># 部署文件 + 同目录 rename 切换（依赖 GNU mv -T）</span>
-    rsync -avz "${SCRIPT_DIR}/build/" "$release_dir/"
-    switch_link "$release_dir" "$current_link" || die "版本链接切换失败"
-
-    <span class="comment"># 重启 + 等待就绪</span>
-    if ! systemctl restart "$APP_NAME" \
-        || ! wait_for_http "http://localhost:${APP_PORT:-8080}/health" 60; then
-        if [[ -n "$previous" ]]; then
-            switch_link "$previous" "$current_link" \
-                && systemctl restart "$APP_NAME" \
-                || error "恢复旧链接或重启失败"
-        fi
-        die "新版本未通过启动检查"
-    fi
-
-    info "✅ 部署完成"
-}
-
-<span class="comment"># ===== 主入口 =====</span>
-main() {
-    prepare_dirs
-    acquire_lock
-    trap 'info "脚本退出 (exit=$?)"' EXIT
-
-    local env="${1:-}"; local version="${2:-$(date +%Y%m%d%H%M%S)}"
-    [[ "$env" =~ ^(staging|production)$ ]] || die "无效环境: $env"
-    DEPLOY_ENV="$env"
-
-    deploy "$version"
-}
-main "$@"</code></pre>
+<ul>
+  <li>输入：环境、版本和路径允许哪些值，谁负责验证？</li>
+  <li>并发：哪些资源需要互斥，所有写入者是否使用同一种锁？</li>
+  <li>发布：哪些目录不可变，配置、密钥和持久化数据由谁管理？</li>
+  <li>就绪：HTTP 成功是否足够，是否还要验证响应字段和依赖状态？</li>
+  <li>失败：每一步失败后停止、清理还是恢复；恢复失败如何报告？</li>
+  <li>证据：成功、超时、信号中断、磁盘写满和并发运行是否有自动测试？</li>
+</ul>
 
 <h2>总结</h2>
 
@@ -501,14 +509,14 @@ main "$@"</code></pre>
   │                                                          │
   │  <strong>模式</strong>        <strong>知识来源</strong>        <strong>一句话</strong>                      │
   │  ────────────────────────────────────────────────────     │
-  │  结构化日志    L6函数+L3重定向    日志→stderr，tee→文件       │
+  │  文本日志      L6函数+L3重定向    日志→stderr，并按策略写文件 │
   │  锁文件        fd+L8 trap         flock -n 防并发          │
   │  健康检查等待  L5 while+L6函数     轮询→就绪→继续或超时退出   │
   │  原子写入      L3重定向+L8 trap    mktemp→写→mv             │
   │  备份恢复      L5 if+L8 trap       外部备份→隔离解压→验证    │
   │  通知钩子      L6函数+L4变量       curl webhook 成功/失败    │
   │  配置加载      L4参数展开+白名单解析  env > file > 默认值     │
-  │  目录布局      L2文件操作+L7 sed    releases/ + current→     │
+  │  目录布局      L2文件操作+服务规则   releases/ + current→     │
   └──────────────────────────────────────────────────────────┘
 </pre>
 </div>
@@ -547,7 +555,7 @@ main "$@"</code></pre>
 </div>
 
 <div class="question" id="q4">
-  <p><strong>Q4:</strong> 在 `wait_for_http` 函数中，为什么 `curl` 的输出要重定向到 `/dev/null`？</p>
+  <p><strong>Q4:</strong> 在本例 `wait_for_http` 中，为什么把 curl 的响应体重定向到 <code>/dev/null</code>？</p>
   <div class="options">
     <span class="option" data-q="q4" data-a="a">因为只关心退出码（服务是否响应），不关心响应体内容</span>
     <span class="option" data-q="q4" data-a="b">因为 curl 的输出会干扰 bash 脚本的执行流</span>
@@ -559,10 +567,10 @@ main "$@"</code></pre>
 
 <div class="session-footer">
   <p>
-    📖 <strong>推荐阅读</strong>：<a href="https://12factor.net/" target="_blank">The Twelve-Factor App</a>（特别是 Config 和 Processes 两章——好的部署模式背后是一套设计哲学）；<a href="https://github.com/joshsymonds/bashstrap" target="_blank">Bashstrap</a>（一个设计良好的 Bash 应用模板）<br>
+    📖 <strong>一手资料</strong>：<a href="https://www.gnu.org/software/coreutils/manual/html_node/mv-invocation.html" target="_blank">GNU mv</a>；<a href="https://man7.org/linux/man-pages/man1/flock.1.html" target="_blank">util-linux flock</a>；<a href="https://curl.se/docs/manpage.html" target="_blank">curl manual</a><br>
     📋 <strong>速查参考</strong>：<a href="../reference/expansion-and-quoting.html">变量展开与引用速查表</a><br>
     📝 <strong>上一课</strong>：<a href="0008-error-handling-and-debugging.html">第 8 课 — 错误处理与调试</a><br>
-    📝 <strong>下一课预告</strong>：第 10 课 — 进程管理（后台任务、jobs、nohup、信号——脚本里管理多进程的正确姿势）<br>
+    📝 <strong>下一课预告</strong>：第 10 课 — 后台任务、信号与进程退出<br>
     ❓ <strong>有疑问？</strong>在对话中直接问我。
   </p>
 </div>
@@ -573,7 +581,7 @@ main "$@"</code></pre>
     q1: { correct: 'b', fb: {
       b: '正确！临时文件与目标同目录时，rename 可让其他进程看到旧内容或完整新内容，而不是半截写入。断电持久性和文件元数据仍需额外处理。',
       a: '唯一名称有助于避免冲突，但本例模板把临时文件建在目标目录，不一定是 /tmp；主要目标是完成写入后再替换。',
-      c: '不对。mktemp 不做加密，它只是创建唯一名称的空文件（默认在 /tmp 且权限 600）。'
+      c: '不对。mktemp 不加密内容；它按模板安全创建唯一的文件或目录，具体位置由模板和实现决定。'
     }},
     q2: { correct: 'b', fb: {
       b: '正确！稳定的 current 路径把调用方与具体发布目录分开，发布目录可保持不可变，旧版本也能保留。链接如何安全替换以及服务如何切换仍需单独设计。',
@@ -586,8 +594,8 @@ main "$@"</code></pre>
       c: '不对。-n 是 nonblock 模式的标志，不是 no file。'
     }},
     q4: { correct: 'a', fb: {
-      a: '正确！在健康检查场景里，我们只关心 curl 返回 0（服务响应了）还是非 0（挂了/超时）——响应体的 HTML/JSON 内容在这个上下文中是噪音。`> /dev/null 2>&1` 把 stdout 和 stderr 都静默掉，只保留退出码给 if 判断。',
-      b: 'curl 的 stdout 输出不会干扰脚本执行——只是很吵。重定向 /dev/null 是为了干净，不是为了防止干扰。',
+      a: '正确！本例只把传输成功且 HTTP 状态不被 -f 判为错误当作就绪，未验证响应体语义，所以丢弃响应体但保留 -S 的诊断。真实服务可能还要用 jq 校验字段。',
+      b: '不准确。响应体不会改变控制流，但可能污染调用者期望的 stdout；是否丢弃取决于接口设计。',
       c: '不对。/dev/null 不缓存任何东西——写进去的数据直接丢弃。'
     }}
   };

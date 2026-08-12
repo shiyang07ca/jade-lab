@@ -27,7 +27,7 @@
 
 <h2>1. <code>if</code> 不判断真假，它判断退出码</h2>
 
-<p>这是 Bash 和其他语言最根本的区别：</p>
+<p>Bash 的条件位置执行命令列表，并根据退出状态选择分支；这与直接判断一个布尔对象的语言不同：</p>
 
 <pre><code><span class="comment"># Python/JS 思维（在 Bash 里是错的！）</span>
 <span class="comment"># if (condition == true) { ... }</span>
@@ -46,17 +46,18 @@ fi
 # grep 没找到   → 退出码 1 → "一切正常"</span></code></pre>
 
 <div class="insight">
-<b>任何命令都可以放在 if 后面。</b> <code>if cd /tmp; then</code>、<code>if tar -xf backup.tar.gz; then</code>、<code>if curl -s http://localhost/health; then</code>——它们都返回退出码，if 只看退出码。这个设计让 Bash 的 if 比大多数语言更直接：你不需要先"获取结果"再"判断"，你直接判断命令本身。
+<b>命令列表可以直接放在 if 后面。</b> <code>if cd /tmp; then</code>、<code>if tar -xf backup.tar.gz; then</code>、<code>if curl -fsS --max-time 5 http://localhost/health; then</code> 都通过退出状态决定分支。仍要查清每个命令的非零状态分别表示“正常未匹配”、输入错误还是运行故障。
 </div>
 
 <h2>2. <code>test</code> 命令和它的三个化身</h2>
 
-<p>那你肯定想问：比较字符串、检查文件存在这种"条件"怎么做？答案是 <code>test</code>——它就是一个<strong>普通命令</strong>，根据条件返回 0 或 1：</p>
+<p>比较字符串、检查文件存在这种“条件”由 <code>test</code> 完成。它是一个命令：条件为真返回 0，为假返回 1；
+表达式无效等错误可以返回大于 1 的状态，因此调用方仍要区分“假”和“执行失败”：</p>
 
-<pre><code><span class="comment"># 三种写法，完全等价：</span>
+<pre><code><span class="comment"># 对这个简单文件测试，三种写法表达同一条件：</span>
 <span class="prompt"></span>test -f /etc/passwd          <span class="comment"># test 命令</span>
 <span class="prompt"></span>[ -f /etc/passwd ]          <span class="comment"># [ 是 test 的命令形式之一（注意空格）</span>
-<span class="prompt"></span>[[ -f /etc/passwd ]]        <span class="comment"># Bash 增强版，更安全（推荐）</span></code></pre>
+<span class="prompt"></span>[[ -f /etc/passwd ]]        <span class="comment"># Bash 条件命令；解析和运算符并不等同于 test</span></code></pre>
 
 <div class="pitfall">
 <code>[</code> 是一个<strong>命令名</strong>，不是语法括号！所以 <code>[ "$x" = "y" ]</code> 必须带空格——<code>["$x"</code> 会被当成一个命令名。同理，<code>]</code> 是 <code>[</code> 命令的最后一个参数，也必须前面有空格。记不记得住？想想 <code>ls -l</code> 命令和参数之间怎么写的，<code>[</code> 也是一条命令。
@@ -81,7 +82,7 @@ fi
   </tr>
   <tr style="border-bottom:1px solid var(--border);">
     <td><code>[ -x "$FILE" ]</code></td>
-    <td>是可执行文件</td>
+    <td>当前用户可执行该路径；目录上表示可搜索，不保证是普通文件</td>
   </tr>
   <tr style="border-bottom:1px solid var(--border);">
     <td rowspan="2" style="vertical-align:top;">字符串测试</td>
@@ -105,7 +106,7 @@ fi
 
 <h3><code>[ ]</code> vs <code>[[ ]]</code>：选哪个？</h3>
 
-<pre><code><span class="comment"># [ ] 是 POSIX 标准，但功能弱、易出错：</span>
+<pre><code><span class="comment"># [ ] 是 POSIX 接口，参数和引用规则需要明确处理：</span>
 <span class="prompt"></span>[ "$A" = "$B" ]          <span class="comment"># 引用展开，避免空值和通配展开改变参数</span>
 <span class="prompt"></span>[ "$A" = "$B" -a "$C" = "$D" ]  <span class="comment"># -a (and) 语法诡异</span>
 
@@ -160,33 +161,35 @@ fi</code></pre>
     echo "处理 $fruit"
 done
 
-<span class="comment"># 模式 2：遍历文件通配</span>
-<span class="prompt"></span>for log in /var/log/*.log; do
-    echo "归档 $log"
-    gzip "$log"
+<span class="comment"># 模式 2：遍历文件通配；无匹配时先跳过字面模式</span>
+<span class="prompt"></span>for log in "$LOG_DIR"/*.log; do
+    [[ -e $log ]] || continue
+    printf '将归档: %s\n' "$log"
 done
 
-<span class="comment"># 模式 3：遍历命令输出（关键：用 $() 生成列表）</span>
-<span class="prompt"></span>for user in $(cut -d: -f1 /etc/passwd); do
-    echo "用户: $user"
-done</code></pre>
+<span class="comment"># 模式 3：逐行读取，不用 for x in $(command) 破坏原始边界</span>
+<span class="prompt"></span>while IFS=: read -r user _; do
+    printf '用户: %s\n' "$user"
+done &lt; /etc/passwd</code></pre>
 
 <p>需要像 Python 那样数数字怎么做？</p>
 
 <pre><code><span class="comment"># {start..end} 大括号展开</span>
 <span class="prompt"></span>for i in {1..5}; do
-    echo "第 $i 次重试"
-    curl -s https://api.example.com/health &amp;&amp; break
-    sleep 2
+    echo "第 $i 次尝试"
+    curl -fsS --connect-timeout 2 --max-time 5 https://api.example.com/health &amp;&amp; break
+    if [[ $i -lt 5 ]]; then sleep 2; fi
 done
 
-<span class="comment"># seq 命令（更灵活）</span>
-<span class="prompt"></span>for i in $(seq 1 2 10); do   <span class="comment"># 1 到 10，步长 2 → 1, 3, 5, 7, 9</span>
-    echo $i
+<span class="comment"># Bash 算术循环：变量起点、终点和步长都可以计算</span>
+<span class="prompt"></span>for ((i = 1; i &lt;= 10; i += 2)); do
+    printf '%s\n' "$i"
 done</code></pre>
 
 <div class="pitfall">
-<b><code>for f in *.txt</code> 当没有任何 .txt 文件时，<code>$f</code> 的值是字面量 <code>*.txt</code>。</b> 不会报错，但你会陷入困惑。安全写法：先检查文件存不存在——<code>if [[ -f "$f" ]]; then</code>，或开启 <code>shopt -s nullglob</code>（让无匹配的通配符展开成空）。
+<b><code>for f in *.txt</code> 当没有任何 .txt 文件时，<code>$f</code> 的值是字面量 <code>*.txt</code>。</b>
+循环内应先检查展开结果，例如 <code>[[ -f $f ]] || continue</code>；也可以在受控作用域开启
+<code>shopt -s nullglob</code>，并确认调用方是否依赖默认通配行为。
 </div>
 
 <h2>5. <code>while</code> 和 <code>until</code>：条件驱动的循环</h2>
@@ -195,16 +198,20 @@ done</code></pre>
 <span class="prompt"></span>COUNT=0
 while [[ $COUNT -lt 3 ]]; do
     echo "尝试连接... ($((++COUNT)))"
-    nc -z localhost 8080 &amp;&amp; break
-    sleep 1
+    curl -fsS --connect-timeout 1 --max-time 2 http://localhost:8080/health &gt;/dev/null &amp;&amp; break
+    if [[ $COUNT -lt 3 ]]; then sleep 1; fi
 done
 
-<span class="comment"># until: 条件为假（退出码非 0）时继续循环（= while 的相反）</span>
-<span class="prompt"></span>until curl -s http://localhost:8080/health; do
-    echo "等待服务就绪..."
-    sleep 2
-done
-echo "服务已就绪！"</code></pre>
+<span class="comment"># until: 条件为假（退出码非 0）时继续；函数状态区分就绪与超时</span>
+<span class="prompt"></span>wait_until_ready() {
+    local deadline=$((SECONDS + 30))
+    until curl -fsS --connect-timeout 1 --max-time 2 http://localhost:8080/health &gt;/dev/null; do
+        ((SECONDS &lt; deadline)) || return 1
+        echo "等待服务就绪..."
+        sleep 2 || return 1
+    done
+}
+if wait_until_ready; then echo "服务已就绪！"; else echo "等待服务超时" &gt;&amp;2; fi</code></pre>
 
 <div class="insight">
 部署脚本里最经典的 while 模式——<strong>等待某个条件满足</strong>：等待数据库就绪、等待端口监听、等待健康检查通过。另一个经典模式——<strong>逐行读取文件</strong>：<code>while IFS= read -r line; do echo "$line"; done &lt; file.txt</code>（这个我们会在后续课程深入）。
@@ -248,8 +255,8 @@ esac</code></pre>
 <span class="comment"># cmd1 || cmd2  —— cmd1 失败才执行 cmd2</span>
 <span class="prompt"></span>grep -q "OK" /tmp/status || echo "没找到 OK" &gt;&amp;2
 
-<span class="comment"># 组合使用：三元运算的效果</span>
-<span class="prompt"></span>curl -s http://localhost/health &amp;&amp; echo "OK" || echo "FAIL"</code></pre>
+<span class="comment"># 需要 if/else 语义时直接使用 if，避免中间命令失败改变分支</span>
+<span class="prompt"></span>if curl -fsS --max-time 5 http://localhost/health; then echo "OK"; else echo "FAIL"; fi</code></pre>
 
 <div class="pitfall">
 <b><code>&amp;&amp;</code> 和 <code>||</code> 是短路运算，不是 if/else！</b> 回头看 <code>cmd1 &amp;&amp; cmd2 || cmd3</code>：如果 cmd1 失败，cmd2 不执行（短路），然后 cmd3 执行。但如果 <strong>cmd1 成功、cmd2 也成功了，cmd3 也会执行</strong>吗？不会——因为 cmd2 成功返回 0，<code>||</code> 发现左边已经"真"了，短路跳过 cmd3。但如果 <strong>cmd1 成功、cmd2 失败了</strong>，cmd3 也会执行！<code>A &amp;&amp; B || C</code> 不等于 if/else，它等于"A 且 B 失败时，或 A 失败时，执行 C"。逻辑复杂时，老老实实用 if。
@@ -261,10 +268,11 @@ esac</code></pre>
 <span class="comment"># deploy.sh — 一个简单的部署脚本</span>
 <span class="comment"># 用法: ./deploy.sh [staging|production]</span>
 
-set -euo pipefail   <span class="comment"># 第 8 课会详细讲，先记住这是"严格模式"</span>
+set -euo pipefail   <span class="comment"># 第 8 课会解释这些选项的作用与例外</span>
 
 ENV="${1:-}"
-APP_DIR="/opt/myapp"
+BUILD_DIR="./build"
+REMOTE_APP_DIR="/opt/myapp"
 
 <span class="comment"># 1. 参数检查</span>
 if [[ -z "$ENV" ]]; then
@@ -280,7 +288,7 @@ case "$ENV" in
     production)
         SERVER="prod.example.com"
         echo "⚠️  你正在操作生产环境！"
-        read -p "确认？(yes/no) " CONFIRM
+        read -r -p "确认？(yes/no) " CONFIRM
         [[ "$CONFIRM" != "yes" ]] &amp;&amp; exit 0
         ;;
     *)
@@ -290,24 +298,26 @@ case "$ENV" in
 esac
 
 <span class="comment"># 3. 前置检查</span>
-if [[ ! -d "$APP_DIR" ]]; then
-    echo "应用目录不存在: $APP_DIR" &gt;&amp;2
+if [[ ! -d "$BUILD_DIR" ]]; then
+    echo "本地构建目录不存在: $BUILD_DIR" &gt;&amp;2
     exit 1
 fi
 
-<span class="comment"># 4. 部署循环——重试 3 次</span>
+<span class="comment"># 4. 部署循环——最多尝试 3 次</span>
 for i in {1..3}; do
     echo "部署尝试 $i/3 ..."
-    if rsync -avz ./build/ "$SERVER:$APP_DIR/"; then
+    if rsync -avz "$BUILD_DIR/" "$SERVER:$REMOTE_APP_DIR/"; then
         echo "✅ 部署成功"
         exit 0
     fi
-    echo "部署失败，等待 5 秒后重试..."
-    sleep 5
+    if [[ $i -lt 3 ]]; then
+        echo "部署失败，等待 5 秒后再次尝试..."
+        sleep 5
+    fi
 done
 
 <span class="comment"># 5. 循环结束 = 全部失败</span>
-echo "❌ 部署失败：已重试 3 次" &gt;&amp;2
+echo "❌ 部署失败：3 次尝试均未成功" &gt;&amp;2
 exit 1</code></pre>
 
 <div class="exercise">
@@ -323,7 +333,8 @@ exit 1</code></pre>
 <span class="prompt"></span>SECONDS=0; while [[ $SECONDS -lt 5 ]]; do echo "已等待 ${SECONDS}s"; sleep 1; done; echo "5 秒到！"
 
 <span class="comment"># 4. 写一个完整的小脚本</span>
-<span class="prompt"></span>cat &gt; /tmp/check-file.sh &lt;&lt; 'EOF'
+<span class="prompt"></span>workdir=$(mktemp -d)
+<span class="prompt"></span>cat &gt; "$workdir/check-file.sh" &lt;&lt; 'EOF'
 #!/bin/bash
 FILE="$1"
 if [[ -z "$FILE" ]]; then
@@ -334,15 +345,16 @@ elif [[ -f "$FILE" ]]; then
     echo "大小: $(wc -c &lt; "$FILE") 字节"
 elif [[ -d "$FILE" ]]; then
     echo "📁 $FILE 是一个目录"
-    echo "内容: $(ls "$FILE" | wc -l) 项"
+    echo "目录可访问；本练习不通过解析 ls 输出统计条目"
 else
     echo "❌ $FILE 不存在"
 fi
 EOF
-<span class="prompt"></span>chmod +x /tmp/check-file.sh
-<span class="prompt"></span>/tmp/check-file.sh /etc/passwd
-<span class="prompt"></span>/tmp/check-file.sh /etc
-<span class="prompt"></span>/tmp/check-file.sh /nonexistent</span></code></pre>
+<span class="prompt"></span>chmod +x "$workdir/check-file.sh"
+<span class="prompt"></span>"$workdir/check-file.sh" /etc/passwd
+<span class="prompt"></span>"$workdir/check-file.sh" /etc
+<span class="prompt"></span>"$workdir/check-file.sh" /nonexistent
+<span class="prompt"></span>rm -rf -- "$workdir"</code></pre>
 </div>
 
 <h2>总结</h2>
@@ -400,7 +412,7 @@ EOF
   <p><strong>Q3:</strong> 部署脚本中 <code>for i in {1..3}; do curl api/health &amp;&amp; break; sleep 2; done</code> 是什么意思？</p>
   <div class="options">
     <span class="option" data-q="q3" data-a="a">精确执行 curl 命令 3 次，每次间隔 2 秒</span>
-    <span class="option" data-q="q3" data-a="b">最多重试 3 次：curl 成功就跳出循环，失败就等 2 秒再试</span>
+    <span class="option" data-q="q3" data-a="b">最多尝试 3 次：curl 成功就跳出循环，失败就等 2 秒再试</span>
     <span class="option" data-q="q3" data-a="c">如果 curl 失败，重复 3 次；如果成功，直接退出脚本</span>
   </div>
   <div class="feedback" id="q3-fb"></div>
@@ -419,9 +431,9 @@ EOF
 
 <div class="session-footer">
   <p>
-    📖 <strong>推荐阅读</strong>：<a href="https://mywiki.wooledge.org/BashGuide/TestsAndConditionals" target="_blank">BashGuide — Tests and Conditionals</a><br>
+    📖 <strong>一手资料</strong>：<a href="https://www.gnu.org/software/bash/manual/bash.html#Conditional-Constructs" target="_blank">Bash Conditional Constructs</a>；<a href="https://www.gnu.org/software/bash/manual/bash.html#Bash-Conditional-Expressions" target="_blank">Bash Conditional Expressions</a><br>
     📝 <strong>上一课</strong>：<a href="0004-variables-quoting-expansion.html">第 4 课 — 变量、引用与展开</a><br>
-    📝 <strong>下一课预告</strong>：第 6 课 — 函数与脚本结构（把代码打包复用，写出模块化的脚本）<br>
+    📝 <strong>下一课预告</strong>：第 6 课 — 函数、作用域与脚本入口<br>
     ❓ <strong>有疑问？</strong>在对话中直接问我。
   </p>
 </div>
@@ -440,7 +452,7 @@ EOF
       c: '这个写法也是正确的（Bash 增强版，推荐）。'
     }},
     q3: { correct: 'b', fb: {
-      b: '正确！&amp;&amp; 实现了"成功就不再重试"的逻辑——curl 成功（退出码 0）时，&amp;&amp; 后面的 break 执行，跳出了循环。curl 失败时，&amp;&amp; 短路跳过 break，执行 sleep 2，然后进入下一轮循环。这是部署脚本里最常见的"重试直到成功"模式。',
+      b: '正确！&amp;&amp; 实现了"成功就不再尝试"的逻辑。注意这段简写会在第三次失败后仍 sleep，并且没有设置请求期限；真实脚本应补总期限和最终状态。',
       a: '不完全对。如果 curl 成功，break 会立即跳出循环——不一定会执行满 3 次。',
       c: 'break 只跳出循环，不退出脚本。exit 才是退出脚本。'
     }},

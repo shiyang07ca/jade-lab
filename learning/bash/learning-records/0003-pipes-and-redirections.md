@@ -1,5 +1,6 @@
-# 掌握了管道与重定向
+# 第 3 课历史学习记录
 
-用户理解了重定向（`>` 覆盖、`>>` 追加、`2>` stderr、`2>&1` 合并）和管道（`|` 连接命令的 stdout → stdin）的核心机制，能区分管道（命令↔命令）和重定向（命令↔文件）的不同。掌握了 `/dev/null` 静默输出、`tee` 同时写文件和传管道的用法，并能在实战中组合出 `grep ERROR log | tee errors.txt | wc -l` 这样的管道链。通过了 3 道自检题。
+当时完成了管道和重定向的即时自检，能区分 stdout、stderr、文件重定向和 `tee`。当前能力需通过重定向顺序、
+`pipefail` 和上游失败的实际预测验证。
 
-**Implications**：用户可以开始在脚本中读取和理解日志重定向（`>> log 2>&1`）和管道组合。第 4 课引入变量后，可以展示 `LOG_FILE="/var/log/app.log"; grep ERROR "$LOG_FILE"` 这种变量+重定向的组合模式。
+恢复检查：比较 `cmd >file 2>&1` 与 `cmd 2>&1 >file`，并解释 `producer | tee file` 的默认状态来自哪里。

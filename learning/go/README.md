@@ -1,18 +1,23 @@
 # Go 学习工作区
 
-本工作区服务于一个目标：掌握 Go 语言和常见后端工程能力，能够求职、维护真实 Go 项目并独立交付后端服务。
-课程以表现而不是累计课时判断是否掌握。
+目标是掌握 Go 语言和常见后端工程能力，能够求职、维护真实 Go 项目并独立交付后端服务。课程按可观察表现
+判断进度，不按累计课时自动判定掌握。
 
-## 阅读顺序
+## 现在开始
 
-1. [MISSION.md](MISSION.md)：长期目标和 10/20/35/50 小时表现标准。
-2. [CURRICULUM.md](CURRICULUM.md)：从语言基础到 leetgo、Dagu、后端实验和 Nuclei 的课程顺序。
-3. [CASES.md](CASES.md)：固定版本、共同准备规则和案例入口。
-4. [RESOURCES.md](RESOURCES.md)：Go 官方资料、固定版本源码和项目官方文档。
-5. [第 1 课](lessons/0001-python-to-go-mindset.html)：从 Python 后端开发切换到 Go 的第一组可验证差异。
+当前阶段：Phase 0，第 1 课尚未留下完成证据。下一次学习只做下面一项 35–50 分钟任务：
 
-当前只有[已确认基础与课程方向](learning-records/0001-confirmed-background-and-course-direction.md)这一份学习记录。
-它证明了学习目标和已有背景，不证明 Phase 0 或后续课程已经完成。
+```sh
+mise install go
+mise run check learning-go
+open learning/go/lessons/0001-python-to-go-mindset.html
+```
+
+完成课件中的第 1 课练习，故意让一个测试失败并恢复，再运行 `mise run check learning-go`。将工具链、失败原因、
+最终结果和下一步写入新的 `learning-records/`；只阅读或打开课件不算完成。
+
+长期目标与阶段标准见 [MISSION.md](MISSION.md)，课程顺序见 [CURRICULUM.md](CURRICULUM.md)。固定案例版本见
+[CASES.md](CASES.md)，查证入口见 [RESOURCES.md](RESOURCES.md)，教学规则见 [NOTES.md](NOTES.md)。
 
 ## 案例职责
 
@@ -25,18 +30,18 @@
 
 这些仓库是案例，不是通用最佳实践的证明。结论必须同时依据可观察行为、固定版本源码、测试和一手文档。
 
-## 学习产物的位置
+## 本课程产物
 
-- 课件与即时测验保存在 `lessons/` 和 `assets/`。
-- 已证明掌握的知识写入 `learning-records/`，不记录单纯阅读或课件交付。
-- 调用说明、阶段评估和精简测试结果在首次产生时创建 `evidence/`；大型原始日志放 `.scratch/`。
+- `lessons/` 保存课件和即时测验；`exercises/` 是受检查的课程练习 Go module。
+- `learning-records/` 只记录已经通过解释、修改或测试证明的结果。
+- `evidence/` 保存案例准备与阶段评估；大型原始日志放 `.scratch/`。
 - 后端任务接纳实验开始实现时进入仓库根目录 `labs/scheduling/job-intake-go/`，本目录只保留任务说明和链接。
 - 既有语言机制程序保存在 [`labs/languages/go-fundamentals/`](../../labs/languages/go-fundamentals/)；只在当前课需要
   最小反例时使用，程序存在不算课程掌握证据。
-- 具有明确公开接口和消费方测试、能被其他代码依赖的实现进入按能力命名的 `packages/<name>/`；由人或自动化
-  系统直接启动、完成重复工作流程的程序进入 `tools/`。
 - leetgo、Dagu 和 Nuclei 按 [CASES.md](CASES.md) 的 commit 获取到仓库外或 `.scratch/`。只有决定长期保留并维护时，
   才分别加入 `references/` submodule。
+
+其他代码的归类规则统一见 [仓库架构](../../docs/project/architecture.md)，本页不重复维护。
 
 ## 当前状态
 

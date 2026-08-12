@@ -31,7 +31,7 @@
       "type": "basic",
       "front": "在 Bash 的重定向语境中，stdin、stdout 和 stderr 分别对应哪个文件描述符？",
       "back": "stdin = fd 0，stdout = fd 1，stderr = fd 2。",
-      "extra": "默认 stdin 连键盘，stdout 和 stderr 连终端。重定向就是改变这些 fd 的指向；例如 `2>&1` 将 fd 2 指向 fd 1 当前的目标。",
+      "extra": "进程通常从调用者继承这些文件描述符；交互式终端中常见 stdin/stdout/stderr 都连接终端。重定向会改变描述符目标，例如 `2>&1` 让 fd 2 复制 fd 1 当时的目标。",
       "source": "lesson:0001-how-shell-executes-commands §5",
       "tags": ["ai_generated", "codex", "date_2026_07_22", "bash", "file-descriptors"],
       "priority": 1,
@@ -727,7 +727,7 @@
     },
     {
       "point": "`IFS=$'\\n\\t'` 的严格模式变体",
-      "reason": "这是严格模式的进阶细节，当前课程的核心是 `set -euo pipefail` 与其边界；等专门处理空白和数组时再复习。",
+      "reason": "全局修改 IFS 会改变多处拆分语义，不是固定错误选项组合的一部分；应在具体 read 或拆分位置局部设置。",
       "source": "lesson:0008-error-handling-and-debugging §5"
     },
     {

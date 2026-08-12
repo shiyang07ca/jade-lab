@@ -22,7 +22,7 @@
 <p class="subtitle">Shell 的心智模型 — 你按下回车之后发生了什么</p>
 
 <div class="mission-tie">
-学习部署脚本时，你首先需要的不是记住一堆命令，而是理解「命令是怎么跑起来的」。这节课帮你建立一个能解释一切的心智模型。
+学习部署脚本时，先建立能够预测常见行为的执行模型，再记命令选项。本课区分解析、命令查找、进程、标准流和退出状态。
 </div>
 
 <h2>1. Shell 是什么</h2>
@@ -36,7 +36,7 @@
 <span class="prompt"></span>echo hello</code></pre>
 
 <p>
-<b>Shell</b> 是命令解释器。交互式 Shell 通常反复完成下面三步；运行脚本的非交互式 Shell 则从文件或标准输入读取命令，不一定显示提示符：
+<b>Shell</b> 是命令语言解释器。下面是同步执行一条简单外部命令的入门模型；管道、后台任务、函数和内置命令会改变具体步骤。非交互式 Shell 从文件或标准输入读取命令，不显示交互提示符：
 </p>
 
 <div class="diagram">
@@ -60,18 +60,19 @@
 </p>
 
 <div class="insight">
-Shell 的核心工作不是执行具体任务，而是<b>找到正确的程序，启动它，把输入传给它，收集它的输出和退出状态</b>。理解这四点，就等于理解了 Shell 的骨架。
+对于外部命令，Shell 需要解析输入、找到程序、设置文件描述符、启动并等待进程，再取得退出状态。内置命令和函数可以直接由当前 Shell 执行。
 </div>
 
 <h2>2. Shell 怎么找到命令？</h2>
 
 <p>
-当命令名不是函数或内置命令，而且不含斜杠时，Bash 才使用名为 <strong><code>PATH</code></strong> 的环境变量查找外部程序。
+在这组入门例子中，当命令名解析为外部命令且不含斜杠时，Bash 使用
+<strong><code>PATH</code></strong> 查找程序。<code>PATH</code> 是 Shell 变量，通常也会导出给子进程。
 </p>
 
 <p>看看你当前的 <code>PATH</code>：</p>
 
-<pre><code><span class="prompt"></span>echo $PATH
+<pre><code><span class="prompt"></span>printf '%s\n' "$PATH"
 <span class="output">/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</span></code></pre>
 
 <p>
@@ -79,11 +80,12 @@ Shell 的核心工作不是执行具体任务，而是<b>找到正确的程序�
 </p>
 
 <ol>
-  <li>先找 <code>/usr/local/bin/ls</code> — 存在吗？</li>
-  <li>再找 <code>/usr/bin/ls</code> — 找到了！启动它。</li>
+  <li>先检查 <code>/usr/local/bin/ls</code>；若不是可执行文件，继续。</li>
+  <li>再检查 <code>/usr/bin/ls</code>、<code>/bin/ls</code> 等后续路径。</li>
+  <li>使用找到的第一个可执行文件；实际位置取决于系统和当前 <code>PATH</code>。</li>
 </ol>
 
-<p>用 Bash 自带的 <code>type -a</code> 或 <code>command -V</code> 查看完整的命令解析结果；外部 <code>which</code> 工具通常只查 PATH，可能看不到函数、别名或内置命令：</p>
+<p>用 Bash 自带的 <code>type -a</code> 或 <code>command -V</code> 查看命令如何解析；别名会在命令查找之前展开，实际输出也可能受当前 Shell 配置影响。外部 <code>which</code> 工具通常只查 PATH，可能看不到函数、别名或内置命令：</p>
 
 <pre><code><span class="prompt"></span>type -a ls
 <span class="output">ls is /bin/ls</span>
@@ -104,7 +106,7 @@ Shell 的核心工作不是执行具体任务，而是<b>找到正确的程序�
 <pre>
   Shell 进程 (PID 1234)
        │
-       │ fork()  — 复制出一个一模一样的子进程
+       │ fork()  — 创建继承大部分进程状态的子进程
        ↓
   子 Shell (PID 5678)          ← 现在有两个 Shell 进程
        │
@@ -138,7 +140,7 @@ Shell 的核心工作不是执行具体任务，而是<b>找到正确的程序�
 <h2>4. 退出码：成功的命令和失败的命令</h2>
 
 <p>
-每个命令结束时，都会返回一个数字——<strong>退出码（exit code）</strong>。Shell 把它存在特殊变量 <code>$?</code> 里。
+命令或管道完成后会产生一个整数<strong>退出状态（exit status）</strong>。Shell 把最近一个前台管道的状态放在特殊参数 <code>$?</code> 中；必须立即读取，否则下一条命令会覆盖它。
 </p>
 
 <pre><code><span class="prompt"></span>ls /tmp
@@ -163,7 +165,7 @@ Bash 把 <b>0 视为成功或逻辑真，非 0 视为未成功或逻辑假</b>�
 <h2>5. 三条数据流：stdin, stdout, stderr</h2>
 
 <p>
-每个进程启动时，操作系统自动打开三条数据流：
+按照 Unix 命令行约定，Shell 启动命令时通常让它继承三个已打开的文件描述符。程序可以关闭或重新定向它们，因此这不是“每个进程永远自带三条流”的保证：
 </p>
 
 <table style="width:100%; border-collapse:collapse; margin:1rem 0;">
@@ -185,12 +187,12 @@ Bash 把 <b>0 视为成功或逻辑真，非 0 视为未成功或逻辑假</b>�
   <tr>
     <td style="padding:0.4rem 0;"><strong>stderr</strong></td>
     <td style="text-align:right;">2</td>
-    <td style="padding:0.4rem 0;">标准错误 — 错误信息写到这里</td>
+    <td style="padding:0.4rem 0;">标准错误 — 诊断信息通常写到这里，不保证每条内容都是错误</td>
   </tr>
 </table>
 
 <p>
-默认情况下，stdin 连接到键盘，stdout 和 stderr 都显示在终端上。但你可以<strong>重定向</strong>它们（这也是下一课的主题）：
+在常见交互式终端中，这三个描述符通常都连接到终端；从脚本、管道、IDE 或服务管理器启动时会继承不同目标。你可以继续<strong>重定向</strong>它们（这也是下一课的主题）：
 </p>
 
 <pre><code><span class="prompt"></span>ls /tmp &gt; files.txt       # stdout → 文件
@@ -206,12 +208,12 @@ Bash 把 <b>0 视为成功或逻辑真，非 0 视为未成功或逻辑假</b>�
 <p>每次你输入一条命令并按下回车时：</p>
 
 <ol>
-  <li>Shell <strong>解析</strong>你的输入，把空格分隔的部分拆成命令名和参数</li>
+  <li>Shell 按引用、运算符和语法规则读取并<strong>解析</strong>输入；它不是简单按空格切分字符串</li>
   <li>Shell 按函数、内置命令和外部命令等规则<strong>解析命令名</strong>；需要查外部程序时才搜索 <strong><code>PATH</code></strong></li>
   <li>内置命令可在当前 Shell 中执行；外部命令通常在子进程中加载并运行</li>
-  <li>程序运行，从 <strong>stdin</strong> (fd 0) 读数据，往 <strong>stdout</strong> (fd 1) 写结果，往 <strong>stderr</strong> (fd 2) 写错误</li>
-  <li>程序结束，返回一个 <strong>退出码</strong>（0=成功），Shell 把它存进 <code>$?</code></li>
-  <li>Shell 打印提示符，等待下一条命令</li>
+  <li>命令通常从 <strong>stdin</strong> (fd 0) 读数据，往 <strong>stdout</strong> (fd 1) 写结果，往 <strong>stderr</strong> (fd 2) 写诊断</li>
+  <li>前台管道结束后产生一个<strong>退出状态</strong>；0 通常表示成功，具体非零含义由命令定义</li>
+  <li>交互式 Shell 再显示提示符；脚本则继续读取下一条命令</li>
 </ol>
 
 <div class="quiz">
@@ -229,7 +231,7 @@ Bash 把 <b>0 视为成功或逻辑真，非 0 视为未成功或逻辑假</b>�
 </div>
 
 <div class="question" id="q2">
-  <p><strong>Q2:</strong> <code>ls /tmp && echo "OK"</code> — 什么情况下 "OK" 不会被打印？</p>
+  <p><strong>Q2:</strong> <code>ls /tmp &amp;&amp; echo "OK"</code> — 什么情况下 "OK" 不会被打印？</p>
   <div class="options">
     <span class="option" data-q="q2" data-a="a">/tmp 目录不存在</span>
     <span class="option" data-q="q2" data-a="b">/tmp 中包含隐藏文件</span>
@@ -251,9 +253,9 @@ Bash 把 <b>0 视为成功或逻辑真，非 0 视为未成功或逻辑假</b>�
 
 <div class="session-footer">
   <p>
-    📖 <strong>推荐阅读</strong>：<a href="https://linuxcommand.org/tlcl.php" target="_blank">The Linux Command Line</a> — 第 1 章（什么是 Shell）、第 7 章（重定向）<br>
-    📝 <strong>下一课预告</strong>：第 2 课 — 文件系统操作（真正操控文件和目录）<br>
-    ❓ <strong>有疑问？</strong>在对话中直接问我——我是你的老师，任何不清楚的地方都可以追问。
+    📖 <strong>一手资料</strong>：<a href="https://www.gnu.org/software/bash/manual/bash.html#Command-Search-and-Execution" target="_blank">Bash Command Search and Execution</a>；<a href="https://www.gnu.org/software/bash/manual/bash.html#Exit-Status" target="_blank">Exit Status</a><br>
+    📝 <strong>下一课预告</strong>：第 2 课 — 文件系统导航、类型与权限<br>
+    ❓ <strong>需要澄清？</strong>把预测、实际输出和退出状态发到对话中一起分析。
   </p>
 </div>
 

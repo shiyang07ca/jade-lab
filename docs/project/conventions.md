@@ -3,12 +3,12 @@
 每个独立模块自行声明环境、依赖和验证方式，仓库根目录只固定完整开发工具版本并转发模块命令。
 
 - Python 模块使用 `pyproject.toml` 与 `uv.lock`，不共享根虚拟环境，也不使用 PDM。
-- Go lab、tool 或 package 各自使用 `go.mod`；仓库根目录不建立 `go.work`。
+- Go 学习练习、lab、tool 或 package 各自使用 `go.mod`；仓库根目录不建立 `go.work`。
 - Java 模块使用独立 Maven 项目，默认目标 JDK 21；没有真实多模块构建需求时不建立根聚合工程。
 - C/C++ 使用 CMake；共享配置进入模块的 `CMakePresets.json`，个人配置和构建目录不提交。
 - Shell 默认兼容 POSIX；使用 Bash 或特定系统命令时明确运行环境。
 - submodule 的 commit 固定与本仓库代码修改分开维护。
-- 学习工作区以文档和静态课件为主；可执行练习遵循其所在 `labs/`、`packages/` 或 `tools/` 模块的语言约定。
+- 与课程评分共同演进的短练习可在 `learning/<topic>/exercises/` 自带依赖和检查；其他代码按仓库架构归类。
 
 独立模块的 README 至少说明目标、适用范围、运行前提、验证命令和当前限制。锁文件由对应依赖管理器生成，不手工
 编辑。软件包额外验证构建产物和公开接口；工具额外验证参数、输出、退出码与状态变更。

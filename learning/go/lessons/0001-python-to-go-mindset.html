@@ -19,16 +19,13 @@
 
 <p>本课程所有语言行为、标准库链接和案例构建统一使用 <strong>Go 1.26.5</strong>。先运行：</p>
 
-<pre><code>go version
-go env GOOS GOARCH GOTOOLCHAIN
-GOTOOLCHAIN=go1.26.5 go version</code></pre>
+<pre><code>mise exec go@1.26.5 -- env GOTOOLCHAIN=local go version
+mise exec go@1.26.5 -- env GOTOOLCHAIN=local go env GOOS GOARCH GOTOOLCHAIN</code></pre>
 
-<p>最后一行必须以 <code>go version go1.26.5</code> 开头。补丁版本也会包含安全和缺陷修复，因此课程不接受
-“任意 Go 1.26”。默认 <code>go version</code> 可以是已有的启动工具链；课程命令实际解析出的版本必须是
-1.26.5。如果当前 Go 支持工具链选择，可以只在课程 shell 中运行
-<code>export GOTOOLCHAIN=go1.26.5</code>；也可以阅读官方的
-<a href="https://go.dev/doc/manage-install">多版本安装说明</a>或使用官方安装包。两种方式都不能用未核对的版本
-继续课程。</p>
+<p>第一行必须以 <code>go version go1.26.5</code> 开头。<code>mise</code> 选择课程固定工具链，
+<code>GOTOOLCHAIN=local</code> 禁止命令根据模块声明再切换或下载其他工具链。补丁版本也包含安全和缺陷修复，
+因此课程不接受“任意 Go 1.26”。其他安装方式见官方
+<a href="https://go.dev/doc/manage-install">多版本安装说明</a>。</p>
 
 <h2>1. Go 为什么存在：以官方历史为准</h2>
 
@@ -76,25 +73,24 @@ implicit”。因此不要记“Python 隐式、Go 显式”这种口号；应�
 <p>以下流程使用官方工具链；其中 <code>mkdir</code> 只负责创建输出目录。各 Go 命令职责不同，不要把
 <code>vet</code> 称为编译的一部分：</p>
 
-<pre><code>export GOTOOLCHAIN=go1.26.5             # 只影响当前 shell，固定本课工具链
-go version                              # 再次确认实际运行的是 go1.26.5
-go mod init example.com/hello           # 创建模块，记录模块路径
-go mod edit -go=1.26.5                 # 固定本课程使用的语言版本
-go mod edit -toolchain=go1.26.5        # 记录本课程建议使用的精确工具链
-go mod tidy                            # 按实际 import 增删依赖并维护 go.sum
-go fmt ./...                           # 格式化当前模块中的包
-go vet ./...                           # 独立静态分析，报告可疑结构
-go test ./...                          # 编译并运行全部包的测试
-go test -race ./...                    # 使用竞态检测器运行测试
-mkdir -p bin                           # 创建构建输出目录（shell 命令）
-go build -o bin/hello .                # 构建 main 包
-go run .                               # 临时编译并运行 main 包</code></pre>
+<pre><code>cd learning/go/exercises                # 进入课程练习 module
+go env GOMOD                            # 确认当前 go.mod
+go mod tidy                             # 按实际 import 增删依赖并维护 go.sum
+go fmt ./...                            # 格式化当前 module 中的 package
+go vet ./...                            # 独立静态分析，报告可疑结构
+go test ./...                           # 编译并运行全部 package 的测试
+go test -race ./...                     # 使用竞态检测器运行测试
+go build ./...                          # 构建全部 package
+go run ./lesson01                       # 临时编译并运行第 1 课命令</code></pre>
 
-<p><code>go.mod</code> 不只是 Python 的 <code>requirements.txt</code>：它还声明模块路径、Go 语言版本和模块级
+<p>本仓库已经初始化课程 module，不要在每课创建新的 <code>go.mod</code>。新建独立项目时才使用
+<code>go mod init module-path</code>；随后用 <code>go mod edit -go=1.26.5</code> 记录最低所需 Go 版本。<code>go.mod</code> 不只是 Python 的
+<code>requirements.txt</code>：它还声明模块路径、Go 语言版本和模块级
 指令。<a href="https://go.dev/doc/go1.26">Go 1.26 发布说明</a>指出 <code>go mod init</code> 会有意为新模块选择
 较低的默认 <code>go</code> 版本，因此本课显式设置
-<code>go 1.26.5</code>。<code>toolchain go1.26.5</code> 记录建议使用的精确工具链，但是否能自动取得该工具链仍取决于
-<code>GOTOOLCHAIN</code> 设置；依赖校验信息主要记录在 <code>go.sum</code>。添加或调整库依赖使用
+<code>go 1.26.5</code>。<code>toolchain</code> 指令只记录建议工具链，并不会拒绝更新版本，因此本课程不把它当作精确固定机制；
+根 <code>mise.toml</code> 选择 Go 1.26.5，<code>learning/go/check.sh</code> 再核对 <code>GOVERSION</code>，并设置
+<code>GOTOOLCHAIN=local</code> 阻止自动切换。依赖校验信息主要记录在 <code>go.sum</code>。添加或调整库依赖使用
 <code>go get module@version</code>；安装外部命令使用 <code>go install module/cmd@version</code>。</p>
 
 <p><code>./...</code> 是包匹配模式，表示当前目录下的包及其子目录中的包。Go 模块不要求使用旧式
@@ -106,16 +102,14 @@ go run .                               # 临时编译并运行 main 包</code></
 <h2>4. 动手：程序、测试、构建一次完成</h2>
 
 <div class="exercise">
-<h3>练习 1a · 创建模块（5 分钟）</h3>
+<h3>练习 1a · 核对受版本控制的练习（5 分钟）</h3>
 <ol>
-  <li>新建目录并初始化模块：
-    <pre><code>mkdir -p ~/go-practice/hello
-cd ~/go-practice/hello
-go mod init example.com/hello
-go mod edit -go=1.26.5
-go mod edit -toolchain=go1.26.5</code></pre>
+  <li>从仓库根目录进入课程 module 并核对版本：
+    <pre><code>cd learning/go/exercises
+go env GOMOD GOVERSION
+sed -n '1,120p' go.mod</code></pre>
   </li>
-  <li>创建 <code>main.go</code>：
+  <li>打开 <code>lesson01/main.go</code>，逐行解释下面的基线实现：
     <pre><code>package main
 
 import (
@@ -135,14 +129,14 @@ func main() {
     fmt.Println(countWords("go go go python go"))
 }</code></pre>
   </li>
-  <li>运行 <code>go run .</code>，预期得到 <code>map[go:4 python:1]</code>。这个示例只有两个键；不要从这里
+  <li>运行 <code>go run ./lesson01</code>，预期得到 <code>map[go:4 python:1]</code>。这个示例只有两个键；不要从这里
       推断一般 map 的输出顺序。</li>
 </ol>
 </div>
 
 <div class="exercise">
 <h3>练习 1b · 第一张安全网（10 分钟）</h3>
-<p>创建 <code>main_test.go</code>：</p>
+<p>打开并运行现有的 <code>lesson01/main_test.go</code>：</p>
 
 <pre><code>package main
 
@@ -152,6 +146,8 @@ import (
 )
 
 func TestCountWords(t *testing.T) {
+    t.Parallel()
+
     got := countWords("go  go\npython")
     want := map[string]int{"go": 2, "python": 1}
     if !reflect.DeepEqual(got, want) {
@@ -165,12 +161,13 @@ func TestCountWords(t *testing.T) {
 go vet ./...
 go test ./...
 go test -race ./...
-mkdir -p bin
-go build -o bin/hello .
-./bin/hello</code></pre>
+mkdir -p ../../../.scratch/go-course/bin
+go build -o ../../../.scratch/go-course/bin/lesson01 ./lesson01
+../../../.scratch/go-course/bin/lesson01</code></pre>
 
 <p>所有命令通过才算完成。然后把测试中的 <code>"go": 2</code> 改成 <code>"go": 3</code>，确认测试真的会
-失败，再改回正确值。没有见过测试失败，就不能证明测试检查了目标行为。</p>
+失败，再改回正确值。最后回到仓库根目录运行 <code>mise run check learning-go</code>。没有见过测试失败，
+不能证明测试检查了目标行为。</p>
 </div>
 
 <div class="exercise">

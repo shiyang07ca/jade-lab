@@ -43,7 +43,7 @@
 <span class="output">-rw-r--r--  1 alice  staff  2.0K Jul 22 11:20 deploy.sh
 drwxr-xr-x  5 alice  staff   160 Jul 22 10:51 lessons</span></code></pre>
 
-<p>选项可以组合，顺序任意：</p>
+<p>多数彼此独立的短选项可以组合；如果选项语义冲突，顺序可能影响最终行为，应以目标实现的手册为准：</p>
 
 <pre><code><span class="prompt"></span>ls -ltrh     # 详细信息 + 按时间排序 + 反向（最旧的在最前面） + 人类可读
 <span class="prompt"></span>ls -la       # 详细信息 + 包含隐藏文件</code></pre>
@@ -104,8 +104,8 @@ drwxr-xr-x  5 alice  staff   160 Jul 22 10:51 lessons</span></code></pre>
   </tr>
 </table>
 
-<pre><code><span class="prompt"></span>head -20 deploy.sh          # 看前 20 行
-<span class="prompt"></span>tail -3 /var/log/nginx.log  # 看最后 3 条日志
+<pre><code><span class="prompt"></span>head -n 20 deploy.sh          # 看前 20 行
+<span class="prompt"></span>tail -n 3 /var/log/nginx.log  # 看最后 3 条日志
 <span class="prompt"></span>tail -f /var/log/app.log    # 一直盯着日志，有新内容立刻显示
 
 <span class="prompt"></span>less deploy.sh              # 翻页浏览脚本
@@ -117,7 +117,8 @@ drwxr-xr-x  5 alice  staff   160 Jul 22 10:51 lessons</span></code></pre>
 #   q — 退出</code></pre>
 
 <div class="insight">
-<code>tail -f</code> 是你做日志分析时最重要的命令之一。部署出问题时，打开另一个终端跑 <code>tail -f /var/log/app.log</code>，然后触发请求——你能实时看到日志滚动。
+<code>tail -f</code> 适合交互观察追加中的日志。部署出问题时，可以在另一个终端运行
+<code>tail -f /var/log/app.log</code> 再触发请求；自动监控仍应使用能处理轮转、断线和结构化事件的工具。
 </div>
 
 <h2>4. 创建和删除</h2>
@@ -134,21 +135,24 @@ drwxr-xr-x  5 alice  staff   160 Jul 22 10:51 lessons</span></code></pre>
 <span class="prompt"></span>rmdir emptydir            # 只能删空目录，安全但很少用</code></pre>
 
 <div class="pitfall">
-<code>rm -rf</code> 是 Bash 里最危险的命令之一。没有回收站、没有确认提示（加了 <code>-f</code>）。部署脚本里经常看到 <code>rm -rf /tmp/build</code> 这种用法——限定路径很重要，<b>永远不要在 rm -rf 里用变量而不检查它是否为空</b>。
+<code>rm</code> 是外部文件工具，不是 Bash 语法。<code>-r</code> 会递归删除，<code>-f</code> 还会抑制部分诊断。自动化删除前应解析精确目标，拒绝空值、根目录和意外父目录，引用参数并使用 <code>--</code> 结束选项；“变量不为空”本身不足以证明目标安全。
 </div>
 
 <h2>5. 复制和移动</h2>
 
 <pre><code><span class="prompt"></span>cp source.txt dest.txt     # 复制文件
-<span class="prompt"></span>cp -r srcdir/ destdir/     # 递归复制目录
+<span class="prompt"></span>cp -R srcdir/ destdir/     # 按 POSIX -R 递归复制目录
 <span class="prompt"></span>cp file1 file2 file3 dir/  # 把多个文件复制到同一个目录
 
-<span class="prompt"></span>mv oldname newname         # 重命名（mv = 移动 = 改名，是一回事）
+<span class="prompt"></span>mv oldname newname         # 在同一文件系统内通常由 rename 完成
 <span class="prompt"></span>mv file.txt /tmp/          # 移动文件到 /tmp
 <span class="prompt"></span>mv file1 file2 dir/        # 移动多个文件到目录</code></pre>
 
 <div class="insight">
-<code>cp</code> 和 <code>mv</code> 默认都可能覆盖已有目标。不要把 <code>-n</code>、<code>-b</code> 当作跨平台接口：GNU 与 BSD/macOS 实现的选项和细节并不完全相同。自动化脚本应先确定目标平台，再使用该平台手册支持的选项，并用临时目录验证覆盖行为。
+<code>cp</code> 和 <code>mv</code> 默认都可能覆盖已有目标。同一文件系统内的 <code>mv</code> 通常是重命名；
+跨文件系统移动可能退化为复制后删除，因此性能、原子性和失败状态不同。不要把 <code>-n</code>、<code>-b</code>
+当作跨平台接口：GNU 与 BSD/macOS 实现的选项和细节并不完全相同。自动化脚本应先确定目标平台，
+再使用该平台手册支持的选项，并用临时目录验证覆盖行为。
 </div>
 
 <h2>6. 读懂权限</h2>
@@ -167,7 +171,7 @@ drwxr-xr-x  5 alice  staff   160 Jul 22 10:51 lessons</span></code></pre>
 
 <pre><code><span class="prompt"></span>chmod u+x deploy.sh         # 给文件拥有者加执行权限
 <span class="prompt"></span>chmod 755 deploy.sh         # 数字模式：user=rwx, group=r-x, other=r-x
-<span class="prompt"></span>chmod 600 secret.key         # 只有 owner 可读写（敏感文件的标准权限）</code></pre>
+<span class="prompt"></span>chmod 600 secret.key         # 只授予 owner 读写；是否满足敏感文件要求还取决于目录、ACL 等</code></pre>
 
 <table style="width:100%; margin:1rem 0;">
   <tr style="border-bottom:1px solid var(--border);">
@@ -185,14 +189,17 @@ drwxr-xr-x  5 alice  staff   160 Jul 22 10:51 lessons</span></code></pre>
 <div class="exercise">
 <h3>动手练习（5 分钟）</h3>
 <p>在你的终端里完成以下操作，每个命令都亲自敲一遍：</p>
-<pre><code><span class="prompt"></span>mkdir -p ~/bash-practice/logs
-<span class="prompt"></span>cd ~/bash-practice
-<span class="prompt"></span>echo "这是第一行" &gt; README.md                       # 创建一个文件
-<span class="prompt"></span>echo "错误日志内容" &gt; logs/error.log
+<p>从仓库根目录运行，所有练习状态留在被 Git 忽略的 <code>.scratch/</code>：</p>
+<pre><code><span class="prompt"></span>mkdir -p .scratch/bash-course/files/logs
+<span class="prompt"></span>cd .scratch/bash-course/files
+<span class="prompt"></span>printf '%s\n' '这是第一行' &gt; README.md
+<span class="prompt"></span>printf '%s\n' '#!/usr/bin/env bash' 'printf "hello\n"' &gt; hello.sh
+<span class="prompt"></span>printf '%s\n' '错误日志内容' &gt; logs/error.log
 <span class="prompt"></span>ls -lR                                           # 递归列出所有文件
-<span class="prompt"></span>head -1 README.md                                # 看第一行
-<span class="prompt"></span>chmod u+x README.md                              # 给拥有者加执行权限
-<span class="prompt"></span>ls -l README.md                                  # 确认权限已变
+<span class="prompt"></span>head -n 1 README.md                              # 看第一行
+<span class="prompt"></span>chmod u+x hello.sh                               # 给脚本拥有者加执行权限
+<span class="prompt"></span>ls -l hello.sh                                   # 确认权限已变
+<span class="prompt"></span>./hello.sh
 <span class="prompt"></span>less README.md                                   # 翻页浏览（q 退出）
 <span class="prompt"></span>cd -                                            # 回到之前的目录</code></pre>
 </div>
@@ -225,11 +232,11 @@ drwxr-xr-x  5 alice  staff   160 Jul 22 10:51 lessons</span></code></pre>
   <tr><td>追踪日志</td><td><code>tail -f f</code></td><td>follow，Ctrl+C 停止</td></tr>
   <tr><td>创建目录</td><td><code>mkdir -p path</code></td><td>parents，自动创建父目录</td></tr>
   <tr><td>创建空文件</td><td><code>touch f</code></td><td>碰一下，就有了</td></tr>
-  <tr><td>复制</td><td><code>cp [-r] src dst</code></td><td>copy</td></tr>
+  <tr><td>复制</td><td><code>cp [-R] src dst</code></td><td>copy</td></tr>
   <tr><td>移动/改名</td><td><code>mv src dst</code></td><td>move</td></tr>
   <tr><td>删除</td><td><code>rm [-r] f</code></td><td>remove，谨慎使用 -f</td></tr>
   <tr><td>给拥有者加执行权限</td><td><code>chmod u+x f</code></td><td>change mode, user + executable</td></tr>
-  <tr><td>识别类型</td><td><code>file f</code></td><td>不看扩展名，看文件头</td></tr>
+  <tr><td>识别类型</td><td><code>file f</code></td><td>结合内容和 magic 规则</td></tr>
 </table>
 
 <div class="quiz">
@@ -239,8 +246,8 @@ drwxr-xr-x  5 alice  staff   160 Jul 22 10:51 lessons</span></code></pre>
   <p><strong>Q1:</strong> 你想查看一个 2000 行的日志文件的最后 50 行，用什么命令？</p>
   <div class="options">
     <span class="option" data-q="q1" data-a="a">cat log.txt | last 50</span>
-    <span class="option" data-q="q1" data-a="b">tail -50 log.txt</span>
-    <span class="option" data-q="q1" data-a="c">head -50 log.txt</span>
+    <span class="option" data-q="q1" data-a="b">tail -n 50 log.txt</span>
+    <span class="option" data-q="q1" data-a="c">head -n 50 log.txt</span>
   </div>
   <div class="feedback" id="q1-fb"></div>
 </div>
@@ -278,9 +285,9 @@ drwxr-xr-x  5 alice  staff   160 Jul 22 10:51 lessons</span></code></pre>
 
 <div class="session-footer">
   <p>
-    📖 <strong>推荐阅读</strong>：<a href="https://linuxcommand.org/tlcl.php" target="_blank">The Linux Command Line</a> — 第 3-4 章（文件系统导航）、第 9 章（权限）<br>
+    📖 <strong>一手资料</strong>：<a href="https://www.gnu.org/software/coreutils/manual/coreutils.html" target="_blank">GNU Coreutils Manual</a>；目标是 macOS/BSD 时还要查本机对应 man page<br>
     📝 <strong>上一课</strong>：<a href="0001-how-shell-executes-commands.html">第 1 课 — 命令是如何被执行的</a><br>
-    📝 <strong>下一课预告</strong>：第 3 课 — 管道与重定向（把命令串起来，这才是 Shell 的魔法）<br>
+    📝 <strong>下一课预告</strong>：第 3 课 — 管道、重定向与文件描述符<br>
     ❓ <strong>有疑问？</strong>在对话中直接问我。
   </p>
 </div>
@@ -289,7 +296,7 @@ drwxr-xr-x  5 alice  staff   160 Jul 22 10:51 lessons</span></code></pre>
 (function() {
   const answers = {
     q1: { correct: 'b', fb: {
-      b: '正确！tail -50 显示最后 50 行。tail 默认显示 10 行，-n 指定行数。-50 是老式写法，效果等同于 -n 50。',
+      b: '正确！tail -n 50 显示最后 50 行；tail 默认显示 10 行，-n 明确指定行数。',
       a: '不对。last 不是一个命令。cat 会把整个文件打印出来（2000 行），然后再也没有然后了。',
       c: '不对。head 显示的是文件最前面的行，不是最后面。用 head 你会看到第 1-50 行。'
     }},
@@ -304,7 +311,7 @@ drwxr-xr-x  5 alice  staff   160 Jul 22 10:51 lessons</span></code></pre>
       c: '不对。owner 有 r 权限（rw-），可以读文件。少了的是 x（执行），不是 r（读）。'
     }},
     q4: { correct: 'b', fb: {
-      b: '正确！-p (parents) 的意思是：如果 /app 或 /app/logs 不存在，先创建它们，再创建 nginx。部署脚本里到处是 mkdir -p，因为它让脚本在任意环境下都能安全运行。',
+      b: '正确！-p (parents) 的意思是：如果 /app 或 /app/logs 不存在，先创建它们，再创建 nginx；已有目录不会单独导致失败。权限不足或中间路径是普通文件时仍会失败。',
       a: '不对。-p 在这里是 parents 的缩写，跟权限无关。设置权限用的是 -m（mode），例如 mkdir -m 755 mydir。',
       c: '不对。mkdir 确实有 -v（verbose）选项可以打印过程，但 -p 不是做这个的。'
     }}

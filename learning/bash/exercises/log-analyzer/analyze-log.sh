@@ -7,6 +7,7 @@ readonly SCRIPT_NAME=${0##*/}
 LOG_FILE=
 ALERT_THRESHOLD=10
 WEBHOOK_URL=
+TOP=5
 
 die() {
   printf '[FATAL] %s\n' "$*" >&2
@@ -22,7 +23,7 @@ info() {
 }
 
 usage() {
-  printf 'Usage: %s LOG_FILE [--alert-threshold N] [--webhook URL]\n' "$SCRIPT_NAME"
+  printf 'Usage: %s LOG_FILE [--alert-threshold N] [--webhook URL] [--top N]\n' "$SCRIPT_NAME"
 }
 
 require_option_value() {
@@ -32,15 +33,12 @@ require_option_value() {
 }
 
 parse_args() {
-  (($# >= 1)) || {
-    usage >&2
-    exit 2
-  }
-  LOG_FILE=$1
-  shift
-
   while (($# > 0)); do
     case $1 in
+    --help | -h)
+      usage
+      exit 0
+      ;;
     --alert-threshold)
       require_option_value "$1" "$#"
       ALERT_THRESHOLD=$2
@@ -51,18 +49,39 @@ parse_args() {
       WEBHOOK_URL=$2
       shift 2
       ;;
-    --help)
-      usage
-      exit 0
+    --top)
+      require_option_value "$1" "$#"
+      TOP=$2
+      shift 2
+      ;;
+    --*)
+      die "unknown argument: $1"
       ;;
     *)
-      die "unknown argument: $1"
+      [[ -z $LOG_FILE ]] || die "unexpected positional argument: $1"
+      LOG_FILE=$1
+      shift
       ;;
     esac
   done
 
-  [[ $ALERT_THRESHOLD =~ ^[0-9]+$ ]] ||
-    die "--alert-threshold must be a non-negative integer"
+  [[ -n $LOG_FILE ]] || {
+    usage >&2
+    exit 2
+  }
+  [[ $ALERT_THRESHOLD =~ ^0*([0-9]{1,9})$ ]] ||
+    die "--alert-threshold must be an integer from 0 to 999999999"
+  ALERT_THRESHOLD=$((10#${BASH_REMATCH[1]}))
+  [[ $TOP =~ ^0*([0-9]{1,3})$ ]] ||
+    die "--top must be an integer from 1 to 100"
+  TOP=$((10#${BASH_REMATCH[1]}))
+  ((TOP >= 1 && TOP <= 100)) || die "--top must be an integer from 1 to 100"
+  if [[ -n $WEBHOOK_URL ]]; then
+    case $WEBHOOK_URL in
+    http://* | https://*) ;;
+    *) die "--webhook must use http:// or https://" ;;
+    esac
+  fi
   [[ -f $LOG_FILE && -r $LOG_FILE ]] || die "log file is not readable: $LOG_FILE"
 }
 
@@ -87,7 +106,7 @@ print_level_distribution() {
 				printf "%d %s\n", count[level], level
 			}
 		}
-	' "$LOG_FILE" | sort -rn
+	' "$LOG_FILE" | LC_ALL=C sort -k1,1nr -k2,2
 }
 
 print_top_error_messages() {
@@ -97,13 +116,17 @@ print_top_error_messages() {
 			sub(/^ +/, "")
 			print
 		}
-	' "$LOG_FILE" | sort | uniq -c | sort -rn | head -5
+	' "$LOG_FILE" |
+    LC_ALL=C sort |
+    uniq -c |
+    LC_ALL=C sort -k1,1nr -k2,2 |
+    awk -v limit="$TOP" 'NR <= limit'
 }
 
 is_second_half_denser() {
   local level=$1
   local total midpoint
-  total=$(line_count)
+  total=$(line_count) || return 2
   ((total >= 2)) || return 1
   midpoint=$((total / 2))
 
@@ -138,19 +161,22 @@ send_alert() {
     warn "failed to build alert payload"
     return 0
   }
-  curl -fsS --connect-timeout 3 --max-time 10 \
-    -H 'Content-Type: application/json' --data "$payload" "$WEBHOOK_URL" >/dev/null ||
-    warn "alert request failed"
+  if ! curl -fsS --connect-timeout 3 --max-time 10 \
+    --proto '=http,https' --header 'Content-Type: application/json' \
+    --data-binary "$payload" --url "$WEBHOOK_URL" >/dev/null; then
+    warn "alert request failed" || true
+  fi
+  return 0
 }
 
 main() {
   parse_args "$@"
 
   local total errors warns fatals severe
-  total=$(line_count)
-  errors=$(count_level ERROR)
-  warns=$(count_level WARN)
-  fatals=$(count_level FATAL)
+  total=$(line_count) || die "failed to count log lines"
+  errors=$(count_level ERROR) || die "failed to count ERROR lines"
+  warns=$(count_level WARN) || die "failed to count WARN lines"
+  fatals=$(count_level FATAL) || die "failed to count FATAL lines"
   severe=$((errors + fatals))
 
   info "analyzing: ${LOG_FILE##*/}"
@@ -169,10 +195,13 @@ main() {
   printf '\n%s\n' '--- top severe messages ---'
   print_top_error_messages
 
-  local level
+  local level status
   for level in ERROR WARN FATAL; do
     if is_second_half_denser "$level"; then
       printf '[NOTICE] %s density is higher in the second half of the file\n' "$level"
+    else
+      status=$?
+      ((status == 1)) || die "failed to compare $level density"
     fi
   done
 
