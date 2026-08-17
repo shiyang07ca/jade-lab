@@ -9,6 +9,9 @@ mise run bash learning/bash/exercises/log-analyzer/test.sh
 mise run bash learning/bash/exercises/log-analyzer/analyze-log.sh /path/to/app.log
 ```
 
+`fixtures/migration-practice.txt` 是人工构造的迁移练习输入。它故意包含动态请求字段、多行堆栈、未知级别、畸形行和
+不同的时间戳格式，用于暴露当前解析规则的边界；它不能替代学习者实际工作日志的迁移检验。
+
 脚本只按示例格式的第三列识别 `[INFO]`、`[WARN]`、`[ERROR]` 和 `[FATAL]`。所谓“后半段密度更高”只是按文件行数归一化的启发式信号，不是时间序列错误率。
 
 接口约定：

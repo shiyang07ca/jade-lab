@@ -1,13 +1,13 @@
 # Anki 待确认卡片：Mnemosyne
 
-共 53 张卡。确认后只同步 `approved` 卡片。
+共 59 张卡。确认后只同步 `approved` 卡片。
 检查时先只看 Front/Text：你应该能看出它在说哪种技术或哪篇资料、正在解决什么事情，以及只需要回答哪一个问题。确认后再看答案和来源。
 
 ## 学习目标
 
 为看懂、调试和维护服务部署脚本建立 Bash 核心心智模型——能够识别退出码、重定向、管道、变量展开、控制流、函数、文本处理、错误处理、进程生命周期、API/JSON 边界和部署模式，并能验证脚本的真实执行路径。
 
-## approved（51）
+## approved（57）
 
 ### bash-2026-07-22-001
 
@@ -69,7 +69,7 @@ stdin = fd 0，stdout = fd 1，stderr = fd 2。
 
 **Extra**
 
-默认 stdin 连键盘，stdout 和 stderr 连终端。重定向就是改变这些 fd 的指向；例如 `2>&1` 将 fd 2 指向 fd 1 当前的目标。
+进程通常从调用者继承这些文件描述符；交互式终端中常见 stdin/stdout/stderr 都连接终端。重定向会改变描述符目标，例如 `2>&1` 让 fd 2 复制 fd 1 当时的目标。
 
 **卡片信息**
 
@@ -1233,6 +1233,150 @@ jq 中只有 `false` 和 `null` 为假，`0`、空字符串、空数组和空对
 
 确认：`approved` / `needs_review` / `rejected`
 
+### bash-2026-08-17-058
+
+**Front**
+
+在启用 `set -e` 的 Bash 脚本中，函数 `run_parser` 被直接用作 `if` 条件；函数内解析命令失败后，下一条 `printf` 成功。为什么调用方仍可能进入 `then`？
+
+**Back**
+
+`run_parser` 位于 `if` 的测试上下文，Bash 会在整个函数体中忽略 `errexit`；失败命令没有终止函数，最后成功的 `printf` 使函数返回 0。
+
+**Extra**
+
+关键步骤应显式传播失败，例如 `parse_input || return 2`。即使函数体内再次执行 `set -e`，在该忽略上下文结束前也不会生效。
+
+**卡片信息**
+
+- 类型：`basic`
+- 优先级：`1`
+- 来源：file:learning/bash/lessons/0008-error-handling-and-debugging.html §2、§5；conversation:2026-08-17；GNU Bash 5.3 Reference Manual: The Set Builtin
+- 为什么值得记：条件中的函数会改变 `errexit` 对整个函数体的作用；记住这一规则能避免解析或部署步骤失败后仍被最后一条成功命令伪装成成功。
+- 标签：ai_generated, codex, date_2026_08_17, bash, error-handling, set-e, functions
+
+确认：`approved` / `needs_review` / `rejected`
+
+### bash-2026-08-17-059
+
+**Front**
+
+Bash 探测函数约定 `0` 表示找到、`1` 表示未找到、`2` 表示内部错误。调用方用 `if ! probe` 进入失败分支后再保存状态，为什么保存不到原来的 1 或 2？
+
+**Back**
+
+`!` 先把 `probe` 的退出状态做逻辑取反；原来的 1 或 2 都变成 0，因此分支内保存到的 `$?` 都是 0。
+
+**Extra**
+
+要保留原状态，不要用 `!`：写成 `if probe; then ...; else status=$?; ...; fi`。必须在 `else` 的第一条命令立即保存，因为下一条命令会覆盖 `$?`。
+
+**卡片信息**
+
+- 类型：`basic`
+- 优先级：`1`
+- 来源：file:learning/bash/learning-records/0013-log-analysis-and-language-boundary.md；conversation:2026-08-17；GNU Bash 5.3 Reference Manual: Pipelines、Special Parameters
+- 为什么值得记：三态查询常用不同非零状态区分普通否定和内部故障；错误使用 `!` 会不可逆地丢失这一区别。
+- 标签：ai_generated, codex, date_2026_08_17, bash, exit-code, negation, functions
+
+确认：`approved` / `needs_review` / `rejected`
+
+### bash-2026-08-17-060
+
+**Front**
+
+在启用 `pipefail` 的 Bash 日志管道中，`producer | head -n 1` 已输出需要的第一行，却返回非零状态。为什么这不一定表示日志读取或处理失败？
+
+**Back**
+
+`head` 读够一行后会关闭管道；上游继续写时可能收到 `SIGPIPE` 并以非零状态结束，而 `pipefail` 会把该状态作为管道失败暴露出来。
+
+**Extra**
+
+若必须确认上游读完整个有限输入，可让下游继续消费但只打印前 N 条；若目标是尽早停止昂贵或无限的数据源，则应明确处理这种结束，不能机械改成读取全部输入。
+
+**卡片信息**
+
+- 类型：`basic`
+- 优先级：`1`
+- 来源：file:learning/bash/lessons/0013-log-analysis-practice.html §4；conversation:2026-08-17；GNU Bash 5.3 Reference Manual: Pipelines、Exit Status；POSIX.1-2024 <signal.h>: SIGPIPE
+- 为什么值得记：限量读取是日志管道的常见操作；理解预期 SIGPIPE 与真实读取失败的区别，能避免把正确结果误判为故障。
+- 标签：ai_generated, codex, date_2026_08_17, bash, pipefail, sigpipe, pipelines
+
+确认：`approved` / `needs_review` / `rejected`
+
+### bash-2026-08-17-061
+
+**Front**
+
+在 Bash 包装脚本中，需要按条件增加选项，并把可能含空格或通配字符的值传给 Python。怎样构造参数才能保持每个 argv 边界？
+
+**Back**
+
+使用数组逐项构造，并以 `"${args[@]}"` 展开；可选项在 `if` 中用 `args+=(--webhook "$url")` 追加。每个数组元素对应一个独立参数。
+
+**Extra**
+
+命令字符串在未引用展开或交给 `eval` 时会重新分词并做路径名展开。数组解决的是动态构造参数，区别于只用 `"$@"` 转发调用者已经提供的参数。
+
+**卡片信息**
+
+- 类型：`basic`
+- 优先级：`1`
+- 来源：file:learning/bash/lessons/0004-variables-quoting-expansion.html §4、§6；conversation:2026-08-17；GNU Bash 5.3 Reference Manual: Arrays、Shell Expansions
+- 为什么值得记：包装脚本经常动态添加可选参数；数组能可靠保留路径和 URL 的参数边界，避免空格、通配符或重新解析改变调用含义。
+- 标签：ai_generated, codex, date_2026_08_17, bash, arrays, argv, wrapper
+
+确认：`approved` / `needs_review` / `rejected`
+
+### bash-2026-08-17-062
+
+**Front**
+
+Bash 包装脚本完成参数处理后只需启动 Python，之后没有清理或状态转换。此时使用 `exec python3 ...` 会怎样改变进程生命周期？
+
+**Back**
+
+`exec` 用 Python 替换当前 Shell，不再保留一层包装进程；PID 不变，信号直接交给 Python，最终退出状态也来自 Python。
+
+**Extra**
+
+成功的 `exec` 不会返回，所以后续 Bash 代码不会执行。若包装器还要清理、重试、转换状态或汇总多个子进程，就不应使用这种替换方式。
+
+**卡片信息**
+
+- 类型：`basic`
+- 优先级：`2`
+- 来源：file:learning/bash/learning-records/0013-log-analysis-and-language-boundary.md；conversation:2026-08-17；GNU Bash 5.3 Reference Manual: Bourne Shell Builtins (`exec`)
+- 为什么值得记：薄包装器是否使用 `exec` 会直接决定 PID、信号和后续清理语义；这是把 Bash 留作进程入口时需要做出的明确选择。
+- 标签：ai_generated, codex, date_2026_08_17, bash, exec, process-model, wrapper
+
+确认：`approved` / `needs_review` / `rejected`
+
+### bash-2026-08-17-063
+
+**Front**
+
+Bash CLI 允许用户输入 `008` 表示十进制 8。将输入值用于算术前应怎样验证和转换，才能避免八进制解释或把算术表达式当作输入？
+
+**Back**
+
+先用正则确认输入只含允许数量的十进制数字，再用 `$((10#$value))` 转成十进制整数；最后对转换后的数值检查范围。
+
+**Extra**
+
+`10#` 只指定进制，不能代替不可信输入验证。Bash 算术会把变量内容继续当作表达式求值，并把前导 0 的整数常量解释为八进制，因此语法验证必须先完成。
+
+**卡片信息**
+
+- 类型：`basic`
+- 优先级：`1`
+- 来源：file:learning/bash/lessons/0013-log-analysis-practice.html §4；file:learning/bash/exercises/log-analyzer/analyze-log.sh；GNU Bash 5.3 Reference Manual: Shell Arithmetic、Conditional Constructs
+- 为什么值得记：端口、阈值和次数常来自字符串参数；先限制语法再强制十进制并检查范围，能避免静默八进制和算术表达式注入。
+- 标签：ai_generated, codex, date_2026_08_17, bash, cli, validation, arithmetic
+
+确认：`approved` / `needs_review` / `rejected`
+
 ## needs_review（0）
 
 ## draft（0）
@@ -1340,8 +1484,8 @@ jq 中只有 `false` 和 `null` 为假，`0`、空字符串、空数组和空对
 17. awk 的完整语言能力：变量、循环、函数和数组
    - 拒绝原因：超出本课程的部署脚本目标；当前只保留字段提取、分隔符和管道统计的高频模式。
    - 来源：lesson:0007-text-processing-trio §3
-18. `IFS=$'\n\t'` 的所谓严格模式变体
-   - 拒绝原因：全局修改 IFS 会改变多处拆分语义，不是固定错误选项组合的一部分；应在具体 `read` 或拆分位置局部设置。
+18. `IFS=$'\n\t'` 的严格模式变体
+   - 拒绝原因：全局修改 IFS 会改变多处拆分语义，不是固定错误选项组合的一部分；应在具体 read 或拆分位置局部设置。
    - 来源：lesson:0008-error-handling-and-debugging §5
 19. `ERR`、`INT`、`TERM` 的 trap 信号清单
    - 拒绝原因：把多个信号名称堆在一张卡中会变成裸列表；本批先保留更通用、可迁移的 `EXIT` 清理机制。
@@ -1400,3 +1544,24 @@ jq 中只有 `false` 和 `null` 为假，`0`、空字符串、空数组和空对
 37. 轮询部署 API 时区分成功、失败终态并设置总截止时间
    - 拒绝原因：用户判定为常识，主动回忆收益不足，明确要求删除，不占用复习次数。
    - 来源：lesson:0011-json-api-curl-jq §3
+38. 主结果成功而 best-effort webhook 失败时的固定退出状态
+   - 拒绝原因：退出状态必须由具体 CLI 的公开接口定义；一旦题目说明哪个结果是必需的，答案可以现场推导，且现有错误处理卡已覆盖显式允许降级的前提。
+   - 来源：lesson:0013-log-analysis-practice §3；conversation:2026-08-17
+39. 用乘除顺序记忆 Bash 整数百分比计算
+   - 拒绝原因：行为正确但使用频率较低，最小测试容易发现；本批把复习空间留给更隐蔽的状态、管道和参数边界。
+   - 来源：lesson:0013-log-analysis-practice §4；GNU Bash Reference Manual: Shell Arithmetic
+40. 进程在 pgrep 与 ps 之间消失时一律跳过
+   - 拒绝原因：现有 PID 身份卡已覆盖进程退出与 PID 复用风险；单项消失后应跳过还是使任务失败取决于诊断工具的接口，不能固化为通用答案。
+   - 来源：file:tools/process-inspector/scripts/thread-count.sh；file:learning/bash/learning-records/0013-log-analysis-and-language-boundary.md；approved card bash-2026-08-11-049
+41. 日志严重率计算前定义逻辑事件和分母
+   - 拒绝原因：这是分析具体日志时必须现场定义的业务规则，不是脱离格式和分析目标后仍有固定答案的 Bash 知识。
+   - 来源：file:learning/bash/exercises/log-analyzer/fixtures/migration-practice.txt；conversation:2026-08-17
+42. 遇到多行日志和多种时间戳时把解析迁移到 Python
+   - 拒绝原因：这是受输入规模、错误恢复、团队维护能力和目标接口共同影响的架构判断；保留在学习使命中比固化成单一答案更合适。
+   - 来源：file:learning/bash/MISSION.md；file:learning/bash/learning-records/0013-log-analysis-and-language-boundary.md
+43. 排名输出测试必须断言完整结果集合
+   - 拒绝原因：这是有价值的通用测试经验，但不是 Bash 特有知识，且已经由练习测试和学习记录保存，不需要占用 Bash 卡片复习次数。
+   - 来源：file:learning/bash/exercises/log-analyzer/test.sh；conversation:2026-08-17
+44. 日志聚合时总是排除 request_id、client 和 path，并使用 error 字段
+   - 拒绝原因：聚合键必须服务于具体分析目标；动态上下文字段与稳定事件类型的区别值得现场建模，但不存在可适用于所有日志的固定键。
+   - 来源：file:learning/bash/exercises/log-analyzer/fixtures/migration-practice.txt；OpenTelemetry Logs Data Model

@@ -85,8 +85,12 @@ assert_not_contains "$many_output" "1 Message 6"
 assert_not_contains "$many_output" "1 Message 7"
 
 top_output=$(bash "$SCRIPT_DIR/analyze-log.sh" "$TEMP_DIR/many.log" --alert-threshold 99 --top 3)
+assert_contains "$top_output" "1 Message 1"
+assert_contains "$top_output" "1 Message 2"
 assert_contains "$top_output" "1 Message 3"
 assert_not_contains "$top_output" "1 Message 4"
+assert_not_contains "$top_output" "1 Message 5"
+assert_not_contains "$top_output" "1 Message 6"
 assert_not_contains "$top_output" "1 Message 7"
 
 assert_status 2 "missing log file" bash "$SCRIPT_DIR/analyze-log.sh"

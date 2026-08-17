@@ -1,0 +1,19 @@
+2026-08-17 09:00:00 [INFO] service=orders event=start
+2026-08-17 09:00:01 [ERROR] request_id=<REQ_001> client=<IP_1> path=/orders/1001 error="database timeout"
+2026-08-17 09:00:02 [WARN] request_id=<REQ_001> retry=1 reason="database timeout"
+2026-08-17 09:00:03 [ERROR] request_id=<REQ_002> client=<IP_2> path=/orders/1002 error="database timeout"
+    at database.query (database.go:184)
+    at order.load (order.go:91)
+2026-08-17 09:00:04 [DEBUG] request_id=<REQ_003> event=healthcheck
+2026-08-17 09:00:05 [ERROR] request_id=<REQ_003> client=<IP_1> path=/orders/1003 error="database timeout"
+garbled line without expected fields
+
+2026-08-17 09:00:06 [FATAL] instance=orders-7 error="worker crashed"
+    caused by: context deadline exceeded
+2026-08-17T09:00:07+08:00 [ERROR] request_id=<REQ_004> client=<IP_3> path=/orders/1004 error="database timeout"
+2026-08-17 09:00:08 [INFO] service=orders event=recovered
+2026-08-17 09:00:09 [ERROR] request_id=<REQ_005> client=<IP_2> path=/orders/1005 error="invalid state"
+2026-08-17 09:00:10 [WARN] heap_used=91%
+2026-08-17 09:00:11 [ERROR] request_id=<REQ_006> client=<IP_3> path=/orders/1006 error="invalid state"
+2026-08-17 09:00:12 [FATAL] instance=orders-8 error="worker crashed"
+2026-08-17 09:00:13 [INFO] service=orders event=shutdown
