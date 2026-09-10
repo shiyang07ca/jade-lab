@@ -33,6 +33,8 @@ leetcode:
   site: https://leetcode.cn
   credentials:
     from: browser
+    browsers:
+      - edge
 
 contest:
   out_dir: contests
@@ -40,4 +42,6 @@ contest:
   open_in_browser: false
 
 editor:
-  use: none
+  use: custom
+  command: /Applications/Cursor.app/Contents/Resources/app/bin/cursor
+  args: "{{.Files}}"
