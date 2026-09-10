@@ -18,7 +18,7 @@ mise run modules
 随后只安装当前模块需要的工具。例如开始 Go 课程：
 
 ```sh
-mise install go ubi:j178/leetgo
+mise install go github:j178/leetgo
 sed -n '1,220p' learning/go/README.md
 ```
 

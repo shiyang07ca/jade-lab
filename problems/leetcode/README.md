@@ -21,7 +21,7 @@ Python 项目的依赖真源是 `pyproject.toml` 和 `uv.lock`。leetgo 自身�
 
 ```sh
 brew install mise
-mise install python ubi:j178/leetgo
+mise install python github:j178/leetgo
 ```
 
 进入本目录后初始化 Python 依赖和题目缓存：
@@ -93,3 +93,14 @@ mise exec -- leetgo test --help
 
 如果 `.venv` 被 leetgo 重建，重新执行 `mise exec -- uv sync --frozen --python 3.12.9`，让本地运行环境回到
 `pyproject.toml` 和 `uv.lock` 定义的依赖集合。
+
+## 检查当前题目
+
+从仓库根目录执行窄检查，只检查指定题目已有的 Python 和 Go 解法：
+
+```sh
+mise run leetcode-check 88
+```
+
+Python 解法会运行 `basedpyright`、Ruff 和 LeetGo 本地测试；Go 解法会运行 `gofmt` 和 LeetGo 本地测试。
+该命令不会扫描其他题目、访问远程判题或提交代码。
