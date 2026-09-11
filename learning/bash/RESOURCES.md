@@ -4,6 +4,10 @@
 
 - [GNU Bash Reference Manual](https://www.gnu.org/software/bash/manual/bash.html)
   Bash 语法、参数展开、builtin、作业控制和调用规则的一手来源。遇到“Bash 保证什么”时先查这里。
+- [GNU Bash — Signals](https://www.gnu.org/software/bash/manual/html_node/Signals.html)、
+  [Bourne Shell Builtins](https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html) 与
+  [Job Control Builtins](https://www.gnu.org/software/bash/manual/html_node/Job-Control-Builtins.html)
+  第 15 课关于 trap 执行时机、`kill` 和 `wait` 状态的直接依据；课程结论按 GNU Bash 5.3.15 验证。
 - [POSIX Shell Command Language](https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html)
   POSIX shell 的标准定义。用来区分可移植 shell 行为与 Bash 扩展，不能用它推导 Bash 独有功能。
 - [GNU Coreutils Manual](https://www.gnu.org/software/coreutils/manual/coreutils.html)

@@ -508,15 +508,19 @@ def _bash_course_errors(catalog: Catalog) -> list[str]:
     lesson_dir = ROOT / "learning/bash/lessons"
     lessons = sorted(lesson_dir.glob("*.html"))
     errors: list[str] = []
-    if len(lessons) != 13:
-        errors.append(f"Bash course expects 13 lessons, found {len(lessons)}")
+    if len(lessons) != 15:
+        errors.append(f"Bash course expects 15 lessons, found {len(lessons)}")
     expected_runtime = catalog.runtimes.get("bash_image", "")
     expected_version = catalog.runtimes.get("bash_version", "")
+    audit_pattern = re.compile(
+        r'<meta\s+name="course-audit"\s+content="\d{4}-\d{2}-\d{2};\s*([^\"]+)">'
+    )
     for lesson in lessons:
         text = lesson.read_text(encoding="utf-8")
-        if 'name="course-audit"' not in text or "2026-08-12" not in text:
-            errors.append(f"Bash lesson has no current audit marker: {lesson.relative_to(ROOT)}")
-        if expected_version and expected_version not in text:
+        audit_match = audit_pattern.search(text)
+        if audit_match is None:
+            errors.append(f"Bash lesson has no audit marker: {lesson.relative_to(ROOT)}")
+        elif expected_version and expected_version not in audit_match.group(1):
             errors.append(f"Bash lesson does not declare {expected_version}: {lesson.relative_to(ROOT)}")
         if "TODO" in text or "FIXME" in text:
             errors.append(f"Bash lesson contains unfinished marker: {lesson.relative_to(ROOT)}")

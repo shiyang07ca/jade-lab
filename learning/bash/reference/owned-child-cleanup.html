@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>受管子进程清理 — 速查参考</title>
+<meta name="course-audit" content="2026-08-24; GNU Bash 5.3.15">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="breadcrumb">
+  <a href="../MISSION.md">使命</a> → <a href="../lessons/0015-terminating-and-reaping-child-processes.html">第 15 课</a> → 速查参考
+</nav>
+
+<h1>受管子进程清理</h1>
+<p class="subtitle">只处理父 Bash 明确启动并立即记录 PID 的直接子进程</p>
+
+<h2>最小状态模型</h2>
+
+<table style="width:100%; margin:1rem 0;">
+  <tr><th style="text-align:left;">步骤</th><th style="text-align:left;">目的</th><th style="text-align:left;">成功不代表</th></tr>
+  <tr><td>保存 <code>$!</code></td><td>记录刚启动任务的 PID</td><td>任务最终成功</td></tr>
+  <tr><td><code>kill -TERM "$pid"</code></td><td>发送终止请求</td><td>目标已经退出</td></tr>
+  <tr><td><code>wait "$pid"</code></td><td>确认结束并消费等待状态</td><td>该状态应成为父脚本最终状态</td></tr>
+  <tr><td><code>exit 143</code></td><td>本课程约定 TERM 中断</td><td>所有 POSIX Shell 都使用同一映射</td></tr>
+</table>
+
+<h2>处理器骨架</h2>
+
+<pre><code>pids=()  # 每次 command &amp; 后立即执行 pids+=("$!")
+
+on_term() {
+  local pid child_status
+  trap - TERM
+
+  for pid in "${pids[@]}"; do
+    if kill -TERM "$pid" 2&gt;/dev/null; then
+      printf 'child=%s action=term-sent\n' "$pid" &gt;&amp;2
+    else
+      printf 'child=%s action=term-not-sent\n' "$pid" &gt;&amp;2
+    fi
+  done
+
+  for pid in "${pids[@]}"; do
+    if wait "$pid" 2&gt;/dev/null; then
+      child_status=0
+    else
+      child_status=$?
+    fi
+    printf 'child=%s wait_status=%s\n' \
+      "$pid" "$child_status" &gt;&amp;2
+  done
+
+  exit 143
+}
+
+trap on_term TERM</code></pre>
+
+<div class="insight">
+先向全部 PID 发送 TERM，再逐项 <code>wait</code>。不要在第一个仍运行的子进程上先等待，否则后续子进程迟迟收不到
+终止请求。
+</div>
+
+<h2>验证清单</h2>
+
+<ul>
+  <li>测试等待所有 PID 已记录，再只向父 PID 发送 TERM。</li>
+  <li>父脚本状态符合公开接口；本课程固定为 143。</li>
+  <li>每个受管 PID 都已执行 <code>wait</code>，测试结束时均不存在。</li>
+  <li>正常完成、运行中中断、部分任务已结束时中断分别验证。</li>
+</ul>
+
+<div class="pitfall">
+PID 数组不等于进程树。子进程自行创建的后代、忽略 TERM、超时升级、连续信号和自动重启均不由这段骨架解决。
+</div>
+
+<div class="session-footer">
+  <p>
+    📖 <strong>依据</strong>：<a href="https://www.gnu.org/software/bash/manual/html_node/Signals.html" target="_blank">GNU Bash：Signals</a>；<a href="https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html" target="_blank">trap</a>；<a href="https://www.gnu.org/software/bash/manual/html_node/Job-Control-Builtins.html" target="_blank">kill 与 wait</a><br>
+    📝 <strong>返回课件</strong>：<a href="../lessons/0015-terminating-and-reaping-child-processes.html">第 15 课</a>
+  </p>
+</div>
+
+</body>
+</html>

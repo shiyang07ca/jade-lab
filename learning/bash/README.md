@@ -19,6 +19,10 @@ open learning/bash/lessons/0001-how-shell-executes-commands.html
 mise run bash learning/bash/exercises/log-analyzer/test.sh
 ```
 
+第 13 课的测试改动和真实脚本迁移检验、[第 14 课](lessons/0014-collecting-background-job-status.html) 的后台任务
+状态汇总均已完成。下一步进入[第 15 课](lessons/0015-terminating-and-reaping-child-processes.html)：处理 TERM 中断和
+直接子进程清理；完成后不再扩展 Bash 语法范围。
+
 一次学习只完成一个可观察结果：读一节、预测命令行为、在临时目录验证、完成迁移题，最后重跑
 `mise run check learning-bash`。失败时记录命令、状态和根因；不要只记录“看完”。
 
@@ -35,7 +39,7 @@ docker.io/library/bash:5.3.15-alpine3.24@sha256:a19c811ee9e97fa8a080001d82b8e0de
 
 ## 材料职责
 
-- `lessons/`：13 节短课，包含预测题和实践任务。
+- `lessons/`：15 节短课，包含预测题和实践任务。
 - `exercises/`：课程唯一的可执行练习与测试；第 13 课直接引用这里的源码。
 - `learning-records/`：历史学习记录，不等于当前掌握证明。
 - `reference/`、`anki/`：按需查阅，不作为课程入口。

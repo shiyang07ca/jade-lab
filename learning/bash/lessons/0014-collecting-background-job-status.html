@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 14 课：汇总后台任务状态</title>
+<meta name="course-audit" content="2026-08-17; GNU Bash 5.3.15">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="breadcrumb">
+  <a href="../MISSION.md">使命</a> → <a href="0013-log-analysis-practice.html">第 13 课</a> → 第 14 课
+</nav>
+
+<div class="lesson-meta">
+  <span class="number">第 14 课</span>
+  <span class="duration">⏱ 约 25–35 分钟</span>
+</div>
+
+<h1>汇总后台任务状态</h1>
+<p class="subtitle">启动多个任务不难，难的是让父 Shell 对每个结果负责</p>
+
+<div class="mission-tie">
+第 10 课介绍过 <code>&amp;</code>、<code>$!</code> 和 <code>wait</code>，但历史记录只证明当时能识别概念。本课不增加新的
+并发框架，而是完成一个真实自动化必须具备的能力：三个后台任务中任意一个失败，父脚本都能指出失败对象、保留其
+状态，并给调用者一个明确的整体结果。
+</div>
+
+<h2>1. 本课只学什么</h2>
+
+<p>本课聚焦一条完整因果链：</p>
+
+<div class="diagram">
+<pre><code>command &amp;
+   │ 立即返回状态 0
+   ▼
+$! 保存刚启动任务的 PID
+   │
+   ▼
+wait "$pid" 取得该任务的真实状态
+   │
+   ▼
+父 Shell 按公开规则汇总所有任务</code></pre>
+</div>
+
+<p>完成后，你应该能：</p>
+
+<ul>
+  <li>解释为什么 <code>command &amp;</code> 的即时成功不代表后台任务最终成功。</li>
+  <li>在启动下一个任务前保存 <code>$!</code>，并保持 PID 与任务名称的对应关系。</li>
+  <li>逐个执行 <code>wait "$pid"</code>，取得每个任务自己的退出状态。</li>
+  <li>实现“全部任务都执行；任一失败则整体失败”的 collect-all 策略。</li>
+</ul>
+
+<div class="pitfall">
+本课不处理 Ctrl+C、SIGTERM 或取消仍在运行的任务。那需要另外定义中断状态、子进程所有权和清理顺序，属于第 15 课。
+</div>
+
+<h2>2. 四条必须准确掌握的规则</h2>
+
+<table style="width:100%; margin:1rem 0;">
+  <tr><th style="text-align:left;">写法</th><th style="text-align:left;">Bash 行为</th><th style="text-align:left;">本课用途</th></tr>
+  <tr><td><code>command &amp;</code></td><td>异步启动；父 Shell 不等待，当前异步命令的状态为 0。</td><td>只说明任务已被放到后台。</td></tr>
+  <tr><td><code>$!</code></td><td>最近放入后台的作业 PID。</td><td>必须在下一次后台启动前立即保存。</td></tr>
+  <tr><td><code>wait "$pid"</code></td><td>等待指定子进程并返回它的退出状态。</td><td>把异步任务的最终结果带回父 Shell。</td></tr>
+  <tr><td><code>wait</code></td><td>无参数时等待所有后台任务，但返回状态为 0。</td><td>只能等完，不能汇总每项成败。</td></tr>
+</table>
+
+<div class="insight">
+“等待所有任务结束”和“知道所有任务是否成功”是两个不同需求。无参数 <code>wait</code> 只满足前者；要满足后者，父 Shell 必须保存 PID 并逐项等待。
+</div>
+
+<h2>3. 先定义批处理接口</h2>
+
+<p>没有“并行脚本天然应该如何失败”的通用答案。本练习先固定以下接口：</p>
+
+<ul>
+  <li>三个任务启动后都允许执行完；一个任务失败不会取消其他任务。</li>
+  <li>成功任务写一行摘要到 stdout。</li>
+  <li>失败任务把名称和原始退出状态写到 stderr。</li>
+  <li>全部成功时脚本返回 0；只要有一项失败，脚本最终返回 1。</li>
+</ul>
+
+<p>最终状态使用 1 表示“批次含失败”，而不是假装一个状态码能携带多个子任务状态；每项原始状态保留在诊断中。</p>
+
+<h2>4. 有缺陷的版本</h2>
+
+<pre><code>run_job() {
+    local name=$1 delay=$2 status=$3
+    sleep "$delay"
+    printf 'job=%s finished\n' "$name"
+    return "$status"
+}
+
+run_job alpha 1 0 &amp;
+run_job beta  2 7 &amp;
+run_job gamma 3 0 &amp;
+
+wait
+printf 'batch complete\n'</code></pre>
+
+<p>这里的 <code>beta</code> 最终返回 7，但父脚本没有保存任何 PID。无参数 <code>wait</code> 会等三个任务全部结束，却返回 0；
+最后的 <code>printf</code> 也返回 0。调用方因此看见“批次成功”。</p>
+
+<div class="exercise">
+<h3>第一轮：只追状态，不改代码</h3>
+
+<p>请按执行顺序写出：</p>
+
+<ol>
+  <li>三条 <code>run_job ... &amp;</code> 在父 Shell 中各自立即产生什么状态。</li>
+  <li><code>beta</code> 的真实状态存在于哪里，父 Shell 通过什么操作才能取得。</li>
+  <li>无参数 <code>wait</code> 返回什么；最后整个脚本返回什么。</li>
+</ol>
+
+<p>先把答案发给老师，再进入实现。不要用“有任务失败所以脚本失败”替代逐步追踪。</p>
+</div>
+
+<h2>5. 正确结构：先看一个任务，再扩展到三个</h2>
+
+<p>先不用数组。对于一个任务，任务名写在代码里，PID 保存到一个变量：</p>
+
+<pre><code>run_job beta 2 7 &amp;
+beta_pid=$!
+
+if wait "$beta_pid"; then
+    printf 'job=beta status=0\n'
+else
+    beta_status=$?
+    printf 'job=beta status=%s\n' "$beta_status" &gt;&amp;2
+fi</code></pre>
+
+<p>有三个任务时，可以分别写 <code>alpha_pid</code>、<code>beta_pid</code> 和 <code>gamma_pid</code>。但等待和报告逻辑会重复
+三遍。索引数组只是把这三组同样的数据放在连续位置。假设一次运行得到以下 PID：</p>
+
+<pre><code>names=(alpha beta gamma)
+pids=(43101 43102 43103)</code></pre>
+
+<table style="width:100%; margin:1rem 0;">
+  <tr><th style="text-align:left;">索引 <code>i</code></th><th style="text-align:left;"><code>"${names[$i]}"</code></th><th style="text-align:left;"><code>"${pids[$i]}"</code></th></tr>
+  <tr><td>0</td><td><code>alpha</code></td><td><code>43101</code></td></tr>
+  <tr><td>1</td><td><code>beta</code></td><td><code>43102</code></td></tr>
+  <tr><td>2</td><td><code>gamma</code></td><td><code>43103</code></td></tr>
+</table>
+
+<p><code>"${!pids[@]}"</code> 展开的是 <code>pids</code> 的全部索引，也就是 <code>0 1 2</code>。循环每次用同一个
+索引 <code>i</code> 同时取任务名和 PID，因此二者不会错配：</p>
+
+<pre><code>for i in "${!pids[@]}"; do
+    printf 'index=%s name=%s pid=%s\n' \
+        "$i" "${names[$i]}" "${pids[$i]}"
+done</code></pre>
+
+<p>真实 PID 每次运行都会变化，所以启动任务时动态追加任务名和刚得到的 PID：</p>
+
+<pre><code>names=()
+pids=()
+
+start_job() {
+    local name=$1 delay=$2 status=$3
+    run_job "$name" "$delay" "$status" &amp;
+    names+=("$name")
+    pids+=("$!")
+}</code></pre>
+
+<p><code>$!</code> 必须紧跟后台启动保存；任何新的后台命令都会改变它。接着由父 Shell 按照索引逐项等待：</p>
+
+<pre><code>collect_results() {
+    local batch_status=0 child_status i
+
+    for i in "${!pids[@]}"; do
+        if wait "${pids[$i]}"; then
+            printf 'job=%s status=0\n' "${names[$i]}"
+        else
+            child_status=$?
+            printf 'job=%s status=%s\n' \
+                "${names[$i]}" "$child_status" &gt;&amp;2
+            batch_status=1
+        fi
+    done
+
+    return "$batch_status"
+}</code></pre>
+
+<p><code>wait</code> 放在 <code>if</code> 条件中，因此可以显式处理非零状态，不依赖 <code>set -e</code>。失败分支第一条命令
+立即保存 <code>$?</code>；这里不能写成 <code>if ! wait ...</code>，否则取反会丢掉子任务原始状态。</p>
+
+<h2>6. 学习任务</h2>
+
+<div class="exercise">
+<h3>实现并证明 collect-all 策略</h3>
+
+<p>把上面的函数组合成一个约 35–50 行的临时脚本，并完成三组验证：</p>
+
+<ol>
+  <li><strong>全部成功：</strong>三个任务状态都是 0；stdout 有三项结果，stderr 为空，脚本状态为 0。</li>
+  <li><strong>单项失败：</strong><code>beta</code> 返回 7；三个任务都完成，stderr 保留 <code>beta</code> 与 7，脚本状态为 1。</li>
+  <li><strong>完成顺序变化：</strong>调整 delay，使任务按不同顺序结束；名称仍必须对应正确状态。</li>
+</ol>
+
+<p>验证重点不是运行速度，而是 PID、名称和退出状态没有因完成顺序变化而错配。</p>
+</div>
+
+<h2>7. 本课边界与第 15 课</h2>
+
+<p>本课选择 collect-all：即使某项失败，也等待其他项完成。真实自动化还可能需要 fail-fast，但取消任务会立刻引入
+新的问题：父脚本收到信号时谁负责通知子进程、已经结束的 PID 如何移出清理集合、以及退出前为什么仍要 <code>wait</code>。</p>
+
+<p>第 15 课只处理这条中断路径：向父脚本发送 SIGTERM，父脚本显式终止自己启动且仍在运行的子进程，逐个回收，
+并向调用者返回明确的中断状态。完成后，固定课程结束，后续只在真实任务中按需学习。</p>
+
+<div class="session-footer">
+  <p>
+    📖 <strong>主要依据</strong>：<a href="https://www.gnu.org/software/bash/manual/html_node/Lists.html" target="_blank">GNU Bash：Lists of Commands</a>；<a href="https://www.gnu.org/software/bash/manual/html_node/Special-Parameters.html" target="_blank">Special Parameters</a>；<a href="https://www.gnu.org/software/bash/manual/html_node/Job-Control-Builtins.html" target="_blank">Job Control Builtins</a><br>
+    📋 <strong>课程资料</strong>：<a href="../RESOURCES.md">一手资料与适用范围</a><br>
+    📝 <strong>上一课</strong>：<a href="0013-log-analysis-practice.html">第 13 课 — 日志分析器综合实践</a><br>
+    📝 <strong>下一课</strong>：<a href="0015-terminating-and-reaping-child-processes.html">第 15 课 — 中断时终止并回收子进程</a><br>
+    ❓ <strong>需要反馈？</strong>先把第一轮的三步状态推导发给老师，再开始写临时脚本。
+  </p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 15 课：中断时终止并回收子进程</title>
+<meta name="course-audit" content="2026-08-24; GNU Bash 5.3.15">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="breadcrumb">
+  <a href="../MISSION.md">使命</a> → <a href="0014-collecting-background-job-status.html">第 14 课</a> → 第 15 课
+</nav>
+
+<div class="lesson-meta">
+  <span class="number">第 15 课</span>
+  <span class="duration">⏱ 约 25–35 分钟</span>
+</div>
+
+<h1>中断时终止并回收子进程</h1>
+<p class="subtitle">父脚本退出之前，要处理自己启动且仍归它管理的任务</p>
+
+<div class="mission-tie">
+第 14 课已经证明你能在正常执行路径逐项 <code>wait</code> 并汇总状态。本课只补一条失败路径：另一个进程只向父 Bash
+发送 TERM 时，父 Bash 通过 trap 终止并回收自己记录的直接子进程，然后向调用者返回明确的中断状态。
+</div>
+
+<h2>1. 本课目标与边界</h2>
+
+<p>练习对象固定为一个父 Bash 和两个由它直接启动的 <code>sleep</code>。测试先等两个 PID 都记录完成，再向父 PID 发送
+TERM。完成本课时必须同时证明：</p>
+
+<ul>
+  <li>正常结束时，父脚本返回 0。</li>
+  <li>只向父脚本发送 TERM 后，父脚本返回课程约定的 143。</li>
+  <li>两个受管子进程都已退出，父脚本对它们执行过 <code>wait</code>。</li>
+</ul>
+
+<div class="pitfall">
+本课不处理 Ctrl+C、进程组、孙进程、忽略 TERM 的程序、宽限期或 KILL 升级。那些需求会进入进程监督和进程树管理，
+应由服务管理器、容器运行时或更合适的语言负责。
+</div>
+
+<h2>2. 四条因果规则</h2>
+
+<table style="width:100%; margin:1rem 0;">
+  <tr><th style="text-align:left;">操作</th><th style="text-align:left;">它完成了什么</th><th style="text-align:left;">它没有完成什么</th></tr>
+  <tr><td><code>kill -TERM "$pid"</code></td><td>向指定 PID 请求发送 TERM。</td><td>不等待目标退出，也不自动通知它的子进程。</td></tr>
+  <tr><td><code>trap on_term TERM</code></td><td>让父 Bash 收到 TERM 时执行 <code>on_term</code>。</td><td>不自动知道应该清理哪些 PID。</td></tr>
+  <tr><td><code>wait "$pid"</code></td><td>等待该直接子进程并取得、消费它的状态。</td><td>不会主动要求仍在运行的进程终止。</td></tr>
+  <tr><td><code>exit 143</code></td><td>执行本课明确规定的父脚本中断接口。</td><td>不是 POSIX 对所有 Shell 的通用计算公式。</td></tr>
+</table>
+
+<p>GNU Bash 规定：如果 Bash 正在 <code>wait</code> 异步任务，并收到已注册 trap 的信号，<code>wait</code> 会立即以大于
+128 的状态返回，随后 Bash 立即执行 trap。POSIX 只要求“因信号结束”的 Shell 状态大于 128，信号与具体数值的映射
+由实现决定。本课固定使用 GNU Bash 5.3.15，并主动选择 143 表示 TERM 中断。</p>
+
+<div class="insight">
+<code>kill</code> 是“发出终止请求”，<code>wait</code> 是“确认结束并收集结果”。可靠清理需要两步，顺序也不能颠倒。
+</div>
+
+<h2>3. 固定环境中的失败基线</h2>
+
+<pre><code>baseline_parent() {
+  sleep 30 &amp;
+  child_pid=$!
+  wait "$child_pid"
+}
+
+baseline_parent &amp;
+parent_pid=$!
+kill -TERM "$parent_pid"</code></pre>
+
+<p>在课程固定的 GNU Bash 5.3.15 容器中，只向父 PID 发送 TERM，实测结果为：</p>
+
+<pre><code>parent_status=143
+child_after_parent=alive</code></pre>
+
+<p>父脚本结束不会替你把刚收到的 TERM 转发给后台子进程。测试随后主动终止这个受控 <code>sleep</code>，因此实验没有在
+容器中遗留任务。</p>
+
+<h2>4. 先定义清理顺序</h2>
+
+<div class="diagram">
+<pre><code>父 Bash 收到 TERM
+       │
+       ▼
+trap 进入 on_term
+       │
+       ▼
+先向全部已记录 PID 发送 TERM
+       │
+       ▼
+再逐项 wait，确认并收集状态
+       │
+       ▼
+父 Bash exit 143</code></pre>
+</div>
+
+<p>“全部发送，再全部等待”很重要：如果第一个子进程需要时间响应 TERM，其他子进程也能同时开始退出，而不是等父脚本
+依次处理。</p>
+
+<div class="exercise">
+<h3>第一轮：找出会卡住的清理顺序</h3>
+
+<p>两个子进程都是 <code>sleep 300</code>。父 Bash 收到 TERM 后进入下面的 handler：</p>
+
+<pre><code>on_term() {
+  local pid
+  trap - TERM
+
+  for pid in "${pids[@]}"; do
+    wait "$pid"
+  done
+
+  for pid in "${pids[@]}"; do
+    kill -TERM "$pid"
+  done
+
+  exit 143
+}</code></pre>
+
+<p>它能否迅速完成清理？请指出进入 handler 后第一条会长期阻塞的命令，以及因此迟迟无法执行的操作。先把因果过程
+发给老师，再看下一节的完整结构。</p>
+</div>
+
+<h2>5. 完整结构</h2>
+
+<pre><code>pids=()
+
+terminate_children() {
+  local pid child_status
+
+  for pid in "${pids[@]}"; do
+    if kill -TERM "$pid" 2&gt;/dev/null; then
+      printf 'child=%s action=term-sent\n' "$pid" &gt;&amp;2
+    else
+      printf 'child=%s action=term-not-sent\n' "$pid" &gt;&amp;2
+    fi
+  done
+
+  for pid in "${pids[@]}"; do
+    if wait "$pid" 2&gt;/dev/null; then
+      child_status=0
+    else
+      child_status=$?
+    fi
+    printf 'child=%s wait_status=%s\n' \
+      "$pid" "$child_status" &gt;&amp;2
+  done
+}
+
+on_term() {
+  trap - TERM
+  printf 'signal=TERM action=cleanup\n' &gt;&amp;2
+  terminate_children
+  exit 143
+}
+
+trap on_term TERM
+
+sleep 300 &amp;
+pids+=("$!")
+sleep 300 &amp;
+pids+=("$!")
+
+for pid in "${pids[@]}"; do
+  wait "$pid"
+done</code></pre>
+
+<p><code>kill</code> 失败可能表示目标已经结束；清理过程记录它，但仍继续处理其他 PID。每个 <code>wait</code> 都放在
+<code>if</code> 中并立即保存非零状态，避免预期中的 TERM 状态中止清理。<code>trap - TERM</code> 恢复 TERM 的原始处理方式，
+防止同一个 handler 递归执行；本练习不承诺抵抗连续多次 TERM。</p>
+
+<h2>6. 实现与验证任务</h2>
+
+<div class="exercise">
+<h3>证明父脚本和子进程的最终状态</h3>
+
+<p>根据上面的接口实现 handler，由测试进程完成三组验证：</p>
+
+<ol>
+  <li><strong>正常结束：</strong>两个短任务自然结束；父脚本返回 0。</li>
+  <li><strong>运行中中断：</strong>两个长任务仍在运行时，只向父 PID 发送 TERM；父脚本返回 143，两个子 PID 均不存在。</li>
+  <li><strong>时序变化：</strong>一个短任务已经结束、另一个仍在运行时发送 TERM；清理仍完成，父脚本返回 143。</li>
+</ol>
+
+<p>测试必须先得到两个子 PID，再发送 TERM；检查结束后不得按命令名做宽泛 <code>pkill</code>。把 handler 发给老师，
+由老师在一次性固定版本容器中运行验证。</p>
+</div>
+
+<h2>7. 何时不要继续用这段 Bash</h2>
+
+<ul>
+  <li>外部信号可能恰好到达 <code>command &amp;</code> 与 <code>pids+=("$!")</code> 之间，而业务要求原子地启动并登记任务。</li>
+  <li>子进程会创建自己的进程树，单个 <code>$!</code> 不能代表全部后代。</li>
+  <li>目标可能忽略 TERM，需要宽限期、KILL 升级和严格墙钟期限。</li>
+  <li>要求连续信号、重启、日志、健康检查或跨平台一致的进程监督。</li>
+</ul>
+
+<p>出现任一条件，就应交给服务管理器、容器运行时或 Python/Go 等更适合管理状态的实现。本课完成后，固定 Bash
+课程结束；后续通过真实脚本和间隔复习保持能力。</p>
+
+<div class="session-footer">
+  <p>
+    📖 <strong>主要依据</strong>：<a href="https://www.gnu.org/software/bash/manual/html_node/Signals.html" target="_blank">GNU Bash：Signals</a>；<a href="https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html" target="_blank">trap builtin</a>；<a href="https://www.gnu.org/software/bash/manual/html_node/Job-Control-Builtins.html" target="_blank">kill 与 wait builtins</a>；<a href="https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html" target="_blank">POSIX Shell Command Language</a><br>
+    📋 <strong>速查参考</strong>：<a href="../reference/owned-child-cleanup.html">受管子进程清理</a><br>
+    📝 <strong>上一课</strong>：<a href="0014-collecting-background-job-status.html">第 14 课 — 汇总后台任务状态</a><br>
+    ❓ <strong>有疑问？</strong>先把第一轮的阻塞过程发给老师；不要在不受控的真实进程上试验。
+  </p>
+</div>
+
+</body>
+</html>
