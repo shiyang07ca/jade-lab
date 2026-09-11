@@ -1,5 +1,7 @@
 # Go 学习资源
 
+按当前问题查阅，不要求通读资源表。Gin、gRPC、Nuclei 和深入性能诊断为选修；已有案例和资料不决定课程顺序。
+
 > 核实日期：2026-08-12。课程固定使用 Go 1.26.5；案例和第三方依赖使用 [CASES.md](CASES.md) 中的
 > tag 与 commit。这里保留少量高可信入口，不用链接数量代替资料质量。
 
@@ -67,7 +69,7 @@
   课程固定主版本的约束、事务隔离、锁、索引和 SQL 行为来源。
 - [PostgreSQL 18 `SELECT`](https://www.postgresql.org/docs/18/sql-select.html)
   `FOR UPDATE`、`NOWAIT` 和 `SKIP LOCKED` 的准确语义。官方明确指出 `SKIP LOCKED` 适合 queue-like table，
-  但会给出不一致视图；后端实验必须据此讨论适用边界。
+  但会给出不一致视图；后端实验如果采用该机制，需要讨论适用边界，不预先固定事务领取方案。
 - [pgx v5.9.2](https://github.com/jackc/pgx/tree/v5.9.2)
   固定 PostgreSQL 驱动，commit `0aeabbcf11d859229c1f0b20e710d3596c76bf27`，与 Dagu v2.13.0 使用版本一致。
   课程先通过 `database/sql` 与 `pgx/v5/stdlib` 学习通用接口，再按真实需求使用 pgx 原生 API。
@@ -129,7 +131,7 @@
   真实修改候选。状态和讨论会变化，开始当天必须检查已有 PR 并在固定版本复现。
 - [Nuclei v3.11.1](https://github.com/projectdiscovery/nuclei/tree/v3.11.1) 与
   [release](https://github.com/projectdiscovery/nuclei/releases/tag/v3.11.1)
-  固定 commit `a8c88feb4a1c8e961b7902534ce3af97e9d524a4`。只用于三小时并发与 HTTP client pool 比较。
+  固定 commit `a8c88feb4a1c8e961b7902534ce3af97e9d524a4`。仅用于选修并发与 HTTP client pool 比较。
 - [Running Nuclei](https://docs.projectdiscovery.io/opensource/nuclei/running)
   官方 CLI、执行策略、concurrency、bulk size 与 rate limit 说明。课程只针对本地夹具并关闭更新检查。
 - [Mass scanning with Nuclei](https://docs.projectdiscovery.io/opensource/nuclei/mass-scanning-cli)
@@ -151,6 +153,6 @@
 ## Gaps
 
 - 当前没有外部维护者对学习者 patch 的反馈证据。完成本地可评审修改后，再由学习者决定是否向项目社区请求评审。
-- 当前没有真实部署和故障恢复记录。50 小时之后选择一个自己长期使用的 Go 服务，补充部署、升级、备份和恢复实践。
-- ORM、Redis、Kafka 和 Kubernetes 有意留在核心 50 小时之后。是否加入应由目标岗位和真实服务需求决定，而不是为
+- 当前没有部署和故障恢复记录。核心课程加入本机 Linux 容器部署；公网部署、升级、备份和恢复作为后续实践。
+- ORM、Redis、Kafka 和 Kubernetes 不进入第一轮核心。是否加入应由目标岗位和真实服务需求决定，而不是为
   技术名词覆盖率添加。

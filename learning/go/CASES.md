@@ -1,12 +1,16 @@
 # Go 课程案例索引
 
+本页保存版本和检索入口，不是逐项必修清单。leetgo 与 Dagu 按当前问题选择路径，第一轮共完成至少一项
+真实修改即可；Gin、Nuclei、Dagu 分布式 worker/gRPC 和深入性能诊断为选修。使用顺序以
+[课程路线](CURRICULUM.md)为准，不要求先获取全部源码。
+
 > 核实日期：2026-08-12。课程不得把 tag、commit、依赖版本或源码路径替换为浮动分支。
 
 ## 固定版本
 
 | 案例或依赖 | 课程作用 | Tag/版本 | Commit | 模块声明的 Go 版本 |
 | --- | --- | --- | --- | --- |
-| [j178/leetgo](https://github.com/j178/leetgo) | 语言、CLI 与第一项真实修改 | `v1.4.17` | `393d4219207884c675fc0e3557ff64f86f5c61de` | `go 1.25.0` |
+| [j178/leetgo](https://github.com/j178/leetgo) | 语言、CLI 与真实修改候选 | `v1.4.17` | `393d4219207884c675fc0e3557ff64f86f5c61de` | `go 1.25.0` |
 | [dagucloud/dagu](https://github.com/dagucloud/dagu) | 主要后端与系统案例；实际个人自动化工具 | `v2.13.0` | `13745bb8811de8e1cdbe116561e4a4e491edbed5` | `go 1.26.5` |
 | [projectdiscovery/nuclei](https://github.com/projectdiscovery/nuclei) | 高并发网络程序比较案例 | `v3.11.1` | `a8c88feb4a1c8e961b7902534ce3af97e9d524a4` | `go 1.26` |
 | [gin-gonic/gin](https://github.com/gin-gonic/gin) | HTTP adapter 对照 | `v1.12.0` | `73726dc606796a025971fe451f0aa6f1b9b847f6` | 以固定源码为准 |
@@ -76,7 +80,7 @@ df -h .
   `go vet -mod=readonly ./...`。
 - Dagu v2.13.0 和 Nuclei v3.11.1 的课程目标包已在空模块缓存、空构建缓存和 Go 1.26.5 下编译通过；环境、命令、
   耗时和限制见[冷缓存编译记录](evidence/0001-pinned-case-cold-builds.md)。
-- 开始 Phase 3 或 Phase 6 时仍须执行对应案例的开始前验证。已有记录不能替代当前 clone 的 commit、工具链、依赖
+- 实际开始使用某个案例时仍须执行其开始前验证。已有记录不能替代当前 clone 的 commit、工具链、依赖
   和目标包状态；更不能替代课程单元列出的业务测试。
 
 ## 使用规则

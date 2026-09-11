@@ -9,6 +9,10 @@
 </head>
 <body>
 
+<p>本页保留第 1 课的示例与工具参考，不是必须整页完成的任务。当前学习顺序见
+<a href="../CURRICULUM.md">课程路线</a>，已完成的环境操作无需重复。下面命令应在
+<code>mise exec go@1.26.5 -- env GOTOOLCHAIN=local</code> 选择的环境中执行，避免使用系统中的其他 Go 版本。</p>
+
 <header class="lesson-head">
   <div class="lesson-number">LESSON 1 · PHASE 0 · 预计 35–40 分钟 · GO 1.26.5</div>
   <h1>从 Python 到 Go：准确的心智模型与工具链</h1>
@@ -165,7 +169,7 @@ mkdir -p ../../../.scratch/go-course/bin
 go build -o ../../../.scratch/go-course/bin/lesson01 ./lesson01
 ../../../.scratch/go-course/bin/lesson01</code></pre>
 
-<p>所有命令通过才算完成。然后把测试中的 <code>"go": 2</code> 改成 <code>"go": 3</code>，确认测试真的会
+<p>这些命令用于观察不同检查的职责，可按当前问题选择。测试失败演示是把 <code>"go": 2</code> 改成 <code>"go": 3</code>，确认测试真的会
 失败，再改回正确值。最后回到仓库根目录运行 <code>mise run check learning-go</code>。没有见过测试失败，
 不能证明测试检查了目标行为。</p>
 </div>
@@ -182,7 +186,7 @@ go build -o ../../../.scratch/go-course/bin/lesson01 ./lesson01
 </ul>
 </div>
 
-<h2>5. 检查理解</h2>
+<h2>5. 可选自查</h2>
 
 <div class="quiz" data-answer="1" data-feedback="读取不存在的键得到值类型的零值；若还要知道键是否存在，使用 value, ok := m[key]。">
   <p class="quiz-question">1. 读取 <code>map[string]int</code> 中不存在的键，结果是什么？</p>
@@ -228,14 +232,14 @@ go build -o ../../../.scratch/go-course/bin/lesson01 ./lesson01
   <p class="quiz-feedback"></p>
 </div>
 
-<h2>6. 本课完成记录</h2>
+<h2>6. 参考与续学</h2>
 
 <ul>
-  <li>保存 <code>go version</code>、<code>GOOS</code>、<code>GOARCH</code> 与本课检查命令的结果。</li>
+  <li>只在需要时记录环境信息，学习记录区分教师检查和学习者实际尝试，不重复保存每轮命令输出。</li>
   <li>一手资料：<a href="https://go.dev/doc/faq">Go FAQ</a>、
       <a href="https://go.dev/doc/code">How to Write Go Code</a>、
       <a href="https://go.dev/doc/cmd">Command Documentation</a>。</li>
-  <li>下一单元：值、指针与生命周期。将用 leetgo 的实际结构体回答“复制了什么、共享了什么”。</li>
+  <li>下一步以课程路线为准，先用小函数理解类型、值和参数传递，源码案例按问题选择。</li>
   <li>如果概念不清楚，或你的命令输出与本课不同，请向教师追问，并附上 <code>go version</code>、完整命令和
       已脱敏的输出；不要带着未解释的差异继续。</li>
 </ul>

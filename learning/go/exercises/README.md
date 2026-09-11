@@ -12,6 +12,6 @@ mise run check learning-go
 
 ```sh
 cd learning/go/exercises
-go test -race ./lesson01
-go run ./lesson01
+mise exec go@1.26.5 -- env GOTOOLCHAIN=local go test -race -count=1 ./lesson01
+mise exec go@1.26.5 -- env GOTOOLCHAIN=local go run ./lesson01
 ```
