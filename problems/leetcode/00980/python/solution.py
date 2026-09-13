@@ -1,10 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/08/04 12:59
 # leetgo: dev
 # https://leetcode.cn/problems/unique-paths-iii/
-
-from collections import deque
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -14,7 +13,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/unique-paths-iii/solutions/2372252/liang-chong-fang-fa-hui-su-zhuang-tai-ya-26py/
-    def uniquePathsIII(self, grid: List[List[int]]) -> int:
+    def uniquePathsIII(self, grid: list[list[int]]) -> int:
         m, n = len(grid), len(grid[0])
 
         def dfs(x: int, y: int, left: int) -> int:
@@ -37,12 +36,13 @@ class Solution:
             for j, v in enumerate(row):
                 if v == 1:  # 起点
                     return dfs(i, j, cnt0 + 1)  # +1 把起点也算上
+        raise ValueError("start point not found")
 
 
 # @lc code=end
 
 if __name__ == "__main__":
-    grid: List[List[int]] = deserialize("List[List[int]]", read_line())
+    grid: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().uniquePathsIII(grid)
 
     print("\noutput:", serialize(ans))

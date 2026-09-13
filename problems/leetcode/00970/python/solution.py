@@ -41,16 +41,15 @@
 - `0 <= bound <= 10⁶`
 
 """
+from __future__ import annotations
 
-from math import *
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def powerfulIntegers(self, x: int, y: int, bound: int) -> List[int]:
+    def powerfulIntegers(self, x: int, y: int, bound: int) -> list[int]:
         ans = set()
         for i in range(21):
             for j in range(21):

@@ -49,15 +49,15 @@
 - `flips` 是范围 `[1, n]` 中所有整数构成的一个排列
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def numTimesAllBlue1(self, flips: List[int]) -> int:
+    def numTimesAllBlue1(self, flips: list[int]) -> int:
         ans = 0
         t = 0
         for i, p in enumerate(flips, 1):
@@ -67,7 +67,7 @@ class Solution:
         return ans
 
     # 链接：https://leetcode.cn/problems/number-of-times-binary-string-is-prefix-aligned/solutions/2308336/qiao-miao-li-yong-xing-zhi-wei-hu-zui-da-79yx/
-    def numTimesAllBlue(self, flips: List[int]) -> int:
+    def numTimesAllBlue(self, flips: list[int]) -> int:
         ans = mx = 0
         for i, x in enumerate(flips, 1):  # i 从 1 开始
             mx = max(mx, x)
@@ -78,7 +78,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    flips: List[int] = deserialize("List[int]", read_line())
+    flips: list[int] = deserialize("List[int]", read_line())
     ans = Solution().numTimesAllBlue(flips)
 
     print("\noutput:", serialize(ans))

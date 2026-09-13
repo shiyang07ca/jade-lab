@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/12/27 00:14
 # leetgo: dev
 # https://leetcode.cn/problems/determine-the-winner-of-a-bowling-game/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def isWinner(self, player1: List[int], player2: List[int]) -> int:
+    def isWinner(self, player1: list[int], player2: list[int]) -> int:
         def count(p):
             ans = 0
             for i, x in enumerate(p):
@@ -31,8 +31,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    player1: List[int] = deserialize("List[int]", read_line())
-    player2: List[int] = deserialize("List[int]", read_line())
+    player1: list[int] = deserialize("List[int]", read_line())
+    player2: list[int] = deserialize("List[int]", read_line())
     ans = Solution().isWinner(player1, player2)
 
     print("\noutput:", serialize(ans))

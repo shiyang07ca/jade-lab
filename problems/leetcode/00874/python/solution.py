@@ -1,17 +1,17 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/07/19 09:37
 # leetgo: dev
 # https://leetcode.cn/problems/walking-robot-simulation/
+from collections import defaultdict
 
-from collections import *
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def robotSim(self, commands: List[int], obstacles: List[List[int]]) -> int:
+    def robotSim(self, commands: list[int], obstacles: list[list[int]]) -> int:
         ans = d = 0
         ds = [(0, 1), (1, 0), (0, -1), (-1, 0)]
         cur = [0, 0]
@@ -49,7 +49,7 @@ class Solution:
         return ans
 
     # 链接：https://leetcode.cn/problems/walking-robot-simulation/solutions/2349712/python3javacgotypescript-yi-ti-yi-jie-ha-ghjx/
-    def robotSim2(self, commands: List[int], obstacles: List[List[int]]) -> int:
+    def robotSim2(self, commands: list[int], obstacles: list[list[int]]) -> int:
         dirs = (0, 1, 0, -1, 0)
         s = {(x, y) for x, y in obstacles}
         ans = k = 0
@@ -72,8 +72,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    commands: List[int] = deserialize("List[int]", read_line())
-    obstacles: List[List[int]] = deserialize("List[List[int]]", read_line())
+    commands: list[int] = deserialize("List[int]", read_line())
+    obstacles: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().robotSim(commands, obstacles)
 
     print("\noutput:", serialize(ans))

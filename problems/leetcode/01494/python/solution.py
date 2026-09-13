@@ -56,9 +56,12 @@
 - 题目输入的图是个有向无环图。
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from functools import cache
+from sys import maxsize as inf
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -68,7 +71,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/parallel-courses-ii/solutions/2310878/zi-ji-zhuang-ya-dpcong-ji-yi-hua-sou-suo-oxwd/
-    def minNumberOfSemesters(self, n: int, relations: List[List[int]], k: int) -> int:
+    def minNumberOfSemesters(self, n: int, relations: list[list[int]], k: int) -> int:
         """
         设全集 U = {0, 1, 2, ..., n-1}, 设 pre[j] 为集合 j 中所有先修课的并集。
 
@@ -108,7 +111,7 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    relations: List[List[int]] = deserialize("List[List[int]]", read_line())
+    relations: list[list[int]] = deserialize("List[List[int]]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().minNumberOfSemesters(n, relations, k)
 

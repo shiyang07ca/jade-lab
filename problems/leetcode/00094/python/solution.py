@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/02/10 01:32
 # leetgo: dev
 # https://leetcode.cn/problems/binary-tree-inorder-traversal/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -15,7 +15,7 @@ from leetgo_py import *
 #         self.left = left
 #         self.right = right
 class Solution:
-    def inorderTraversal(self, root: Optional[TreeNode]) -> List[int]:
+    def inorderTraversal(self, root: TreeNode | None) -> list[int]:
         ans = []
 
         def dfs(node):

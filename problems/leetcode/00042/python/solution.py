@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/07/23 08:47
 # leetgo: dev
 # https://leetcode.cn/problems/trapping-rain-water/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +12,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def trap(self, height: List[int]) -> int:
+    def trap(self, height: list[int]) -> int:
         n = len(height)
         pre_max = [height[0]] * n
         for i in range(1, n):
@@ -27,7 +27,7 @@ class Solution:
             ans += min(pre, suf) - h
         return ans
 
-    def trap2(self, height: List[int]) -> int:
+    def trap2(self, height: list[int]) -> int:
         ans = left = pre_max = suf_max = 0
         right = len(height) - 1
         while left <= right:
@@ -45,7 +45,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    height: List[int] = deserialize("List[int]", read_line())
+    height: list[int] = deserialize("List[int]", read_line())
     ans = Solution().trap(height)
 
     print("\noutput:", serialize(ans))

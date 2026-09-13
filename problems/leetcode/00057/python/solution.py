@@ -1,17 +1,17 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/08/28 13:01
 # leetgo: dev
 # https://leetcode.cn/problems/insert-interval/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
     def insert1(
-        self, intervals: List[List[int]], newInterval: List[int]
-    ) -> List[List[int]]:
+        self, intervals: list[list[int]], newInterval: list[int]
+    ) -> list[list[int]]:
         intervals.append(newInterval)
         intervals.sort()
         ans = [intervals[0]]
@@ -24,8 +24,8 @@ class Solution:
 
     # 链接：https://leetcode.cn/problems/insert-interval/solutions/2414501/python3javacgotypescript-yi-ti-shuang-ji-2fsw/
     def insert(
-        self, intervals: List[List[int]], newInterval: List[int]
-    ) -> List[List[int]]:
+        self, intervals: list[list[int]], newInterval: list[int]
+    ) -> list[list[int]]:
         st, ed = newInterval
         ans = []
         insert = False
@@ -48,8 +48,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    intervals: List[List[int]] = deserialize("List[List[int]]", read_line())
-    newInterval: List[int] = deserialize("List[int]", read_line())
+    intervals: list[list[int]] = deserialize("List[List[int]]", read_line())
+    newInterval: list[int] = deserialize("List[int]", read_line())
     ans = Solution().insert(intervals, newInterval)
 
     print("\noutput:", serialize(ans))

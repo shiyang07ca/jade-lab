@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/08/23 13:40
 # leetgo: dev
 # https://leetcode.cn/problems/count-pairs-of-nodes/
+from typing import Counter
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,8 +15,8 @@ from leetgo_py import *
 class Solution:
     # 链接：https://leetcode.cn/problems/count-pairs-of-nodes/solutions/2400682/ji-bai-100cong-shuang-zhi-zhen-dao-zhong-yhze/
     def countPairs(
-        self, n: int, edges: List[List[int]], queries: List[int]
-    ) -> List[int]:
+        self, n: int, edges: list[list[int]], queries: list[int]
+    ) -> list[int]:
         # deg[i] 表示与点 i 相连的边的数目
         deg = [0] * (n + 1)  # 节点编号从 1 到 n
         for x, y in edges:
@@ -43,8 +45,8 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    edges: List[List[int]] = deserialize("List[List[int]]", read_line())
-    queries: List[int] = deserialize("List[int]", read_line())
+    edges: list[list[int]] = deserialize("List[List[int]]", read_line())
+    queries: list[int] = deserialize("List[int]", read_line())
     ans = Solution().countPairs(n, edges, queries)
 
     print("\noutput:", serialize(ans))

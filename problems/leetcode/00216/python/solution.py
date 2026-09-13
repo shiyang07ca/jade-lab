@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/04/21 12:23
 # leetgo: dev
 # https://leetcode.cn/problems/combination-sum-iii/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def combinationSum31(self, k: int, n: int) -> List[List[int]]:
+    def combinationSum31(self, k: int, n: int) -> list[list[int]]:
         ans = []
         path = []
 
@@ -30,7 +30,7 @@ class Solution:
         dfs(1, n)
         return ans
 
-    def combinationSum3(self, k: int, n: int) -> List[List[int]]:
+    def combinationSum3(self, k: int, n: int) -> list[list[int]]:
         ans = []
         path = []
 

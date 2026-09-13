@@ -65,9 +65,11 @@ ion` 之间的最短距离等于 `target` ，你可以返回任意一种方案�
 - 输入的图是连通图，且没有自环和重边。
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from sys import maxsize as inf
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -75,8 +77,8 @@ from leetgo_py import *
 # 链接：https://leetcode.cn/problems/modify-graph-edge-weights/solutions/2278296/xiang-xi-fen-xi-liang-ci-dijkstrachou-mi-gv1m/
 class Solution:
     def modifiedGraphEdges(
-        self, n: int, edges: List[List[int]], source: int, destination: int, target: int
-    ) -> List[List[int]]:
+        self, n: int, edges: list[list[int]], source: int, destination: int, target: int
+    ) -> list[list[int]]:
         g = [[] for _ in range(n)]
         for i, (x, y, _) in enumerate(edges):
             g[x].append((y, i))
@@ -128,7 +130,7 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    edges: List[List[int]] = deserialize("List[List[int]]", read_line())
+    edges: list[list[int]] = deserialize("List[List[int]]", read_line())
     source: int = deserialize("int", read_line())
     destination: int = deserialize("int", read_line())
     target: int = deserialize("int", read_line())

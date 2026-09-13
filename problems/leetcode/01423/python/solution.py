@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/12/03 00:14
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-points-you-can-obtain-from-cards/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def maxScore(self, ps: List[int], k: int) -> int:
+    def maxScore(self, ps: list[int], k: int) -> int:
         n = len(ps)
         ans = suf = sum(ps[-k:])
         for i in range(n - k, n):
@@ -22,7 +22,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    cardPoints: List[int] = deserialize("List[int]", read_line())
+    cardPoints: list[int] = deserialize("List[int]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().maxScore(cardPoints, k)
 

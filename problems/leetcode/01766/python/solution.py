@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from math import gcd
+
 # Created by shiyang07ca at 2024/04/11 00:07
 # leetgo: dev
 # https://leetcode.cn/problems/tree-of-coprimes/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -16,7 +18,7 @@ coprime = [[j for j in range(1, MX) if gcd(i, j) == 1] for i in range(MX)]
 
 class Solution:
     # 链接：https://leetcode.cn/problems/tree-of-coprimes/solutions/2733992/dfs-zhong-ji-lu-jie-dian-zhi-de-shen-du-4v5d2/
-    def getCoprimes(self, nums: List[int], edges: List[List[int]]) -> List[int]:
+    def getCoprimes(self, nums: list[int], edges: list[list[int]]) -> list[int]:
         n = len(nums)
         g = [[] for _ in range(n)]
         for x, y in edges:
@@ -44,7 +46,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
-    edges: List[List[int]] = deserialize("List[List[int]]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
+    edges: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().getCoprimes(nums, edges)
     print("\noutput:", serialize(ans, "integer[]"))

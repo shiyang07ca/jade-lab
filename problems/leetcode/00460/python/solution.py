@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from collections import defaultdict
+
 # Created by shiyang07ca at 2023/09/25 09:58
 # leetgo: dev
 # https://leetcode.cn/problems/lfu-cache/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, join_array, read_line, serialize, split_array
 
 # @lc code=begin
 
@@ -34,7 +36,7 @@ class LFUCache:
 
         self.freq_to_dummy = defaultdict(new_list)
 
-    def get_node(self, key: int) -> Optional[Node]:
+    def get_node(self, key: int) -> Node | None:
         if key not in self.key_to_node:  # 没有这本书
             return None
         node = self.key_to_node[key]  # 有这本书
@@ -89,7 +91,7 @@ class LFUCache:
 # @lc code=end
 
 if __name__ == "__main__":
-    ops: List[str] = deserialize("List[str]", read_line())
+    ops: list[str] = deserialize("List[str]", read_line())
     params = split_array(read_line())
     output = ["null"]
 
@@ -101,14 +103,14 @@ if __name__ == "__main__":
         match ops[i]:
             case "get":
                 method_params = split_array(params[i])
-                key: int = deserialize("int", method_params[0])
-                ans = serialize(obj.get(key))
+                get_key: int = deserialize("int", method_params[0])
+                ans = serialize(obj.get(get_key))
                 output.append(ans)
             case "put":
                 method_params = split_array(params[i])
-                key: int = deserialize("int", method_params[0])
+                put_key: int = deserialize("int", method_params[0])
                 value: int = deserialize("int", method_params[1])
-                obj.put(key, value)
+                obj.put(put_key, value)
                 output.append("null")
 
     print("\noutput:", join_array(output))

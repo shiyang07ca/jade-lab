@@ -55,10 +55,11 @@ x2 = 0, y2 = 1
 - `-10⁴ <= y1 < y2 <= 10⁴`
 
 """
-from math import *
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from math import sqrt
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

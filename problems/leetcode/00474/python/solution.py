@@ -41,10 +41,11 @@
 - `1 <= m, n <= 100`
 
 """
-from functools import *
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from functools import cache
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -54,7 +55,7 @@ from leetgo_py import *
 
 class Solution:
     # 记忆化搜索
-    def findMaxForm1(self, strs: List[str], m: int, n: int) -> int:
+    def findMaxForm1(self, strs: list[str], m: int, n: int) -> int:
         @cache
         def dfs(m, n, i):
             if i >= len(strs):
@@ -69,7 +70,7 @@ class Solution:
         return dfs(m, n, 0)
 
     # 递推
-    def findMaxForm2(self, strs: List[str], m: int, n: int) -> int:
+    def findMaxForm2(self, strs: list[str], m: int, n: int) -> int:
         f = [
             [[0 for _ in range(n + 1)] for _ in range(m + 1)]
             for _ in range(len(strs) + 1)
@@ -88,7 +89,7 @@ class Solution:
 
     # TODO 思考如何滚动更新？
     # 滚动数组
-    def findMaxForm3(self, strs: List[str], m: int, n: int) -> int:
+    def findMaxForm3(self, strs: list[str], m: int, n: int) -> int:
         f = [[0 for _ in range(n + 1)] for _ in range(m + 1)]
         sl = [(s.count("0"), s.count("1")) for s in strs]
         for k in range(len(strs) - 1, -1, -1):
@@ -100,7 +101,7 @@ class Solution:
 
     # TODO 这个为什么是错的？
     # 滚动数组
-    def findMaxForm(self, strs: List[str], m: int, n: int) -> int:
+    def findMaxForm(self, strs: list[str], m: int, n: int) -> int:
         f = [[0 for _ in range(n + 1)] for _ in range(m + 1)]
         sl = [(s.count("0"), s.count("1")) for s in strs]
         for k in range(len(strs) - 1, -1, -1):
@@ -116,7 +117,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    strs: List[str] = deserialize("List[str]", read_line())
+    strs: list[str] = deserialize("List[str]", read_line())
     m: int = deserialize("int", read_line())
     n: int = deserialize("int", read_line())
     ans = Solution().findMaxForm(strs, m, n)

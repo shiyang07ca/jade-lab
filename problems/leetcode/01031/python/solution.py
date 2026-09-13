@@ -51,17 +51,16 @@
 - `0 <= nums[i] <= 1000`
 
 """
-
-from typing import *
-from leetgo_py import *
+from __future__ import annotations
 
 # @lc code=begin
-
 from itertools import accumulate
+
+from leetgo_py import deserialize, read_line, serialize
 
 
 class Solution:
-    def maxSumTwoNoOverlap1(self, nums: List[int], a: int, b: int) -> int:
+    def maxSumTwoNoOverlap1(self, nums: list[int], a: int, b: int) -> int:
         nums = list(accumulate(nums, initial=0))
         ans = 0
         n = len(nums)
@@ -89,7 +88,7 @@ class Solution:
     # 链接：https://leetcode.cn/problems/maximum-sum-of-two-non-overlapping-subarrays/solutions/2245647/tu-jie-mei-you-si-lu-yi-zhang-tu-miao-do-3lli/
     # 来源：力扣（LeetCode）
     # 著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
-    def maxSumTwoNoOverlap(self, nums: List[int], firstLen: int, secondLen: int) -> int:
+    def maxSumTwoNoOverlap(self, nums: list[int], firstLen: int, secondLen: int) -> int:
         s = list(accumulate(nums, initial=0))  # nums 的前缀和
         ans = 0
 
@@ -108,7 +107,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     firstLen: int = deserialize("int", read_line())
     secondLen: int = deserialize("int", read_line())
     ans = Solution().maxSumTwoNoOverlap(nums, firstLen, secondLen)

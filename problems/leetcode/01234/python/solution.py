@@ -1,9 +1,13 @@
+from __future__ import annotations
+
+from sys import maxsize as inf
+
 # Created by shiyang07ca at 2023/07/12 21:00
 # leetgo: dev
 # https://leetcode.cn/problems/replace-the-substring-for-balanced-string/
+from typing import Counter
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

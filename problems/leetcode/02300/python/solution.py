@@ -1,18 +1,19 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/11/10 10:35
 # leetgo: dev
 # https://leetcode.cn/problems/successful-pairs-of-spells-and-potions/
+from bisect import bisect_left
 
-from bisect import *
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
     def successfulPairs(
-        self, spells: List[int], potions: List[int], success: int
-    ) -> List[int]:
+        self, spells: list[int], potions: list[int], success: int
+    ) -> list[int]:
         potions.sort()
         ans = [0] * len(spells)
         for i, s in enumerate(spells):
@@ -23,8 +24,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    spells: List[int] = deserialize("List[int]", read_line())
-    potions: List[int] = deserialize("List[int]", read_line())
+    spells: list[int] = deserialize("List[int]", read_line())
+    potions: list[int] = deserialize("List[int]", read_line())
     success: int = deserialize("int", read_line())
     ans = Solution().successfulPairs(spells, potions, success)
 

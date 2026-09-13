@@ -1,16 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/08/21 00:28
 # leetgo: dev
 # https://leetcode.cn/problems/move-pieces-to-obtain-a-string/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
     def canChange(self, start: str, target: str) -> bool:
-        n = len(start)
         t = 0
         if start.count("L") != target.count("L") or start.count("R") != target.count(
             "R"

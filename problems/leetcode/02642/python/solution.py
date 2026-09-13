@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from sys import maxsize as inf
+
 # Created by shiyang07ca at 2024/03/26 22:31
 # leetgo: dev
 # https://leetcode.cn/problems/design-graph-with-shortest-path-calculator/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, join_array, read_line, serialize, split_array
 
 # @lc code=begin
 
@@ -12,12 +14,12 @@ from leetgo_py import *
 
 class Graph:
     # 链接：https://leetcode.cn/problems/design-graph-with-shortest-path-calculator/solutions/2229013/dijkstra-suan-fa-mo-ban-pythonjavacgo-by-unmv/
-    def __init__(self, n: int, edges: List[List[int]]):
+    def __init__(self, n: int, edges: list[list[int]]):
         self.g = [[inf] * n for _ in range(n)]  # 邻接矩阵
         for x, y, w in edges:
             self.g[x][y] = w  # 添加一条边（题目保证没有重边）
 
-    def addEdge(self, e: List[int]) -> None:
+    def addEdge(self, e: list[int]) -> None:
         self.g[e[0]][e[1]] = e[2]  # 添加一条边（题目保证这条边之前不存在）
 
     def shortestPath(self, start: int, end: int) -> int:
@@ -48,20 +50,20 @@ class Graph:
 # @lc code=end
 
 if __name__ == "__main__":
-    ops: List[str] = deserialize("List[str]", read_line())
+    ops: list[str] = deserialize("List[str]", read_line())
     params = split_array(read_line())
     output = ["null"]
 
     constructor_params = split_array(params[0])
     n: int = deserialize("int", constructor_params[0])
-    edges: List[List[int]] = deserialize("List[List[int]]", constructor_params[1])
+    edges: list[list[int]] = deserialize("List[List[int]]", constructor_params[1])
     obj = Graph(n, edges)
 
     for i in range(1, len(ops)):
         match ops[i]:
             case "addEdge":
                 method_params = split_array(params[i])
-                edge: List[int] = deserialize("List[int]", method_params[0])
+                edge: list[int] = deserialize("List[int]", method_params[0])
                 obj.addEdge(edge)
                 output.append("null")
             case "shortestPath":

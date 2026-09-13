@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/12/29 00:06
 # leetgo: dev
 # https://leetcode.cn/problems/buy-two-chocolates/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def buyChoco(self, prices: List[int], money: int) -> int:
+    def buyChoco(self, prices: list[int], money: int) -> int:
         prices.sort()
         s = prices[0] + prices[1]
         if s <= money:
@@ -21,7 +21,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    prices: List[int] = deserialize("List[int]", read_line())
+    prices: list[int] = deserialize("List[int]", read_line())
     money: int = deserialize("int", read_line())
     ans = Solution().buyChoco(prices, money)
 

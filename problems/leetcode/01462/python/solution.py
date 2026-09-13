@@ -1,11 +1,11 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/09/12 08:11
 # leetgo: dev
 # https://leetcode.cn/problems/course-schedule-iv/
+from collections import deque
 
-from typing import *
-from collections import *
-
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -15,8 +15,8 @@ from leetgo_py import *
 class Solution:
     # 链接：https://leetcode.cn/problems/course-schedule-iv/solutions/2417905/ke-cheng-biao-iv-by-leetcode-solution-mpc3/
     def checkIfPrerequisite(
-        self, n: int, edges: List[List[int]], queries: List[List[int]]
-    ) -> List[bool]:
+        self, n: int, edges: list[list[int]], queries: list[list[int]]
+    ) -> list[bool]:
         g = [[] for _ in range(n)]
         indeg = [0] * n
         for x, y in edges:
@@ -44,8 +44,8 @@ class Solution:
 
 if __name__ == "__main__":
     numCourses: int = deserialize("int", read_line())
-    prerequisites: List[List[int]] = deserialize("List[List[int]]", read_line())
-    queries: List[List[int]] = deserialize("List[List[int]]", read_line())
+    prerequisites: list[list[int]] = deserialize("List[List[int]]", read_line())
+    queries: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().checkIfPrerequisite(numCourses, prerequisites, queries)
 
     print("\noutput:", serialize(ans))

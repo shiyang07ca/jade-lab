@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/08/15 13:04
 # leetgo: dev
 # https://leetcode.cn/problems/find-and-replace-in-string/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -11,7 +11,7 @@ from leetgo_py import *
 class Solution:
     # 链接：https://leetcode.cn/problems/find-and-replace-in-string/solutions/2388853/xian-xing-zuo-fa-pythonjavacgojs-by-endl-uofo/
     def findReplaceString(
-        self, s: str, indices: List[int], sources: List[str], targets: List[str]
+        self, s: str, indices: list[int], sources: list[str], targets: list[str]
     ) -> str:
         replace = [(c, 1) for c in s]
         for i, src, tar in zip(indices, sources, targets):
@@ -30,9 +30,9 @@ class Solution:
 
 if __name__ == "__main__":
     s: str = deserialize("str", read_line())
-    indices: List[int] = deserialize("List[int]", read_line())
-    sources: List[str] = deserialize("List[str]", read_line())
-    targets: List[str] = deserialize("List[str]", read_line())
+    indices: list[int] = deserialize("List[int]", read_line())
+    sources: list[str] = deserialize("List[str]", read_line())
+    targets: list[str] = deserialize("List[str]", read_line())
     ans = Solution().findReplaceString(s, indices, sources, targets)
 
     print("\noutput:", serialize(ans))

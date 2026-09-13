@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from bisect import bisect_left
+
 # Created by shiyang07ca at 2024/03/09 13:14
 # leetgo: dev
 # https://leetcode.cn/problems/find-the-k-sum-of-an-array/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +14,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/find-the-k-sum-of-an-array/solutions/1764389/zhuan-huan-dui-by-endlesscheng-8yiq/
-    def kSum(self, nums: List[int], k: int) -> int:
+    def kSum(self, nums: list[int], k: int) -> int:
         s = 0
         for i, x in enumerate(nums):
             if x >= 0:
@@ -41,7 +43,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().kSum(nums, k)
 

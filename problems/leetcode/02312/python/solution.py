@@ -1,9 +1,12 @@
+from __future__ import annotations
+
+from collections import defaultdict
+from functools import cache
+
 # Created by shiyang07ca at 2024/03/15 22:30
 # leetgo: dev
 # https://leetcode.cn/problems/selling-pieces-of-wood/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +16,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/selling-pieces-of-wood/solutions/
-    def sellingWood(self, m: int, n: int, prices: List[List[int]]) -> int:
+    def sellingWood(self, m: int, n: int, prices: list[list[int]]) -> int:
         @cache
         def dfs(h: int, w: int) -> int:
             ans = d[h].get(w, 0)
@@ -34,7 +37,7 @@ class Solution:
 if __name__ == "__main__":
     m: int = deserialize("int", read_line())
     n: int = deserialize("int", read_line())
-    prices: List[List[int]] = deserialize("List[List[int]]", read_line())
+    prices: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().sellingWood(m, n, prices)
 
     print("\noutput:", serialize(ans))

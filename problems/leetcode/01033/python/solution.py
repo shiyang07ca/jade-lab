@@ -44,15 +44,15 @@ mum_moves]`
 4. `a != b, b != c, c != a`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def numMovesStones(self, a: int, b: int, c: int) -> List[int]:
+    def numMovesStones(self, a: int, b: int, c: int) -> list[int]:
         a, b, c = sorted([a, b, c])
         ma = abs(b - a - 1) + abs(c - b - 1)
         if b - a == 2 or c - b == 2:

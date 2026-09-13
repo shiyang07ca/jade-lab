@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from heapq import heappush, heapreplace
+
 # Created by shiyang07ca at 2023/09/11 13:36
 # leetgo: dev
 # https://leetcode.cn/problems/course-schedule-iii/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +15,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/course-schedule-iii/solutions/2436667/tan-xin-huan-neng-fan-hui-pythonjavacgoj-lcwp/
-    def scheduleCourse(self, courses: List[List[int]]) -> int:
+    def scheduleCourse(self, courses: list[list[int]]) -> int:
         courses.sort(key=lambda c: c[1])  # 按照 last_day 从小到大排序
         h = []
         day = 0  # 已消耗时间
@@ -31,7 +33,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    courses: List[List[int]] = deserialize("List[List[int]]", read_line())
+    courses: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().scheduleCourse(courses)
 
     print("\noutput:", serialize(ans))

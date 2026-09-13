@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/02/07 00:29
 # leetgo: dev
 # https://leetcode.cn/problems/cousins-in-binary-tree-ii/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -19,7 +19,9 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/cousins-in-binary-tree-ii/solutions/2229010/bfssuan-liang-ci-pythonjavacgo-by-endles-b72a/
-    def replaceValueInTree(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+    def replaceValueInTree(self, root: TreeNode | None) -> TreeNode | None:
+        if root is None:
+            return None
         root.val = 0
         q = [root]
         while q:

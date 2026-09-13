@@ -1,16 +1,17 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/11/08 18:46
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-number-of-moves-in-a-grid/
+from functools import cache
 
-from functools import *
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def maxMoves(self, g: List[List[int]]) -> int:
+    def maxMoves(self, g: list[list[int]]) -> int:
         m, n = len(g), len(g[0])
 
         @cache
@@ -33,7 +34,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    grid: List[List[int]] = deserialize("List[List[int]]", read_line())
+    grid: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().maxMoves(grid)
 
     print("\noutput:", serialize(ans))

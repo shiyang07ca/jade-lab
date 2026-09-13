@@ -1,9 +1,12 @@
+from __future__ import annotations
+
+from functools import cache
+from sys import maxsize as inf
+
 # Created by shiyang07ca at 2023/10/04 20:48
 # leetgo: dev
 # https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-iv/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +16,7 @@ from leetgo_py import *
 class Solution:
     # 链接：https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-iv/solutions/2201488/shi-pin-jiao-ni-yi-bu-bu-si-kao-dong-tai-kksg/
     # 记忆化
-    def maxProfit1(self, k: int, prices: List[int]) -> int:
+    def maxProfit1(self, k: int, prices: list[int]) -> int:
         n = len(prices)
 
         @cache
@@ -29,7 +32,7 @@ class Solution:
         return dfs(n - 1, k, False)
 
     # 递推
-    def maxProfit(self, k: int, prices: List[int]) -> int:
+    def maxProfit(self, k: int, prices: list[int]) -> int:
         n = len(prices)
         f = [[[-inf] * 2 for _ in range(k + 2)] for _ in range(n + 1)]
         for j in range(1, k + 2):
@@ -45,7 +48,7 @@ class Solution:
 
 if __name__ == "__main__":
     k: int = deserialize("int", read_line())
-    prices: List[int] = deserialize("List[int]", read_line())
+    prices: list[int] = deserialize("List[int]", read_line())
     ans = Solution().maxProfit(k, prices)
 
     print("\noutput:", serialize(ans))

@@ -61,9 +61,11 @@
 - 不含任何前导或尾随空格
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from itertools import pairwise
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

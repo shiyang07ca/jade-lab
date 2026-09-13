@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/08/20 00:08
 # leetgo: dev
 # https://leetcode.cn/problems/root-equals-sum-of-children/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -15,7 +15,9 @@ from leetgo_py import *
 #         self.left = left
 #         self.right = right
 class Solution:
-    def checkTree(self, root: Optional[TreeNode]) -> bool:
+    def checkTree(self, root: TreeNode | None) -> bool:
+        if root is None or root.left is None or root.right is None:
+            return False
         return root.val == (root.left.val + root.right.val)
 
 

@@ -1,15 +1,17 @@
+from __future__ import annotations
+
+from collections import deque
+
 # Created by shiyang07ca at 2023/12/07 00:06
 # leetgo: dev
 # https://leetcode.cn/problems/reorder-routes-to-make-all-paths-lead-to-the-city-zero/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def minReorder1(self, n: int, connections: List[List[int]]) -> int:
+    def minReorder1(self, n: int, connections: list[list[int]]) -> int:
         g1 = [[] for _ in range(n)]
         g2 = [[] for _ in range(n)]
         for x, y in connections:
@@ -33,8 +35,8 @@ class Solution:
         return ans
 
     # 链接：https://leetcode.cn/problems/reorder-routes-to-make-all-paths-lead-to-the-city-zero/solutions/2328146/ke-neng-shi-shang-zui-tong-su-yi-dong-de-58by/
-    def minReorder(self, n: int, connections: List[List[int]]) -> int:
-        def dfs(x: int, parent: int, e: List[List[List[int]]]) -> int:
+    def minReorder(self, n: int, connections: list[list[int]]) -> int:
+        def dfs(x: int, parent: int, e: list[list[list[int]]]) -> int:
             res = 0
             for a, c in e[x]:
                 if a == parent:
@@ -54,7 +56,7 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    connections: List[List[int]] = deserialize("List[List[int]]", read_line())
+    connections: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().minReorder(n, connections)
 
     print("\noutput:", serialize(ans))

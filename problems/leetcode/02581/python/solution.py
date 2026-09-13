@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/02/29 00:08
 # leetgo: dev
 # https://leetcode.cn/problems/count-number-of-possible-root-nodes/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +13,7 @@ from leetgo_py import *
 class Solution:
     # 链接：https://leetcode.cn/problems/count-number-of-possible-root-nodes/solutions/2147714/huan-gen-dppythonjavacgo-by-endlesscheng-ccwy/
     def rootCount(
-        self, edges: List[List[int]], guesses: List[List[int]], k: int
+        self, edges: list[list[int]], guesses: list[list[int]], k: int
     ) -> int:
         g = [[] for _ in range(len(edges) + 1)]
         for x, y in edges:
@@ -47,8 +47,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    edges: List[List[int]] = deserialize("List[List[int]]", read_line())
-    guesses: List[List[int]] = deserialize("List[List[int]]", read_line())
+    edges: list[list[int]] = deserialize("List[List[int]]", read_line())
+    guesses: list[list[int]] = deserialize("List[List[int]]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().rootCount(edges, guesses, k)
 

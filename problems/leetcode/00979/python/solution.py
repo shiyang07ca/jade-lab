@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/07/14 10:15
 # leetgo: dev
 # https://leetcode.cn/problems/distribute-coins-in-binary-tree/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -21,10 +21,10 @@ from leetgo_py import *
 
 # 链接：https://leetcode.cn/problems/distribute-coins-in-binary-tree/solutions/2343262/tu-jie-mei-you-si-lu-jin-lai-miao-dong-p-vrni/
 class Solution:
-    def distributeCoins(self, root: Optional[TreeNode]) -> int:
+    def distributeCoins(self, root: TreeNode | None) -> int:
         ans = 0
 
-        def dfs(node: Optional[TreeNode]) -> (int, int):
+        def dfs(node: TreeNode | None) -> tuple[int, int]:
             if node is None:
                 return 0, 0
             coins_l, nodes_l = dfs(node.left)

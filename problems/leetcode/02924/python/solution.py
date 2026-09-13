@@ -1,15 +1,17 @@
+from __future__ import annotations
+
+from collections import deque
+
 # Created by shiyang07ca at 2024/04/13 15:11
 # leetgo: dev
 # https://leetcode.cn/problems/find-champion-ii/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def findChampion(self, n: int, edges: List[List[int]]) -> int:
+    def findChampion(self, n: int, edges: list[list[int]]) -> int:
         g = [[] for _ in range(n)]
         indeg = [0] * n
         for x, y in edges:
@@ -23,6 +25,6 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    edges: List[List[int]] = deserialize("List[List[int]]", read_line())
+    edges: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().findChampion(n, edges)
     print("\noutput:", serialize(ans, "integer"))

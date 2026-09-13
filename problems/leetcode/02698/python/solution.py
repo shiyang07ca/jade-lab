@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from functools import cache
+
 # Created by shiyang07ca at 2023/10/25 13:15
 # leetgo: dev
 # https://leetcode.cn/problems/find-the-punishment-number-of-an-integer/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -25,14 +27,14 @@ def find(n):
     return dfs(0, n)
 
 
-ans = [0] * 1001
+punishment = [0] * 1001
 for i in range(1, 1001):
-    ans[i] = i * i if find(i) else 0
+    punishment[i] = i * i if find(i) else 0
 
 
 class Solution:
     def punishmentNumber(self, n: int) -> int:
-        return sum(ans[: n + 1])
+        return sum(punishment[: n + 1])
 
 
 # @lc code=end

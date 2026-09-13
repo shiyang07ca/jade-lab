@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/05/15 00:10
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-time-to-complete-all-tasks/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +12,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/minimum-time-to-complete-all-tasks/solutions/2163130/tan-xin-pythonjavacgo-by-endlesscheng-w3k3/
-    def findMinimumTime(self, tasks: List[List[int]]) -> int:
+    def findMinimumTime(self, tasks: list[list[int]]) -> int:
         tasks.sort(key=lambda t: t[1])
         run = [False] * (tasks[-1][1] + 1)
         for start, end, d in tasks:
@@ -33,6 +33,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    tasks: List[List[int]] = deserialize("List[List[int]]", read_line())
+    tasks: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().findMinimumTime(tasks)
     print("\noutput:", serialize(ans, "integer"))

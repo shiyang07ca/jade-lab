@@ -1,9 +1,12 @@
+from __future__ import annotations
+
+from functools import cache
+from sys import maxsize as inf
+
 # Created by shiyang07ca at 2023/08/18 13:21
 # leetgo: dev
 # https://leetcode.cn/problems/pizza-with-3n-slices/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,8 +15,8 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/pizza-with-3n-slices/solutions/2393650/python3javacgotypescript-yi-ti-yi-jie-do-mhhj/
-    def maxSizeSlices(self, slices: List[int]) -> int:
-        def g(nums: List[int]) -> int:
+    def maxSizeSlices(self, slices: list[int]) -> int:
+        def g(nums: list[int]) -> int:
             m = len(nums)
             f = [[0] * (n + 1) for _ in range(m + 1)]
             for i in range(1, m + 1):
@@ -28,7 +31,7 @@ class Solution:
         return max(a, b)
 
     # 链接：https://leetcode.cn/problems/pizza-with-3n-slices/solutions/2393770/ji-yi-hua-sou-suo-jie-jue-da-jia-jie-she-sora/
-    def maxSizeSlices2(self, slices: List[int]) -> int:
+    def maxSizeSlices2(self, slices: list[int]) -> int:
         n = len(slices)
         m = n // 3
 
@@ -57,7 +60,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    slices: List[int] = deserialize("List[int]", read_line())
+    slices: list[int] = deserialize("List[int]", read_line())
     ans = Solution().maxSizeSlices(slices)
 
     print("\noutput:", serialize(ans))

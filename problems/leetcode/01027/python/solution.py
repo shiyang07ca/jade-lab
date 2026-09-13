@@ -47,11 +47,11 @@
 - `0 <= nums[i] <= 500`
 
 """
+from __future__ import annotations
 
-from typing import *
-from functools import *
+from functools import cache
 
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -76,7 +76,7 @@ a[j] 是 LAS 的首项。
 
 
 class Solution:
-    def longestArithSeqLength(self, a: List[int]) -> int:
+    def longestArithSeqLength(self, a: list[int]) -> int:
         @cache  # 缓存装饰器，避免重复计算 dfs 的结果
         def dfs(i: int) -> dict[int, int]:
             # i=0 时不会进入循环，返回空哈希表
@@ -93,6 +93,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().longestArithSeqLength(nums)
     print("output:", serialize(ans))

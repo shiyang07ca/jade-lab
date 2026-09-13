@@ -50,15 +50,15 @@
 - 所有事件的时间都按照 `HH:MM` 格式给出
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def haveConflict(self, event1: List[str], event2: List[str]) -> bool:
+    def haveConflict(self, event1: list[str], event2: list[str]) -> bool:
         if event1[0] >= event2[0]:
             event1, event2 = event2, event1
         return event1[1] >= event2[0]
@@ -67,8 +67,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    event1: List[str] = deserialize("List[str]", read_line())
-    event2: List[str] = deserialize("List[str]", read_line())
+    event1: list[str] = deserialize("List[str]", read_line())
+    event2: list[str] = deserialize("List[str]", read_line())
     ans = Solution().haveConflict(event1, event2)
 
     print("\noutput:", serialize(ans))

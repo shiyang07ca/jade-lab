@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/01/05 00:22
 # leetgo: dev
 # https://leetcode.cn/problems/number-of-visible-people-in-a-queue/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +13,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/number-of-visible-people-in-a-queue/solutions/2591558/dan-diao-zhan-de-ben-zhi-ji-shi-qu-diao-8tp3s/
-    def canSeePersonsCount(self, heights: List[int]) -> List[int]:
+    def canSeePersonsCount(self, heights: list[int]) -> list[int]:
         n = len(heights)
         ans = [0] * n
         st = []
@@ -30,7 +30,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    heights: List[int] = deserialize("List[int]", read_line())
+    heights: list[int] = deserialize("List[int]", read_line())
     ans = Solution().canSeePersonsCount(heights)
 
     print("\noutput:", serialize(ans))

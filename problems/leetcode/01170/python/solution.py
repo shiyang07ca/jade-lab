@@ -39,15 +39,17 @@ s` 中满足 `f(queries[i])` < `f(W)` 的 **词的数目** ， `W` 表示词汇�
 - `queries[i][j]`、 `words[i][j]` 都由小写英文字母组成
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from bisect import bisect_right
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def numSmallerByFrequency(self, queries: List[str], words: List[str]) -> List[int]:
+    def numSmallerByFrequency(self, queries: list[str], words: list[str]) -> list[int]:
         def f(s):
             cnt = 1
             s = sorted(s)
@@ -58,14 +60,13 @@ class Solution:
                     return cnt
             return cnt
 
-        for i, w in enumerate(words):
-            words[i] = f(w)
-        words.sort()
+        word_frequencies = [f(w) for w in words]
+        word_frequencies.sort()
 
-        n = len(words)
+        n = len(word_frequencies)
         ans = []
         for q in queries:
-            c = bisect_right(words, f(q))
+            c = bisect_right(word_frequencies, f(q))
             ans.append(n - c)
 
         return ans
@@ -74,8 +75,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    queries: List[str] = deserialize("List[str]", read_line())
-    words: List[str] = deserialize("List[str]", read_line())
+    queries: list[str] = deserialize("List[str]", read_line())
+    words: list[str] = deserialize("List[str]", read_line())
     ans = Solution().numSmallerByFrequency(queries, words)
 
     print("\noutput:", serialize(ans))

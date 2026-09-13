@@ -1,16 +1,16 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/09/23 23:50
 # leetgo: dev
 # https://leetcode.cn/problems/operations-on-tree/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, join_array, read_line, serialize, split_array
 
 # @lc code=begin
 
 
 class LockingTree:
     # https://leetcode.cn/problems/operations-on-tree/solutions/2455158/python3javacgotypescript-yi-ti-yi-jie-df-1iwe/?envType=daily-question&envId=2023-09-23
-    def __init__(self, parent: List[int]):
+    def __init__(self, parent: list[int]):
         n = len(parent)
         self.locked = [-1] * n
         self.parent = parent
@@ -62,33 +62,33 @@ class LockingTree:
 # @lc code=end
 
 if __name__ == "__main__":
-    ops: List[str] = deserialize("List[str]", read_line())
+    ops: list[str] = deserialize("List[str]", read_line())
     params = split_array(read_line())
     output = ["null"]
 
     constructor_params = split_array(params[0])
-    parent: List[int] = deserialize("List[int]", constructor_params[0])
+    parent: list[int] = deserialize("List[int]", constructor_params[0])
     obj = LockingTree(parent)
 
     for i in range(1, len(ops)):
         match ops[i]:
             case "lock":
                 method_params = split_array(params[i])
-                num: int = deserialize("int", method_params[0])
-                user: int = deserialize("int", method_params[1])
-                ans = serialize(obj.lock(num, user))
+                lock_num: int = deserialize("int", method_params[0])
+                lock_user: int = deserialize("int", method_params[1])
+                ans = serialize(obj.lock(lock_num, lock_user))
                 output.append(ans)
             case "unlock":
                 method_params = split_array(params[i])
-                num: int = deserialize("int", method_params[0])
-                user: int = deserialize("int", method_params[1])
-                ans = serialize(obj.unlock(num, user))
+                unlock_num: int = deserialize("int", method_params[0])
+                unlock_user: int = deserialize("int", method_params[1])
+                ans = serialize(obj.unlock(unlock_num, unlock_user))
                 output.append(ans)
             case "upgrade":
                 method_params = split_array(params[i])
-                num: int = deserialize("int", method_params[0])
-                user: int = deserialize("int", method_params[1])
-                ans = serialize(obj.upgrade(num, user))
+                upgrade_num: int = deserialize("int", method_params[0])
+                upgrade_user: int = deserialize("int", method_params[1])
+                ans = serialize(obj.upgrade(upgrade_num, upgrade_user))
                 output.append(ans)
 
     print("\noutput:", join_array(output))

@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/06/03 23:29
 # leetgo: dev
 # https://leetcode.cn/problems/distribute-candies-to-people/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def distributeCandies(self, candies: int, num_people: int) -> List[int]:
+    def distributeCandies(self, candies: int, num_people: int) -> list[int]:
         c = i = 0
         ans = [0] * num_people
         while candies > 0:

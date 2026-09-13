@@ -39,9 +39,9 @@ queries[4] : 子串 = "abcda"，可以变成回文的 "abcba"。
 - `s` 中只有小写英文字母
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -52,7 +52,7 @@ from leetgo_py import *
 # 作者：灵茶山艾府
 # 链接：https://leetcode.cn/problems/can-make-palindrome-from-substring/solutions/2309725/yi-bu-bu-you-hua-cong-qian-zhui-he-dao-q-yh5p/
 class Solution:
-    def canMakePaliQueries(self, s: str, queries: List[List[int]]) -> List[bool]:
+    def canMakePaliQueries(self, s: str, queries: list[list[int]]) -> list[bool]:
         sum = [[0] * 26]
         for c in s:
             sum.append(sum[-1].copy())
@@ -66,7 +66,7 @@ class Solution:
             ans.append(m // 2 <= k)
         return ans
 
-    def canMakePaliQueries2(self, s: str, queries: List[List[int]]) -> List[bool]:
+    def canMakePaliQueries2(self, s: str, queries: list[list[int]]) -> list[bool]:
         sum = [[0] * 26]
         for c in s:
             sum.append(sum[-1].copy())
@@ -81,7 +81,7 @@ class Solution:
             ans.append(m // 2 <= k)
         return ans
 
-    def canMakePaliQueries3(self, s: str, queries: List[List[int]]) -> List[bool]:
+    def canMakePaliQueries3(self, s: str, queries: list[list[int]]) -> list[bool]:
         sum = [[0] * 26]
         for c in s:
             sum.append(sum[-1].copy())
@@ -95,7 +95,7 @@ class Solution:
             ans.append(m // 2 <= k)
         return ans
 
-    def canMakePaliQueries4(self, s: str, queries: List[List[int]]) -> List[bool]:
+    def canMakePaliQueries4(self, s: str, queries: list[list[int]]) -> list[bool]:
         sum = [0]
         for c in s:
             bit = 1 << (ord(c) - ord("a"))
@@ -112,7 +112,7 @@ class Solution:
 
 if __name__ == "__main__":
     s: str = deserialize("str", read_line())
-    queries: List[List[int]] = deserialize("List[List[int]]", read_line())
+    queries: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().canMakePaliQueries(s, queries)
 
     print("\noutput:", serialize(ans))

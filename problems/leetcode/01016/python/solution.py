@@ -32,9 +32,9 @@
 - `1 <= n <= 10⁹`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -48,16 +48,16 @@ class Solution:
     # https://leetcode.cn/problems/binary-string-with-substrings-representing-1-to-n/solutions/2265097/san-chong-suan-fa-cong-bao-li-dao-you-hu-nmtq/
     def queryString(self, s: str, n: int) -> bool:
         seen = set()
-        s = list(map(int, s))
-        for i, x in enumerate(s):
+        digits = list(map(int, s))
+        for i, x in enumerate(digits):
             if x == 0:
                 continue  # 从第一个 1 开始枚举
             j = i + 1  # 计算子串 [i:j] 对应的二进制数
             while x <= n:
                 seen.add(x)
-                if j >= len(s):
+                if j >= len(digits):
                     break
-                x = (x << 1) | s[j]  # 子串 s[i:j] 对应的二进制数
+                x = (x << 1) | digits[j]  # 子串 s[i:j] 对应的二进制数
                 j += 1
         return len(seen) == n
 

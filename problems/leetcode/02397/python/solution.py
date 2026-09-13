@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/01/04 00:00
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-rows-covered-by-columns/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +12,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/maximum-rows-covered-by-columns/solutions/1798794/by-endlesscheng-dvxe/
-    def maximumRows(self, mat: List[List[int]], numSelect: int) -> int:
+    def maximumRows(self, mat: list[list[int]], numSelect: int) -> int:
         mask = [sum(x << j for j, x in enumerate(row)) for i, row in enumerate(mat)]
         ans = 0
         for subset in range(1 << len(mat[0])):
@@ -25,7 +25,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    matrix: List[List[int]] = deserialize("List[List[int]]", read_line())
+    matrix: list[list[int]] = deserialize("List[List[int]]", read_line())
     numSelect: int = deserialize("int", read_line())
     ans = Solution().maximumRows(matrix, numSelect)
 

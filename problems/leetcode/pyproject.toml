@@ -2,7 +2,7 @@
 name = "leetcode-solutions"
 version = "0.1.0"
 description = "使用 leetgo 管理的多语言 LeetCode 题解"
-requires-python = ">=3.12,<3.15"
+requires-python = ">=3.13,<3.15"
 dependencies = [
     "leetgo-py==0.2.4",
     "sortedcontainers==2.4.0",
@@ -17,10 +17,19 @@ dev = [
 [tool.uv]
 package = false
 
+[tool.pyright]
+include = ["."]
+exclude = [".venv"]
+pythonVersion = "3.13"
+venvPath = "."
+venv = ".venv"
+stubPath = "typings"
+typeCheckingMode = "basic"
+
 [tool.ruff]
-target-version = "py312"
+target-version = "py313"
 line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "RUF"]
-ignore = ["E501", "F403", "F405"]
+ignore = ["E501", "F403", "F405", "RUF001", "RUF002", "RUF003"]

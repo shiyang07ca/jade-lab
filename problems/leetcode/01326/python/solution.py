@@ -1,10 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2025/01/05 15:05
 # leetgo: 1.4.13
 # https://leetcode.cn/problems/minimum-number-of-taps-to-open-to-water-a-garden/
-
-from typing import *
-
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -14,7 +13,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def minTaps(self, n: int, ranges: List[int]) -> int:
+    def minTaps(self, n: int, ranges: list[int]) -> int:
         # 链接：https://leetcode.cn/problems/minimum-number-of-taps-to-open-to-water-a-garden/solutions/2123855/yi-zhang-tu-miao-dong-pythonjavacgo-by-e-wqry/
 
         """
@@ -46,6 +45,6 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    ranges: List[int] = deserialize("List[int]", read_line())
+    ranges: list[int] = deserialize("List[int]", read_line())
     ans = Solution().minTaps(n, ranges)
     print("\noutput:", serialize(ans, "integer"))

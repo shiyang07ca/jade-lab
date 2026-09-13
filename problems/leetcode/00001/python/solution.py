@@ -47,26 +47,27 @@
 **进阶：** 你可以想出一个时间复杂度小于 `O(n²)` 的算法吗？
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def twoSum(self, nums: List[int], target: int) -> List[int]:
+    def twoSum(self, nums: list[int], target: int) -> list[int]:
         m = {}
         for i, n in enumerate(nums):
             if n in m:
                 return [m[n], i]
             m[target - n] = i
+        raise ValueError("no two-sum solution")
 
 
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     target: int = deserialize("int", read_line())
     ans = Solution().twoSum(nums, target)
     print("output:", serialize(ans))

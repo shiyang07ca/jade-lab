@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from collections import deque
+
 # Created by shiyang07ca at 2023/11/01 23:17
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-employees-to-be-invited-to-a-meeting/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +14,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/maximum-employees-to-be-invited-to-a-meeting/
-    def maximumInvitations(self, favorite: List[int]) -> int:
+    def maximumInvitations(self, favorite: list[int]) -> int:
         n = len(favorite)
         deg = [0] * n
         for f in favorite:
@@ -59,7 +61,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    favorite: List[int] = deserialize("List[int]", read_line())
+    favorite: list[int] = deserialize("List[int]", read_line())
     ans = Solution().maximumInvitations(favorite)
 
     print("\noutput:", serialize(ans))

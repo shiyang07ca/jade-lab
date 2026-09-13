@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/02/15 13:54
 # leetgo: dev
 # https://leetcode.cn/problems/binary-tree-level-order-traversal-ii/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -15,7 +15,7 @@ from leetgo_py import *
 #         self.left = left
 #         self.right = right
 class Solution:
-    def levelOrderBottom(self, root: Optional[TreeNode]) -> List[List[int]]:
+    def levelOrderBottom(self, root: TreeNode | None) -> list[list[int]]:
         if not root:
             return []
 

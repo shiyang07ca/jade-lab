@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/08/27 12:19
 # leetgo: dev
 # https://leetcode.cn/problems/merge-intervals/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def merge(self, intervals: List[List[int]]) -> List[List[int]]:
+    def merge(self, intervals: list[list[int]]) -> list[list[int]]:
         intervals.sort()
         ans = [intervals[0]]
         for a, b in intervals[1:]:
@@ -23,7 +23,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    intervals: List[List[int]] = deserialize("List[List[int]]", read_line())
+    intervals: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().merge(intervals)
 
     print("\noutput:", serialize(ans))

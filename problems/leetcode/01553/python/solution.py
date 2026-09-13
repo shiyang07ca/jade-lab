@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from functools import cache
+
 # Created by shiyang07ca at 2024/05/12 00:10
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-number-of-days-to-eat-n-oranges/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

@@ -53,9 +53,9 @@
 换。
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -82,6 +82,7 @@ class Solution:
                         c += 1
             else:
                 return upbound + 1
+            raise ValueError("invalid time component")
 
         a, b = time.split(":")
         a, b = cnt(a, 23), cnt(b, 59)

@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/08/25 00:12
 # leetgo: dev
 # https://leetcode.cn/problems/count-good-nodes-in-binary-tree/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 

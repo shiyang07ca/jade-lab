@@ -36,10 +36,11 @@
 - `1 <= n <= 10⁹`
 
 """
-from functools import *
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from functools import cache
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

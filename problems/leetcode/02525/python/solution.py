@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/10/20 00:01
 # leetgo: dev
 # https://leetcode.cn/problems/categorize-box-according-to-criteria/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

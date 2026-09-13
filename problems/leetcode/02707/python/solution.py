@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from functools import cache
+
 # Created by shiyang07ca at 2024/01/09 00:17
 # leetgo: dev
 # https://leetcode.cn/problems/extra-characters-in-a-string/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +14,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/extra-characters-in-a-string/solutions/2286613/dong-tai-gui-hua-cong-ji-yi-hua-sou-suo-wtd7a/
-    def minExtraChar(self, s: str, dictionary: List[str]) -> int:
+    def minExtraChar(self, s: str, dictionary: list[str]) -> int:
         d = set(dictionary)
 
         @cache
@@ -32,7 +34,7 @@ class Solution:
 
 if __name__ == "__main__":
     s: str = deserialize("str", read_line())
-    dictionary: List[str] = deserialize("List[str]", read_line())
+    dictionary: list[str] = deserialize("List[str]", read_line())
     ans = Solution().minExtraChar(s, dictionary)
 
     print("\noutput:", serialize(ans))

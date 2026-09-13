@@ -1,15 +1,17 @@
+from __future__ import annotations
+
+from itertools import pairwise
+
 # Created by shiyang07ca at 2023/08/26 21:38
 # leetgo: dev
 # https://leetcode.cn/problems/summary-ranges/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def summaryRanges(self, nums: List[int]) -> List[str]:
+    def summaryRanges(self, nums: list[int]) -> list[str]:
         if len(nums) == 0:
             return []
 
@@ -28,7 +30,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().summaryRanges(nums)
 
     print("\noutput:", serialize(ans))

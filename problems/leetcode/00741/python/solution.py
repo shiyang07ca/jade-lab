@@ -1,9 +1,12 @@
+from __future__ import annotations
+
+from functools import cache
+from sys import maxsize as inf
+
 # Created by shiyang07ca at 2024/05/06 09:27
 # leetgo: dev
 # https://leetcode.cn/problems/cherry-pickup/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +16,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/cherry-pickup/solutions/2766975/jiao-ni-yi-bu-bu-si-kao-dpcong-ji-yi-hua-ruue/
-    def cherryPickup(self, grid: List[List[int]]) -> int:
+    def cherryPickup(self, grid: list[list[int]]) -> int:
         @cache  # 缓存装饰器，避免重复计算 dfs 的结果（记忆化）
         def dfs(t: int, j: int, k: int) -> int:
             # 不能出界，不能访问 -1 格子
@@ -46,6 +49,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    grid: List[List[int]] = deserialize("List[List[int]]", read_line())
+    grid: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().cherryPickup(grid)
     print("\noutput:", serialize(ans, "integer"))

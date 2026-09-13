@@ -27,9 +27,11 @@
 - `0 < len(land[i]) <= 1000`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from collections import deque
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -38,7 +40,7 @@ from leetgo_py import *
 
 class Solution:
     # bfs
-    def pondSizes1(self, land: List[List[int]]) -> List[int]:
+    def pondSizes1(self, land: list[list[int]]) -> list[int]:
         def bfs(i, j):
             if land[i][j] != 0:
                 return 0
@@ -68,7 +70,7 @@ class Solution:
 
     # dfs
     # 链接：https://leetcode.cn/problems/pond-sizes-lcci/solutions/2316704/mo-ban-wang-ge-tu-dfsfu-ti-dan-by-endles-p0n1/class Solution:
-    def pondSizes(self, land: List[List[int]]) -> List[int]:
+    def pondSizes(self, land: list[list[int]]) -> list[int]:
         m, n = len(land), len(land[0])
 
         def dfs(x: int, y: int) -> int:
@@ -93,7 +95,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    land: List[List[int]] = deserialize("List[List[int]]", read_line())
+    land: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().pondSizes(land)
 
     print("\noutput:", serialize(ans))

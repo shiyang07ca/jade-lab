@@ -37,9 +37,12 @@
 - `1 <= nums[i] <= 10^4`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from functools import cache
+from sys import maxsize as inf
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -50,7 +53,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def maxSumDivThree1(self, nums: List[int]) -> int:
+    def maxSumDivThree1(self, nums: list[int]) -> int:
         ans = sum(nums)
         a1, a2 = [], []
         for n in nums:
@@ -79,7 +82,7 @@ class Solution:
         return ans
 
     # 链接：https://leetcode.cn/problems/greatest-sum-divisible-by-three/solutions/2313700/liang-chong-suan-fa-tan-xin-dong-tai-gui-tsll/
-    def maxSumDivThree2(self, nums: List[int]) -> int:
+    def maxSumDivThree2(self, nums: list[int]) -> int:
         s = sum(nums)
         if s % 3 == 0:
             return s
@@ -93,7 +96,7 @@ class Solution:
         return ans
 
     # 链接：https://leetcode.cn/problems/greatest-sum-divisible-by-three/solutions/2313700/liang-chong-suan-fa-tan-xin-dong-tai-gui-tsll/
-    def maxSumDivThree(self, nums: List[int]) -> int:
+    def maxSumDivThree(self, nums: list[int]) -> int:
         """
         定义 dfs(i, j) 表示 nums[0] 到 nums[i] 中选数，已选数字之和 mod 3 = j 的最大值
         则有：dfs(i, j) = max(dfs(i - 1, j),  不选 x
@@ -113,7 +116,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().maxSumDivThree(nums)
 
     print("\noutput:", serialize(ans))

@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from itertools import accumulate
+
 # Created by shiyang07ca at 2023/11/19 23:47
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-sum-of-3-non-overlapping-subarrays/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +14,7 @@ from leetgo_py import *
 
 # 链接：https://leetcode.cn/problems/maximum-sum-of-3-non-overlapping-subarrays/
 class Solution:
-    def maxSumOfThreeSubarrays(self, nums: List[int], k: int) -> List[int]:
+    def maxSumOfThreeSubarrays(self, nums: list[int], k: int) -> list[int]:
         n = len(nums)
         s = list(accumulate(nums, initial=0))
         pre = [[] for _ in range(n)]
@@ -43,7 +45,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().maxSumOfThreeSubarrays(nums, k)
 

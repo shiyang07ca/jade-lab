@@ -1,17 +1,17 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/09/17 00:00
 # leetgo: dev
 # https://leetcode.cn/problems/house-robber-ii/
+from functools import cache
 
-from functools import *
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def rob(self, nums: List[int]) -> int:
+    def rob(self, nums: list[int]) -> int:
         @cache
         def dfs(i, j):
             if i < 0:
@@ -29,7 +29,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().rob(nums)
 
     print("\noutput:", serialize(ans))

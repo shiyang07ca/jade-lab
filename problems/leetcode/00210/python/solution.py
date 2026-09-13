@@ -1,17 +1,17 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/09/10 13:23
 # leetgo: dev
 # https://leetcode.cn/problems/course-schedule-ii/
+from collections import deque
 
-from typing import *
-from collections import *
-
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def findOrder(self, n: int, edges: List[List[int]]) -> List[int]:
+    def findOrder(self, n: int, edges: list[list[int]]) -> list[int]:
         g = [[] for _ in range(n)]
         indeg = [0] * n
         for y, x in edges:
@@ -33,7 +33,7 @@ class Solution:
 
 if __name__ == "__main__":
     numCourses: int = deserialize("int", read_line())
-    prerequisites: List[List[int]] = deserialize("List[List[int]]", read_line())
+    prerequisites: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().findOrder(numCourses, prerequisites)
 
     print("\noutput:", serialize(ans))

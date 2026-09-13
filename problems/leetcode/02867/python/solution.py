@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/02/27 00:02
 # leetgo: dev
 # https://leetcode.cn/problems/count-valid-paths-in-a-tree/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -44,7 +44,7 @@ for i in range(2, mx + 1):
 
 
 class Solution:
-    def countPaths(self, n: int, edges: List[List[int]]) -> int:
+    def countPaths(self, n: int, edges: list[list[int]]) -> int:
         g = [[] for _ in range(n + 1)]
         uf = UnionFind(n + 1)
         for u, v in edges:
@@ -70,7 +70,7 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    edges: List[List[int]] = deserialize("List[List[int]]", read_line())
+    edges: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().countPaths(n, edges)
 
     print("\noutput:", serialize(ans))

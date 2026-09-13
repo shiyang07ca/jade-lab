@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/04/27 10:08
 # leetgo: dev
 # https://leetcode.cn/problems/find-the-width-of-columns-of-a-grid/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def findColumnWidth(self, grid: List[List[int]]) -> List[int]:
+    def findColumnWidth(self, grid: list[list[int]]) -> list[int]:
         ans = []
         for j in range(len(grid[0])):
             t = 0
@@ -22,6 +22,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    grid: List[List[int]] = deserialize("List[List[int]]", read_line())
+    grid: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().findColumnWidth(grid)
     print("\noutput:", serialize(ans, "integer[]"))

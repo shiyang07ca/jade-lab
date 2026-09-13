@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/10/11 12:53
 # leetgo: dev
 # https://leetcode.cn/problems/reward-top-k-students/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -11,12 +11,12 @@ from leetgo_py import *
 class Solution:
     def topStudents(
         self,
-        positive_feedback: List[str],
-        negative_feedback: List[str],
-        report: List[str],
-        student_id: List[int],
+        positive_feedback: list[str],
+        negative_feedback: list[str],
+        report: list[str],
+        student_id: list[int],
         k: int,
-    ) -> List[int]:
+    ) -> list[int]:
         pos, neg = set(positive_feedback), set(negative_feedback)
         ans = []
         for m, i in zip(report, student_id):
@@ -31,10 +31,10 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    positive_feedback: List[str] = deserialize("List[str]", read_line())
-    negative_feedback: List[str] = deserialize("List[str]", read_line())
-    report: List[str] = deserialize("List[str]", read_line())
-    student_id: List[int] = deserialize("List[int]", read_line())
+    positive_feedback: list[str] = deserialize("List[str]", read_line())
+    negative_feedback: list[str] = deserialize("List[str]", read_line())
+    report: list[str] = deserialize("List[str]", read_line())
+    student_id: list[int] = deserialize("List[int]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().topStudents(
         positive_feedback, negative_feedback, report, student_id, k

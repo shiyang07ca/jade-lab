@@ -1,11 +1,11 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/09/18 00:00
 # leetgo: dev
 # https://leetcode.cn/problems/house-robber-iii/
-
 from functools import cache
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -20,8 +20,8 @@ from leetgo_py import *
 #         self.right = right
 class Solution:
     # 链接：https://leetcode.cn/problems/house-robber-iii/description/
-    def rob1(self, root: Optional[TreeNode]) -> int:
-        def dfs(node: Optional[TreeNode]) -> (int, int):
+    def rob1(self, root: TreeNode | None) -> int:
+        def dfs(node: TreeNode | None) -> tuple[int, int]:
             if node is None:  # 递归边界
                 return 0, 0  # 没有节点，怎么选都是 0
             l_rob, l_not_rob = dfs(node.left)  # 递归左子树
@@ -33,18 +33,20 @@ class Solution:
         return max(dfs(root))  # 根节点选或不选的最大值
 
     @cache
-    def rob(self, root: Optional[TreeNode]) -> int:
+    def rob(self, root: TreeNode | None) -> int:
         if root is None:
             return 0
 
         if root.left is None and root.right is None:
             return root.val
         elif root.left is None:
+            assert root.right is not None
             return max(
                 root.val + self.rob(root.right.left) + self.rob(root.right.right),
                 self.rob(root.right),
             )
         elif root.right is None:
+            assert root.left is not None
             return max(
                 root.val + self.rob(root.left.left) + self.rob(root.left.right),
                 self.rob(root.left),

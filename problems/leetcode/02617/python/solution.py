@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+import heapq
+
 # Created by shiyang07ca at 2024/03/22 07:32
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-number-of-visited-cells-in-a-grid/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +14,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/minimum-number-of-visited-cells-in-a-grid/solutions/
-    def minimumVisitedCells(self, grid: List[List[int]]) -> int:
+    def minimumVisitedCells(self, grid: list[list[int]]) -> int:
         m, n = len(grid), len(grid[0])
         dist = [[-1] * n for _ in range(m)]
         dist[0][0] = 1
@@ -43,7 +45,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    grid: List[List[int]] = deserialize("List[List[int]]", read_line())
+    grid: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().minimumVisitedCells(grid)
 
     print("\noutput:", serialize(ans))

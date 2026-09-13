@@ -37,9 +37,9 @@
 - `to_delete` 包含一些从 `1` 到 `1000`、各不相同的值。
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -58,12 +58,12 @@ from leetgo_py import *
 # 链接：https://leetcode.cn/problems/delete-nodes-and-return-forest/solutions/2289131/he-shi-ji-lu-da-an-pythonjavacgo-by-endl-lpcd/
 class Solution:
     def delNodes(
-        self, root: Optional[TreeNode], to_delete: List[int]
-    ) -> List[TreeNode]:
+        self, root: TreeNode | None, to_delete: list[int]
+    ) -> list[TreeNode]:
         ans = []
         s = set(to_delete)
 
-        def dfs(node: Optional[TreeNode]) -> Optional[TreeNode]:
+        def dfs(node: TreeNode | None) -> TreeNode | None:
             if node is None:
                 return None
             node.left = dfs(node.left)
@@ -85,7 +85,7 @@ class Solution:
 
 if __name__ == "__main__":
     root: TreeNode = deserialize("TreeNode", read_line())
-    to_delete: List[int] = deserialize("List[int]", read_line())
+    to_delete: list[int] = deserialize("List[int]", read_line())
     ans = Solution().delNodes(root, to_delete)
 
     print("\noutput:", serialize(ans))

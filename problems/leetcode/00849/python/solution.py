@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from sys import maxsize as inf
+
 # Created by shiyang07ca at 2023/08/22 08:34
 # leetgo: dev
 # https://leetcode.cn/problems/maximize-distance-to-closest-person/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -11,7 +13,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def maxDistToClosest(self, seats: List[int]) -> int:
+    def maxDistToClosest(self, seats: list[int]) -> int:
         n = len(seats)
         li, ri = 0, n - 1
         l, r = [inf] * n, [inf] * n
@@ -29,7 +31,7 @@ class Solution:
         return max(min(a, b) for i, (a, b) in enumerate(zip(l, r)) if seats[i] == 0)
 
     # 链接：https://leetcode.cn/problems/maximize-distance-to-closest-person/solutions/2399061/python3javago-qian-hou-zhui-fen-jie-by-x-1k2b/
-    def maxDistToClosest2(self, seats: List[int]) -> int:
+    def maxDistToClosest2(self, seats: list[int]) -> int:
         n = len(seats)
         suffix = [inf] * (n + 1)
         for i in range(n - 1, -1, -1):
@@ -52,7 +54,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    seats: List[int] = deserialize("List[int]", read_line())
+    seats: list[int] = deserialize("List[int]", read_line())
     ans = Solution().maxDistToClosest(seats)
 
     print("\noutput:", serialize(ans))

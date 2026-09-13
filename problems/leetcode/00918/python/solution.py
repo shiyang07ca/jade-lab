@@ -1,17 +1,18 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/07/20 12:55
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-sum-circular-subarray/
-
 from functools import lru_cache as cache
+from sys import maxsize as inf
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def maxSubarraySumCircular1(self, nums: List[int]) -> int:
+    def maxSubarraySumCircular1(self, nums: list[int]) -> int:
         s = sum(nums)
         n = len(nums)
         if n == 1:
@@ -40,7 +41,7 @@ class Solution:
 
         # 链接：https://leetcode.cn/problems/maximum-sum-circular-subarray/solutions/2351107/mei-you-si-lu-yi-zhang-tu-miao-dong-pyth-ilqh/
 
-    def maxSubarraySumCircular(self, nums: List[int]) -> int:
+    def maxSubarraySumCircular(self, nums: list[int]) -> int:
         max_s = -inf  # 最大子数组和，不能为空
         min_s = 0  # 最小子数组和，可以为空
         max_f = min_f = 0
@@ -59,7 +60,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().maxSubarraySumCircular(nums)
 
     print("\noutput:", serialize(ans))

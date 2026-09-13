@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from sys import maxsize as inf
+
 # Created by shiyang07ca at 2023/08/31 22:50
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-degree-of-a-connected-trio-in-a-graph/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +14,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/minimum-degree-of-a-connected-trio-in-a-graph/solutions/2419310/python3javacgotypescript-yi-ti-yi-jie-ba-8n3w/
-    def minTrioDegree(self, n: int, edges: List[List[int]]) -> int:
+    def minTrioDegree(self, n: int, edges: list[list[int]]) -> int:
         g = [[False] * n for _ in range(n)]
         deg = [0] * n
         for u, v in edges:
@@ -34,7 +36,7 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    edges: List[List[int]] = deserialize("List[List[int]]", read_line())
+    edges: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().minTrioDegree(n, edges)
 
     print("\noutput:", serialize(ans))

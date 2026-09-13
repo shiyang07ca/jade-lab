@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/12/05 23:40
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-fuel-cost-to-report-to-the-capital/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -28,7 +28,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def minimumFuelCost(self, roads: List[List[int]], seats: int) -> int:
+    def minimumFuelCost(self, roads: list[list[int]], seats: int) -> int:
         ans = 0
         g = [[] for _ in range(len(roads) + 1)]
         for x, y in roads:
@@ -53,7 +53,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    roads: List[List[int]] = deserialize("List[List[int]]", read_line())
+    roads: list[list[int]] = deserialize("List[List[int]]", read_line())
     seats: int = deserialize("int", read_line())
     ans = Solution().minimumFuelCost(roads, seats)
 

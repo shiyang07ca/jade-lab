@@ -30,18 +30,18 @@ i]`。
 - `1 <= barcodes[i] <= 10000`
 
 """
-from itertools import *
-from collections import *
-from heapq import *
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from collections import Counter
+from heapq import heapify, heappop, heappush
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def rearrangeBarcodes1(self, barcodes: List[int]) -> List[int]:
+    def rearrangeBarcodes1(self, barcodes: list[int]) -> list[int]:
         cnt = Counter(barcodes)
         ans = []
         h = [(-c, n) for n, c in cnt.items()]
@@ -63,7 +63,7 @@ class Solution:
     # 链接：https://leetcode.cn/problems/distant-barcodes/solutions/2268959/python3javacgotypescript-yi-ti-yi-jie-ji-3or2/
     # 来源：力扣（LeetCode）
     # 著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
-    def rearrangeBarcodes(self, barcodes: List[int]) -> List[int]:
+    def rearrangeBarcodes(self, barcodes: list[int]) -> list[int]:
         cnt = Counter(barcodes)
         barcodes.sort(key=lambda x: (-cnt[x], x))
         n = len(barcodes)
@@ -76,6 +76,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    barcodes: List[int] = deserialize("List[int]", read_line())
+    barcodes: list[int] = deserialize("List[int]", read_line())
     ans = Solution().rearrangeBarcodes(barcodes)
     print("output:", serialize(ans))

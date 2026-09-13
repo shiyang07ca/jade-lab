@@ -1,11 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/08/02 09:42
 # leetgo: dev
 # https://leetcode.cn/problems/card-flipping-game/
-
-from typing import *
-from math import *
-
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -14,7 +12,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/card-flipping-game/solutions/2368863/yue-du-li-jie-ti-pythonjavacgojs-by-endl-ze7f/
-    def flipgame(self, fronts: List[int], backs: List[int]) -> int:
+    def flipgame(self, fronts: list[int], backs: list[int]) -> int:
         forbidden = {x for x, y in zip(fronts, backs) if x == y}
         return min((x for x in fronts + backs if x not in forbidden), default=0)
 
@@ -22,8 +20,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    fronts: List[int] = deserialize("List[int]", read_line())
-    backs: List[int] = deserialize("List[int]", read_line())
+    fronts: list[int] = deserialize("List[int]", read_line())
+    backs: list[int] = deserialize("List[int]", read_line())
     ans = Solution().flipgame(fronts, backs)
 
     print("\noutput:", serialize(ans))

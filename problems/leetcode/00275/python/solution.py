@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/10/30 00:07
 # leetgo: dev
 # https://leetcode.cn/problems/h-index-ii/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -11,7 +11,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def hIndex1(self, citations: List[int]) -> int:
+    def hIndex1(self, citations: list[int]) -> int:
         citations.sort(reverse=True)
         for i, c in enumerate(citations, start=1):
             if c < i:
@@ -19,7 +19,7 @@ class Solution:
         return i
 
     # https://leetcode.cn/problems/h-index-ii/solutions/871112/gong-shui-san-xie-liang-chong-er-fen-ji-sovjb
-    def hIndex(self, cs: List[int]) -> int:
+    def hIndex(self, cs: list[int]) -> int:
         n = len(cs)
         l, r = 0, n - 1
         while l < r:
@@ -34,7 +34,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    citations: List[int] = deserialize("List[int]", read_line())
+    citations: list[int] = deserialize("List[int]", read_line())
     ans = Solution().hIndex(citations)
 
     print("\noutput:", serialize(ans))

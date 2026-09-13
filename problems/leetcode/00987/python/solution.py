@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from collections import defaultdict
+
 # Created by shiyang07ca at 2024/02/13 00:01
 # leetgo: dev
 # https://leetcode.cn/problems/vertical-order-traversal-of-a-binary-tree/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -19,10 +21,10 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/vertical-order-traversal-of-a-binary-tree/solutions/2638913/si-chong-xie-fa-dfsha-xi-biao-shuang-shu-tg6q/
-    def verticalTraversal(self, root: Optional[TreeNode]) -> List[List[int]]:
+    def verticalTraversal(self, root: TreeNode | None) -> list[list[int]]:
         groups = defaultdict(list)
 
-        def dfs(node: Optional[TreeNode], row: int, col: int):
+        def dfs(node: TreeNode | None, row: int, col: int):
             if node is None:
                 return
             groups[col].append((row, node.val))  # col 相同的分到同一组

@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/12/21 21:26
 # leetgo: dev
 # https://leetcode.cn/problems/beautiful-towers-ii/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +13,7 @@ from leetgo_py import *
 
 class Solution:
     # https://leetcode.cn/problems/beautiful-towers-ii/solutions/2456562/qian-hou-zhui-fen-jie-dan-diao-zhan-pyth-1exe/?envType=daily-question&envId=2023-12-21
-    def maximumSumOfHeights1(self, a: List[int]) -> int:
+    def maximumSumOfHeights1(self, a: list[int]) -> int:
         n = len(a)
         suf = [0] * (n + 1)
         st = [n]  # 哨兵
@@ -63,7 +63,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    maxHeights: List[int] = deserialize("List[int]", read_line())
+    maxHeights: list[int] = deserialize("List[int]", read_line())
     ans = Solution().maximumSumOfHeights(maxHeights)
 
     print("\noutput:", serialize(ans))

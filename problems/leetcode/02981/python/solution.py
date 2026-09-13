@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from collections import defaultdict
+
 # Created by shiyang07ca at 2024/05/29 23:57
 # leetgo: dev
 # https://leetcode.cn/problems/find-longest-special-substring-that-occurs-thrice-i/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

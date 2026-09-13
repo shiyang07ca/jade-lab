@@ -1,15 +1,17 @@
+from __future__ import annotations
+
+from sys import maxsize as inf
+
 # Created by shiyang07ca at 2024/03/29 22:05
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-sum-of-mountain-triplets-i/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def minimumSum(self, nums: List[int]) -> int:
+    def minimumSum(self, nums: list[int]) -> int:
         n = len(nums)
         ans = inf
         for i in range(n - 2):
@@ -23,7 +25,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().minimumSum(nums)
 
     print("\noutput:", serialize(ans))

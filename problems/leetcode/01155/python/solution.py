@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from functools import cache
+
 # Created by shiyang07ca at 2023/10/24 13:26
 # leetgo: dev
 # https://leetcode.cn/problems/number-of-dice-rolls-with-target-sum/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

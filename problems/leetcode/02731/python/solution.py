@@ -1,16 +1,17 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/10/10 00:02
 # leetgo: dev
 # https://leetcode.cn/problems/movement-of-robots/
+from itertools import pairwise
 
-from itertools import *
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def sumDistance1(self, nums: List[int], s: str, d: int) -> int:
+    def sumDistance1(self, nums: list[int], s: str, d: int) -> int:
         MOD = 10**9 + 7
         pos = []
         for i, n in enumerate(nums):
@@ -26,7 +27,7 @@ class Solution:
         return ans
 
     # 链接：https://leetcode.cn/problems/movement-of-robots/description/
-    def sumDistance(self, nums: List[int], s: str, d: int) -> int:
+    def sumDistance(self, nums: list[int], s: str, d: int) -> int:
         mod = 10**9 + 7
         for i, c in enumerate(s):
             nums[i] += d if c == "R" else -d
@@ -41,7 +42,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     s: str = deserialize("str", read_line())
     d: int = deserialize("int", read_line())
     ans = Solution().sumDistance(nums, s, d)

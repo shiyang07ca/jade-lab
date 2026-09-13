@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/10/22 00:20
 # leetgo: dev
 # https://leetcode.cn/problems/reducing-dishes/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def maxSatisfaction1(self, sati: List[int]) -> int:
+    def maxSatisfaction1(self, sati: list[int]) -> int:
         sati.sort()
         n = len(sati)
         suf = [0] * (n + 1)
@@ -24,7 +24,7 @@ class Solution:
         return max(ans, 0)
 
     # 链接：https://leetcode.cn/problems/reducing-dishes/
-    def maxSatisfaction(self, satisfaction: List[int]) -> int:
+    def maxSatisfaction(self, satisfaction: list[int]) -> int:
         satisfaction.sort(reverse=True)
 
         ans = pre = 0
@@ -41,7 +41,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    satisfaction: List[int] = deserialize("List[int]", read_line())
+    satisfaction: list[int] = deserialize("List[int]", read_line())
     ans = Solution().maxSatisfaction(satisfaction)
 
     print("\noutput:", serialize(ans))

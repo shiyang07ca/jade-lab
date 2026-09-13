@@ -64,10 +64,11 @@
 - 每个节点的键值在 `[-4 * 10^4 , 4 * 10^4]` 之间。
 
 """
-from math import *
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from sys import maxsize as inf
+
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -91,10 +92,10 @@ from leetgo_py import *
 
 
 class Solution:
-    def maxSumBST(self, root: Optional[TreeNode]) -> int:
+    def maxSumBST(self, root: TreeNode | None) -> int:
         ans = 0  # 二叉搜索树可以为空
 
-        def dfs(node: Optional[TreeNode]) -> Tuple:
+        def dfs(node: TreeNode | None) -> tuple:
             if node is None:
                 return inf, -inf, 0
 

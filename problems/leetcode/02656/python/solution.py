@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/11/15 00:19
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-sum-with-exactly-k-elements/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def maximizeSum(self, nums: List[int], k: int) -> int:
+    def maximizeSum(self, nums: list[int], k: int) -> int:
         nums.sort()
         ans = 0
         for i in range(k):
@@ -20,7 +20,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().maximizeSum(nums, k)
 

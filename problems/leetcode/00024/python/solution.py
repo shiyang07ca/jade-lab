@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/08/06 00:02
 # leetgo: dev
 # https://leetcode.cn/problems/swap-nodes-in-pairs/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import ListNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -14,7 +14,7 @@ from leetgo_py import *
 #         self.val = val
 #         self.next = next
 class Solution:
-    def swapPairs(self, head: Optional[ListNode]) -> Optional[ListNode]:
+    def swapPairs(self, head: ListNode | None) -> ListNode | None:
         if head is None or head.next is None:
             return head
 

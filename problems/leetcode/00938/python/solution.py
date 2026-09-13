@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/02/26 00:00
 # leetgo: dev
 # https://leetcode.cn/problems/range-sum-of-bst/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -15,7 +15,7 @@ from leetgo_py import *
 #         self.left = left
 #         self.right = right
 class Solution:
-    def rangeSumBST(self, root: Optional[TreeNode], low: int, high: int) -> int:
+    def rangeSumBST(self, root: TreeNode | None, low: int, high: int) -> int:
         ans = 0
 
         def dfs(node):

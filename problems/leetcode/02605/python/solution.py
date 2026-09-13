@@ -1,15 +1,17 @@
+from __future__ import annotations
+
+from sys import maxsize as inf
+
 # Created by shiyang07ca at 2023/09/05 00:03
 # leetgo: dev
 # https://leetcode.cn/problems/form-smallest-number-from-two-digit-arrays/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def minNumber(self, nums1: List[int], nums2: List[int]) -> int:
+    def minNumber(self, nums1: list[int], nums2: list[int]) -> int:
         ans = inf
         for n in nums1:
             if n in nums2:
@@ -24,8 +26,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums1: List[int] = deserialize("List[int]", read_line())
-    nums2: List[int] = deserialize("List[int]", read_line())
+    nums1: list[int] = deserialize("List[int]", read_line())
+    nums2: list[int] = deserialize("List[int]", read_line())
     ans = Solution().minNumber(nums1, nums2)
 
     print("\noutput:", serialize(ans))

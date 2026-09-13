@@ -1,9 +1,13 @@
+from __future__ import annotations
+
+from bisect import bisect_right
+from collections import defaultdict
+from functools import cache
+
 # Created by shiyang07ca at 2023/12/08 21:37
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-earnings-from-taxi/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +16,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/maximum-earnings-from-taxi/
-    def maxTaxiEarnings1(self, n: int, rides: List[List[int]]) -> int:
+    def maxTaxiEarnings1(self, n: int, rides: list[list[int]]) -> int:
         groups = defaultdict(list)
         for start, end, tip in rides:
             groups[end].append((start, end - start + tip))
@@ -25,7 +29,7 @@ class Solution:
 
         return dfs(n)
 
-    def maxTaxiEarnings(self, n: int, rides: List[List[int]]) -> int:
+    def maxTaxiEarnings(self, n: int, rides: list[list[int]]) -> int:
         rides.sort(key=lambda x: x[1])
         ends = [r[1] for r in rides]
         f = [0] * (len(rides) + 1)
@@ -40,7 +44,7 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    rides: List[List[int]] = deserialize("List[List[int]]", read_line())
+    rides: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().maxTaxiEarnings(n, rides)
 
     print("\noutput:", serialize(ans))

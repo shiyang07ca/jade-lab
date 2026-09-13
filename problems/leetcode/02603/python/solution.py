@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/09/21 12:56
 # leetgo: dev
 # https://leetcode.cn/problems/collect-coins-in-a-tree/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -15,7 +15,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/collect-coins-in-a-tree/
-    def collectTheCoins(self, coins: List[int], edges: List[List[int]]) -> int:
+    def collectTheCoins(self, coins: list[int], edges: list[list[int]]) -> int:
         n = len(coins)
         g = [[] for _ in range(n)]
         for x, y in edges:
@@ -52,8 +52,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    coins: List[int] = deserialize("List[int]", read_line())
-    edges: List[List[int]] = deserialize("List[List[int]]", read_line())
+    coins: list[int] = deserialize("List[int]", read_line())
+    edges: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().collectTheCoins(coins, edges)
 
     print("\noutput:", serialize(ans))

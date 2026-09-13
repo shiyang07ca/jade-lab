@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/10/12 13:07
 # leetgo: dev
 # https://leetcode.cn/problems/find-the-array-concatenation-value/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def findTheArrayConcVal(self, nums: List[int]) -> int:
+    def findTheArrayConcVal(self, nums: list[int]) -> int:
         ans = 0
         i, j = 0, len(nums) - 1
         while i < j:
@@ -24,7 +24,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().findTheArrayConcVal(nums)
 
     print("\noutput:", serialize(ans))

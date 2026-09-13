@@ -1,10 +1,8 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/07/26 13:37
 # leetgo: dev
 # https://leetcode.cn/problems/handling-sum-queries-after-update/
-
-from typing import *
-from leetgo_py import *
-
 # @lc code=begin
 
 # TODO
@@ -113,9 +111,4 @@ class SegmentTree:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums1: List[int] = deserialize("List[int]", read_line())
-    nums2: List[int] = deserialize("List[int]", read_line())
-    queries: List[List[int]] = deserialize("List[List[int]]", read_line())
-    ans = Solution().handleQuery(nums1, nums2, queries)
-
-    print("\noutput:", serialize(ans))
+    raise NotImplementedError("Solution.handleQuery 尚未实现")

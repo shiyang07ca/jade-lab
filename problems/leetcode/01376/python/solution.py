@@ -57,10 +57,11 @@ e = [0,0,1,0,0,0]
 - 题目 **保证** 所有员工都可以收到通知。
 
 """
+from __future__ import annotations
 
-from typing import *
-from functools import *
-from leetgo_py import *
+from functools import cache
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -81,7 +82,7 @@ class Solution:
 
     # 返回值写法
     def numOfMinutes1(
-        self, n: int, headID: int, manager: List[int], informTime: List[int]
+        self, n: int, headID: int, manager: list[int], informTime: list[int]
     ) -> int:
         g = [[] for _ in range(n)]
         for i, m in enumerate(manager):
@@ -99,7 +100,7 @@ class Solution:
 
     # 传参写法
     def numOfMinutes2(
-        self, n: int, headID: int, manager: List[int], informTime: List[int]
+        self, n: int, headID: int, manager: list[int], informTime: list[int]
     ) -> int:
         g = [[] for _ in range(n)]
         for i, m in enumerate(manager):
@@ -125,7 +126,7 @@ class Solution:
     """
 
     def numOfMinutes(
-        self, n: int, headID: int, manager: List[int], informTime: List[int]
+        self, n: int, headID: int, manager: list[int], informTime: list[int]
     ) -> int:
         @cache  # 缓存装饰器，避免重复计算 dfs 的结果
         def dfs(x: int) -> int:
@@ -141,7 +142,7 @@ class Solution:
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
     headID: int = deserialize("int", read_line())
-    manager: List[int] = deserialize("List[int]", read_line())
-    informTime: List[int] = deserialize("List[int]", read_line())
+    manager: list[int] = deserialize("List[int]", read_line())
+    informTime: list[int] = deserialize("List[int]", read_line())
     ans = Solution().numOfMinutes(n, headID, manager, informTime)
     print("output:", serialize(ans))

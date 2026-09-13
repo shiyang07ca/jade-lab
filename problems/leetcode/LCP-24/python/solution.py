@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from heapq import heappush, heappushpop
+
 # Created by shiyang07ca at 2024/02/01 21:56
 # leetgo: dev
 # https://leetcode.cn/problems/5TxKeK/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -11,7 +13,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/5TxKeK/solutions/2627350/zhuan-huan-zhong-wei-shu-tan-xin-dui-din-7r9b/
-    def numsGame(self, nums: List[int]) -> List[int]:
+    def numsGame(self, nums: list[int]) -> list[int]:
         MOD = 1_000_000_007
         ans = [0] * len(nums)
         left = []   # 维护较小的一半，大根堆（小根堆取负号）
@@ -37,7 +39,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().numsGame(nums)
 
     print("\noutput:", serialize(ans))

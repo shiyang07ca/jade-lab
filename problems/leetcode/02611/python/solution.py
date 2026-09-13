@@ -43,9 +43,9 @@
 - `0 <= k <= n`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -54,7 +54,7 @@ from leetgo_py import *
 
 # 链接：https://leetcode.cn/problems/mice-and-cheese/solutions/2299918/python3javacgotypescript-yi-ti-yi-jie-ta-439r/
 class Solution:
-    def miceAndCheese(self, reward1: List[int], reward2: List[int], k: int) -> int:
+    def miceAndCheese(self, reward1: list[int], reward2: list[int], k: int) -> int:
         for i, x in enumerate(reward2):
             reward1[i] -= x
         reward1.sort(reverse=True)
@@ -64,8 +64,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    reward1: List[int] = deserialize("List[int]", read_line())
-    reward2: List[int] = deserialize("List[int]", read_line())
+    reward1: list[int] = deserialize("List[int]", read_line())
+    reward2: list[int] = deserialize("List[int]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().miceAndCheese(reward1, reward2, k)
 

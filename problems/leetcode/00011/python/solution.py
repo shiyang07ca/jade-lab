@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/11/11 08:59
 # leetgo: 1.4.10
 # https://leetcode.cn/problems/container-with-most-water/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +12,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/container-with-most-water/solutions/1974355/by-endlesscheng-f0xz/
-    def maxArea(self, height: List[int]) -> int:
+    def maxArea(self, height: list[int]) -> int:
         ans = left = 0
         right = len(height) - 1
         while left < right:
@@ -30,6 +30,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    height: List[int] = deserialize("List[int]", read_line())
+    height: list[int] = deserialize("List[int]", read_line())
     ans = Solution().maxArea(height)
     print("\noutput:", serialize(ans, "integer"))

@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/01/19 21:57
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-time-to-make-array-sum-at-most-x/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +12,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/minimum-time-to-make-array-sum-at-most-x/solutions/2374920/jiao-ni-yi-bu-bu-si-kao-ben-ti-by-endles-2eho/
-    def minimumTime(self, nums1: List[int], nums2: List[int], x: int) -> int:
+    def minimumTime(self, nums1: list[int], nums2: list[int], x: int) -> int:
         pairs = sorted(zip(nums1, nums2), key=lambda p: p[1])
         n = len(pairs)
         f = [0] * (n + 1)
@@ -31,8 +31,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums1: List[int] = deserialize("List[int]", read_line())
-    nums2: List[int] = deserialize("List[int]", read_line())
+    nums1: list[int] = deserialize("List[int]", read_line())
+    nums2: list[int] = deserialize("List[int]", read_line())
     x: int = deserialize("int", read_line())
     ans = Solution().minimumTime(nums1, nums2, x)
 

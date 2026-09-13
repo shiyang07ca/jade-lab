@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from heapq import heappop, heappush
+
 # Created by shiyang07ca at 2024/02/06 00:46
 # leetgo: dev
 # https://leetcode.cn/problems/p0NxJO/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +14,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/p0NxJO/solutions/2633201/python3javacgotypescript-yi-ti-yi-jie-ta-8cfy/
-    def magicTower(self, nums: List[int]) -> int:
+    def magicTower(self, nums: list[int]) -> int:
         q = []
         blood = 1
         ans = v = 0
@@ -31,7 +33,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().magicTower(nums)
 
     print("\noutput:", serialize(ans))

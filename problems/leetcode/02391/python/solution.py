@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/05/11 00:10
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-amount-of-time-to-collect-garbage/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def garbageCollection(self, garbage: List[str], travel: List[int]) -> int:
+    def garbageCollection(self, garbage: list[str], travel: list[int]) -> int:
         ans = 0
         p_i, m_i, g_i = 0, 0, 0
         for index, gar in enumerate(garbage):
@@ -32,7 +32,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    garbage: List[str] = deserialize("List[str]", read_line())
-    travel: List[int] = deserialize("List[int]", read_line())
+    garbage: list[str] = deserialize("List[str]", read_line())
+    travel: list[int] = deserialize("List[int]", read_line())
     ans = Solution().garbageCollection(garbage, travel)
     print("\noutput:", serialize(ans, "integer"))

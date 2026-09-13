@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from collections import deque
+
 # Created by shiyang07ca at 2024/03/03 10:19
 # leetgo: dev
 # https://leetcode.cn/problems/implement-stack-using-queues/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, join_array, read_line, serialize, split_array
 
 # @lc code=begin
 
@@ -42,7 +44,7 @@ class MyStack:
 # @lc code=end
 
 if __name__ == "__main__":
-    ops: List[str] = deserialize("List[str]", read_line())
+    ops: list[str] = deserialize("List[str]", read_line())
     params = split_array(read_line())
     output = ["null"]
 

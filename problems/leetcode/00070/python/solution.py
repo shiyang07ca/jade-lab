@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from functools import cache
+
 # Created by shiyang07ca at 2023/12/10 19:22
 # leetgo: dev
 # https://leetcode.cn/problems/climbing-stairs/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

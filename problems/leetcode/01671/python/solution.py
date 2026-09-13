@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from bisect import bisect_left
+
 # Created by shiyang07ca at 2023/12/22 11:57
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-number-of-removals-to-make-mountain-array/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +14,7 @@ from leetgo_py import *
 
 class Solution:
     # https://leetcode.cn/problems/minimum-number-of-removals-to-make-mountain-array/solutions/2575540/python3javacgorust-yi-ti-yi-jie-dong-tai-wtkr/?envType=daily-question&envId=2023-12-22
-    def minimumMountainRemovals1(self, nums: List[int]) -> int:
+    def minimumMountainRemovals1(self, nums: list[int]) -> int:
         n = len(nums)
         left = [1] * n
         right = [1] * n
@@ -27,7 +29,7 @@ class Solution:
         return n - max(a + b - 1 for a, b in zip(left, right) if a > 1 and b > 1)
 
     # 链接：https://leetcode.cn/problems/minimum-number-of-removals-to-make-mountain-array/solutions/2575527/qian-hou-zhui-fen-jie-zui-chang-di-zeng-9vowl/
-    def minimumMountainRemovals(self, nums: List[int]) -> int:
+    def minimumMountainRemovals(self, nums: list[int]) -> int:
         n = len(nums)
         suf = [0] * n
         g = []
@@ -57,7 +59,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().minimumMountainRemovals(nums)
 
     print("\noutput:", serialize(ans))

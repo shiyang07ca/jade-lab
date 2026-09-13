@@ -1,15 +1,17 @@
+from __future__ import annotations
+
+from itertools import accumulate
+
 # Created by shiyang07ca at 2024/03/18 00:03
 # leetgo: dev
 # https://leetcode.cn/problems/range-sum-query-immutable/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, join_array, read_line, serialize, split_array
 
 # @lc code=begin
 
 
 class NumArray:
-    def __init__(self, nums: List[int]):
+    def __init__(self, nums: list[int]):
         self.acc = list(accumulate(nums, initial=0))
 
     def sumRange(self, left: int, right: int) -> int:
@@ -23,14 +25,14 @@ class NumArray:
 # @lc code=end
 
 if __name__ == "__main__":
-    ops: List[str] = deserialize("List[str]", read_line())
+    ops: list[str] = deserialize("List[str]", read_line())
     params = split_array(read_line())
     output = ["null"]
 
     constructor_params = split_array(params[0])
-    nums: List[int] = deserialize("List[int]", constructor_params[0])
-    numsSize: int = deserialize("int", constructor_params[1])
-    obj = NumArray(nums, numsSize)
+    nums: list[int] = deserialize("List[int]", constructor_params[0])
+    _ = deserialize("int", constructor_params[1])
+    obj = NumArray(nums)
 
     for i in range(1, len(ops)):
         match ops[i]:

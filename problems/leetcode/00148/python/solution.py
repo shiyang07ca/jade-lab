@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/11/09 17:08
 # leetgo: 1.4.10
 # https://leetcode.cn/problems/sort-list/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import ListNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -18,13 +18,15 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/sort-list/solutions/13728/sort-list-gui-bing-pai-xu-lian-biao-by-jyd/
-    def sortList(self, head: ListNode) -> ListNode:
+    def sortList(self, head: ListNode | None) -> ListNode | None:
         if not head or not head.next:
             return head
         # cut the LinkedList at the mid index.
         slow, fast = head, head.next
         while fast and fast.next:
+            assert slow is not None
             fast, slow = fast.next.next, slow.next
+        assert slow is not None
         mid, slow.next = slow.next, None  # save and cut.
 
         left, right = self.sortList(head), self.sortList(mid)

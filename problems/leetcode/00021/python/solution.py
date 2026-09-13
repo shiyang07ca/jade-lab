@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/08/05 00:09
 # leetgo: dev
 # https://leetcode.cn/problems/merge-two-sorted-lists/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import ListNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -15,14 +15,16 @@ from leetgo_py import *
 #         self.next = next
 class Solution:
     def mergeTwoLists(
-        self, list1: Optional[ListNode], list2: Optional[ListNode]
-    ) -> Optional[ListNode]:
+        self, list1: ListNode | None, list2: ListNode | None
+    ) -> ListNode | None:
         cur = ans = ListNode()
         while list1 or list2:
             if not list1:
+                assert list2 is not None
                 cur.next = list2
                 list2 = list2.next
             elif not list2:
+                assert list1 is not None
                 cur.next = list1
                 list1 = list1.next
             elif list1.val <= list2.val:
@@ -36,8 +38,8 @@ class Solution:
         return ans.next
 
     def mergeTwoLists1(
-        self, l1: Optional[ListNode], l2: Optional[ListNode]
-    ) -> Optional[ListNode]:
+        self, l1: ListNode | None, l2: ListNode | None
+    ) -> ListNode | None:
         if not l1:
             return l2
         if not l2:
@@ -58,4 +60,4 @@ if __name__ == "__main__":
     list2: ListNode = deserialize("ListNode", read_line())
     ans = Solution().mergeTwoLists(list1, list2)
 
-    print("\noutput:", serialize(ans))
+    print("\noutput:", serialize(ans, "ListNode"))

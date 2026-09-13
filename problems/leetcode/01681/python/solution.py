@@ -52,9 +52,13 @@
 - `1 <= nums[i] <= nums.length`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from functools import cache
+from sys import maxsize as inf
+from typing import Counter
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -63,7 +67,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def minimumIncompatibility(self, a: List[int], k: int) -> int:
+    def minimumIncompatibility(self, a: list[int], k: int) -> int:
         if any(c > k for c in Counter(a).values()):  # 鸽巢原理
             return -1
 
@@ -93,7 +97,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().minimumIncompatibility(nums, k)
     print("output:", serialize(ans))

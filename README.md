@@ -47,7 +47,7 @@ mise run modules --all
 模块检查与公共规则分开运行：
 
 ```sh
-mise run check package-python-algorithms  # 只检查一个模块
+mise run check lab-python-implementations  # 只检查一个模块
 mise run check                            # 检查默认稳定模块
 mise run check --all --keep-going
 mise run policy                           # 检查目录、索引、文档链接和内容规则

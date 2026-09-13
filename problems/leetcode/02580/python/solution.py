@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/03/27 21:53
 # leetgo: dev
 # https://leetcode.cn/problems/count-ways-to-group-overlapping-ranges/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +12,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/count-ways-to-group-overlapping-ranges/solutions/2147717/tiao-yue-you-xi-bian-xing-by-endlesschen-hatn/
-    def countWays(self, ranges: List[List[int]]) -> int:
+    def countWays(self, ranges: list[list[int]]) -> int:
         ranges.sort(key=lambda p: p[0])
         m, max_r = 0, -1
         for l, r in ranges:
@@ -25,7 +25,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    ranges: List[List[int]] = deserialize("List[List[int]]", read_line())
+    ranges: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().countWays(ranges)
 
     print("\noutput:", serialize(ans))

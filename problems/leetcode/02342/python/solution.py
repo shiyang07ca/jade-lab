@@ -1,15 +1,18 @@
+from __future__ import annotations
+
+from collections import defaultdict
+from heapq import heappop, heappush
+
 # Created by shiyang07ca at 2023/11/18 00:22
 # leetgo: dev
 # https://leetcode.cn/problems/max-sum-of-a-pair-with-equal-sum-of-digits/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def maximumSum(self, nums: List[int]) -> int:
+    def maximumSum(self, nums: list[int]) -> int:
         def compute(n):
             ans = 0
             while n:
@@ -32,7 +35,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().maximumSum(nums)
 
     print("\noutput:", serialize(ans))

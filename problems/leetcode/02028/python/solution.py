@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/05/27 00:01
 # leetgo: dev
 # https://leetcode.cn/problems/find-missing-observations/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def missingRolls(self, rolls: List[int], mean: int, n: int) -> List[int]:
+    def missingRolls(self, rolls: list[int], mean: int, n: int) -> list[int]:
         tot = mean * (len(rolls) + n)
         diff = tot - sum(rolls)
         if diff < n or diff > n * 6:
@@ -28,7 +28,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    rolls: List[int] = deserialize("List[int]", read_line())
+    rolls: list[int] = deserialize("List[int]", read_line())
     mean: int = deserialize("int", read_line())
     n: int = deserialize("int", read_line())
     ans = Solution().missingRolls(rolls, mean, n)

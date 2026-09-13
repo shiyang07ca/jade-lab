@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/12/14 12:09
 # leetgo: dev
 # https://leetcode.cn/problems/stamping-the-grid/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -15,7 +15,7 @@ from leetgo_py import *
 class Solution:
     # https://leetcode.cn/problems/stamping-the-grid/solutions/1199642/wu-nao-zuo-fa-er-wei-qian-zhui-he-er-wei-zwiu/?envType=daily-question&envId=2023-12-14
     def possibleToStamp(
-        self, grid: List[List[int]], stampHeight: int, stampWidth: int
+        self, grid: list[list[int]], stampHeight: int, stampWidth: int
     ) -> bool:
         m, n = len(grid), len(grid[0])
 
@@ -50,7 +50,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    grid: List[List[int]] = deserialize("List[List[int]]", read_line())
+    grid: list[list[int]] = deserialize("List[List[int]]", read_line())
     stampHeight: int = deserialize("int", read_line())
     stampWidth: int = deserialize("int", read_line())
     ans = Solution().possibleToStamp(grid, stampHeight, stampWidth)

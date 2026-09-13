@@ -1,16 +1,16 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/06/13 00:08
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-elegance-of-a-k-length-subsequence/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
     # 链接：https://leetcode.cn/problems/maximum-elegance-of-a-k-length-subsequence/solutions/2375128/fan-hui-tan-xin-pythonjavacgo-by-endless-v2w1/
-    def findMaximumElegance(self, items: List[List[int]], k: int) -> int:
+    def findMaximumElegance(self, items: list[list[int]], k: int) -> int:
         items.sort(key=lambda p: -p[0])  # 把利润从大到小排序
         ans = total_profit = 0
         vis = set()
@@ -33,7 +33,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    items: List[List[int]] = deserialize("List[List[int]]", read_line())
+    items: list[list[int]] = deserialize("List[List[int]]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().findMaximumElegance(items, k)
     print("\noutput:", serialize(ans, "long"))

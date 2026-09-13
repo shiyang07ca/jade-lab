@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/06/10 23:57
 # leetgo: dev
 # https://leetcode.cn/problems/boats-to-save-people/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def numRescueBoats(self, people: List[int], limit: int) -> int:
+    def numRescueBoats(self, people: list[int], limit: int) -> int:
         people.sort(reverse=True)
         left = 0
         right = len(people) - 1
@@ -26,7 +26,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    people: List[int] = deserialize("List[int]", read_line())
+    people: list[int] = deserialize("List[int]", read_line())
     limit: int = deserialize("int", read_line())
     ans = Solution().numRescueBoats(people, limit)
     print("\noutput:", serialize(ans, "integer"))

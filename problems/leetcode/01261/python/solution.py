@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/03/12 00:17
 # leetgo: dev
 # https://leetcode.cn/problems/find-elements-in-a-contaminated-binary-tree/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, join_array, read_line, serialize, split_array
 
 # @lc code=begin
 
@@ -16,8 +16,11 @@ from leetgo_py import *
 
 
 class FindElements:
-    def __init__(self, root: Optional[TreeNode]):
+    def __init__(self, root: TreeNode | None):
         self.set = set()
+
+        if root is None:
+            return
 
         def dfs(node):
             if not node:
@@ -44,7 +47,7 @@ class FindElements:
 # @lc code=end
 
 if __name__ == "__main__":
-    ops: List[str] = deserialize("List[str]", read_line())
+    ops: list[str] = deserialize("List[str]", read_line())
     params = split_array(read_line())
     output = ["null"]
 

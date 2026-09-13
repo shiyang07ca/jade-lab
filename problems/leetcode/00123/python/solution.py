@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from sys import maxsize as inf
+
 # Created by shiyang07ca at 2023/10/03 00:06
 # leetgo: dev
 # https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-iii/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -11,7 +13,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def maxProfit(self, prices: List[int]) -> int:
+    def maxProfit(self, prices: list[int]) -> int:
         k = 2
         f = [[-inf] * 2 for _ in range(k + 2)]
         for j in range(1, k + 2):
@@ -26,7 +28,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    prices: List[int] = deserialize("List[int]", read_line())
+    prices: list[int] = deserialize("List[int]", read_line())
     ans = Solution().maxProfit(prices)
 
     print("\noutput:", serialize(ans))

@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/07/06 09:21
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-split-of-positive-even-integers/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +12,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def maximumEvenSplit(self, finalSum: int) -> List[int]:
+    def maximumEvenSplit(self, finalSum: int) -> list[int]:
         if finalSum % 2:
             return []
         ans = []

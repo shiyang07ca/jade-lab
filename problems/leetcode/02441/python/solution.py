@@ -42,16 +42,17 @@
 - `nums[i] != 0`
 
 """
-from collections import *
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from collections import Counter
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def findMaxK(self, nums: List[int]) -> int:
+    def findMaxK(self, nums: list[int]) -> int:
         ans = -1
         cnt = Counter(nums)
         for n in sorted(cnt.keys(), reverse=True):
@@ -66,6 +67,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().findMaxK(nums)
     print("output:", serialize(ans))

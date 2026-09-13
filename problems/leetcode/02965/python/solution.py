@@ -1,15 +1,17 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/05/31 23:38
 # leetgo: dev
 # https://leetcode.cn/problems/find-missing-and-repeated-values/
+from typing import Counter
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def findMissingAndRepeatedValues(self, grid: List[List[int]]) -> List[int]:
+    def findMissingAndRepeatedValues(self, grid: list[list[int]]) -> list[int]:
         n = len(grid)
         cnt = Counter()
         for row in grid:
@@ -27,6 +29,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    grid: List[List[int]] = deserialize("List[List[int]]", read_line())
+    grid: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().findMissingAndRepeatedValues(grid)
     print("\noutput:", serialize(ans, "integer[]"))

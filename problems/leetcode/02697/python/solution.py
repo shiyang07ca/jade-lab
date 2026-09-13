@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/12/13 23:31
 # leetgo: dev
 # https://leetcode.cn/problems/lexicographically-smallest-palindrome/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

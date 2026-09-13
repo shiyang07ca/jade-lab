@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/11/21 13:46
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-deletions-to-make-array-beautiful/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +12,7 @@ from leetgo_py import *
 
 # 链接：https://leetcode.cn/problems/minimum-deletions-to-make-array-beautiful/
 class Solution:
-    def minDeletion(self, nums: List[int]) -> int:
+    def minDeletion(self, nums: list[int]) -> int:
         n = len(nums)
         i = ans = 0
         while i < n - 1:
@@ -28,7 +28,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().minDeletion(nums)
 
     print("\noutput:", serialize(ans))

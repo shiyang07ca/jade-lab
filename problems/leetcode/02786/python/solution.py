@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from functools import cache
+
 # Created by shiyang07ca at 2024/06/14 23:57
 # leetgo: dev
 # https://leetcode.cn/problems/visit-array-positions-to-maximize-score/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +14,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/visit-array-positions-to-maximize-score/solutions/2810386/jiao-ni-yi-bu-bu-si-kao-dpcong-ji-yi-hua-jhvr/
-    def maxScore(self, nums: List[int], x: int) -> int:
+    def maxScore(self, nums: list[int], x: int) -> int:
         @cache  # 缓存装饰器，避免重复计算 dfs 的结果（记忆化）
         def dfs(i: int, j: int) -> int:
             if i == len(nums):
@@ -27,7 +29,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     x: int = deserialize("int", read_line())
     ans = Solution().maxScore(nums, x)
     print("\noutput:", serialize(ans, "long"))

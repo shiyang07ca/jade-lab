@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/06/15 23:35
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-beauty-of-an-array-after-applying-operation/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +12,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/maximum-beauty-of-an-array-after-applying-operation/solutions/2345805/pai-xu-shuang-zhi-zhen-by-endlesscheng-hbqx/
-    def maximumBeauty(self, nums: List[int], k: int) -> int:
+    def maximumBeauty(self, nums: list[int], k: int) -> int:
         nums.sort()
         ans = left = 0
         for right, x in enumerate(nums):
@@ -25,7 +25,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().maximumBeauty(nums, k)
     print("\noutput:", serialize(ans, "integer"))

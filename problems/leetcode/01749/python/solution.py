@@ -1,15 +1,17 @@
+from __future__ import annotations
+
+from itertools import accumulate
+
 # Created by shiyang07ca at 2023/08/08 09:36
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-absolute-sum-of-any-subarray/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def maxAbsoluteSum1(self, nums: List[int]) -> int:
+    def maxAbsoluteSum1(self, nums: list[int]) -> int:
         ans = abs(nums[0])
         n = len(nums)
         if n == 1:
@@ -32,7 +34,7 @@ class Solution:
         return ans
 
     # 链接：https://leetcode.cn/problems/maximum-absolute-sum-of-any-subarray/solutions/2377930/liang-chong-fang-fa-dong-tai-gui-hua-qia-dczr/
-    def maxAbsoluteSum2(self, nums: List[int]) -> int:
+    def maxAbsoluteSum2(self, nums: list[int]) -> int:
         ans = f_max = f_min = 0
         for x in nums:
             f_max = max(f_max, 0) + x
@@ -40,7 +42,7 @@ class Solution:
             ans = max(ans, f_max, -f_min)
         return ans
 
-    def maxAbsoluteSum(self, nums: List[int]) -> int:
+    def maxAbsoluteSum(self, nums: list[int]) -> int:
         s = list(accumulate(nums, initial=0))  # nums 的前缀和
         return max(s) - min(s)
 
@@ -48,7 +50,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().maxAbsoluteSum(nums)
 
     print("\noutput:", serialize(ans))

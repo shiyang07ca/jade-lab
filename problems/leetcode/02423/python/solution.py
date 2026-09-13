@@ -42,11 +42,11 @@
 - `word` 只包含小写英文字母。
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from collections import Counter
 
-from collections import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

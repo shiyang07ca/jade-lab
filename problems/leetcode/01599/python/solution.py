@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/01/01 00:48
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-profit-of-operating-a-centennial-wheel/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -14,7 +14,7 @@ from leetgo_py import *
 class Solution:
     # 链接：https://leetcode.cn/problems/maximum-profit-of-operating-a-centennial-wheel/solutions/2586522/python3javacgorust-yi-ti-yi-jie-mo-ni-qi-zstw/
     def minOperationsMaxProfit(
-        self, customers: List[int], boardingCost: int, runningCost: int
+        self, customers: list[int], boardingCost: int, runningCost: int
     ) -> int:
         ans = -1
         mx = t = 0
@@ -35,7 +35,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    customers: List[int] = deserialize("List[int]", read_line())
+    customers: list[int] = deserialize("List[int]", read_line())
     boardingCost: int = deserialize("int", read_line())
     runningCost: int = deserialize("int", read_line())
     ans = Solution().minOperationsMaxProfit(customers, boardingCost, runningCost)

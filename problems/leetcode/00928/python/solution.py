@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/04/17 00:09
 # leetgo: dev
 # https://leetcode.cn/problems/minimize-malware-spread-ii/
+from typing import Counter
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +14,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/minimize-malware-spread-ii/solutions/2743395/ni-xiang-si-wei-pythonjavaccgojsrust-by-jinc3/
-    def minMalwareSpread(self, graph: List[List[int]], initial: List[int]) -> int:
+    def minMalwareSpread(self, graph: list[list[int]], initial: list[int]) -> int:
         st = set(initial)
         vis = [False] * len(graph)
 
@@ -53,7 +55,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    graph: List[List[int]] = deserialize("List[List[int]]", read_line())
-    initial: List[int] = deserialize("List[int]", read_line())
+    graph: list[list[int]] = deserialize("List[List[int]]", read_line())
+    initial: list[int] = deserialize("List[int]", read_line())
     ans = Solution().minMalwareSpread(graph, initial)
     print("\noutput:", serialize(ans, "integer"))

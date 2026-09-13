@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/11/11 10:33
 # leetgo: dev
 # https://leetcode.cn/problems/couples-holding-hands/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +12,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/couples-holding-hands/submissions/
-    def minSwapsCouples(self, row: List[int]) -> int:
+    def minSwapsCouples(self, row: list[int]) -> int:
         def find(x: int) -> int:
             if p[x] != x:
                 p[x] = find(p[x])
@@ -29,7 +29,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    row: List[int] = deserialize("List[int]", read_line())
+    row: list[int] = deserialize("List[int]", read_line())
     ans = Solution().minSwapsCouples(row)
 
     print("\noutput:", serialize(ans))

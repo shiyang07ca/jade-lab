@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from bisect import bisect_left
+
 # Created by shiyang07ca at 2024/06/05 09:37
 # leetgo: dev
 # https://leetcode.cn/problems/distribute-elements-into-two-arrays-ii/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -33,7 +35,7 @@ class Fenwick:
 
 class Solution:
     # 链接：https://leetcode.cn/problems/distribute-elements-into-two-arrays-ii/solutions/2664646/chi-san-hua-shu-zhuang-shu-zu-pythonjava-3bb2/
-    def resultArray(self, nums: List[int]) -> List[int]:
+    def resultArray(self, nums: list[int]) -> list[int]:
         sorted_nums = sorted(set(nums))
         m = len(sorted_nums)
         a = [nums[0]]
@@ -58,6 +60,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().resultArray(nums)
     print("\noutput:", serialize(ans, "integer[]"))

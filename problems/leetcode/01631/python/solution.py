@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+import collections
+
 # Created by shiyang07ca at 2023/12/11 22:20
 # leetgo: dev
 # https://leetcode.cn/problems/path-with-minimum-effort/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +14,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/path-with-minimum-effort/
-    def minimumEffortPath(self, heights: List[List[int]]) -> int:
+    def minimumEffortPath(self, heights: list[list[int]]) -> int:
         m, n = len(heights), len(heights[0])
         left, right, ans = 0, 10**6 - 1, 0
 
@@ -45,7 +47,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    heights: List[List[int]] = deserialize("List[List[int]]", read_line())
+    heights: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().minimumEffortPath(heights)
 
     print("\noutput:", serialize(ans))

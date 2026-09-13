@@ -1,15 +1,18 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/11/25 22:43
 # leetgo: dev
 # https://leetcode.cn/problems/pseudo-palindromic-paths-in-a-binary-tree/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def pseudoPalindromicPaths1(self, root: Optional[TreeNode]) -> int:
+    def pseudoPalindromicPaths1(self, root: TreeNode | None) -> int:
+        if root is None:
+            return 0
+
         def dfs(node, pre):
             if not node.left and not node.right:
                 nonlocal ans
@@ -26,7 +29,7 @@ class Solution:
         return ans
 
     # 链接：https://leetcode.cn/problems/pseudo-palindromic-paths-in-a-binary-tree/
-    def pseudoPalindromicPaths(self, root: Optional[TreeNode], mask=0) -> int:
+    def pseudoPalindromicPaths(self, root: TreeNode | None, mask=0) -> int:
         if root is None:
             return 0
         mask ^= 1 << root.val  # 修改 root.val 出现次数的奇偶性

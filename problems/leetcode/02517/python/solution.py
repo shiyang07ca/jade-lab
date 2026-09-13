@@ -48,9 +48,9 @@
 - `2 <= k <= price.length`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -59,7 +59,7 @@ from leetgo_py import *
 
 # https://leetcode.cn/problems/maximum-tastiness-of-candy-basket/solutions/2031994/er-fen-da-an-by-endlesscheng-r418/
 class Solution:
-    def maximumTastiness(self, price: List[int], k: int) -> int:
+    def maximumTastiness(self, price: list[int], k: int) -> int:
         """
         随着甜蜜度增大，能选择的 k 变小，有单调性，可以二分
 
@@ -94,7 +94,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    price: List[int] = deserialize("List[int]", read_line())
+    price: list[int] = deserialize("List[int]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().maximumTastiness(price, k)
 

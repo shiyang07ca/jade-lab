@@ -44,9 +44,11 @@
 - `matrix[i][j] == 0` 或 `1`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from typing import Counter
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -61,7 +63,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def maxEqualRowsAfterFlips(self, matrix: List[List[int]]) -> int:
+    def maxEqualRowsAfterFlips(self, matrix: list[list[int]]) -> int:
         cnt = Counter()
         for row in matrix:
             t = tuple(row) if row[0] == 0 else tuple(x ^ 1 for x in row)
@@ -72,7 +74,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    matrix: List[List[int]] = deserialize("List[List[int]]", read_line())
+    matrix: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().maxEqualRowsAfterFlips(matrix)
 
     print("\noutput:", serialize(ans))

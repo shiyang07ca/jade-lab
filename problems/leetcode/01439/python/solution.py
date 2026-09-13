@@ -52,11 +52,11 @@
 - `mat[i]` 是一个非递减数组
 
 """
-from heapq import *
+from __future__ import annotations
 
+from heapq import heappop, heappush
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -65,14 +65,14 @@ from leetgo_py import *
 
 # 链接：https://leetcode.cn/problems/find-the-kth-smallest-sum-of-a-matrix-with-sorted-rows/solutions/2286593/san-chong-suan-fa-bao-li-er-fen-da-an-du-k1vd/
 class Solution:
-    def kthSmallest1(self, mat: List[List[int]], k: int) -> int:
+    def kthSmallest1(self, mat: list[list[int]], k: int) -> int:
         a = mat[0][:k]
         for row in mat[1:]:
             a = sorted(x + y for x in a for y in row)[:k]
         return a[-1]
 
     # 373. 查找和最小的 K 对数字
-    def kSmallestPairs(self, nums1: List[int], nums2: List[int], k: int) -> List[int]:
+    def kSmallestPairs(self, nums1: list[int], nums2: list[int], k: int) -> list[int]:
         ans = []
         h = [(nums1[0] + nums2[0], 0, 0)]
         while h and len(ans) < k:
@@ -84,7 +84,7 @@ class Solution:
                 heappush(h, (nums1[i] + nums2[j + 1], i, j + 1))
         return ans
 
-    def kthSmallest(self, mat: List[List[int]], k: int) -> int:
+    def kthSmallest(self, mat: list[list[int]], k: int) -> int:
         a = mat[0][:k]
         for row in mat[1:]:
             a = self.kSmallestPairs(row, a, k)
@@ -94,7 +94,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    mat: List[List[int]] = deserialize("List[List[int]]", read_line())
+    mat: list[list[int]] = deserialize("List[List[int]]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().kthSmallest(mat, k)
 

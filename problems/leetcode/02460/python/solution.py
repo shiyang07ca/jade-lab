@@ -52,15 +52,15 @@
 - `0 <= nums[i] <= 1000`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def applyOperations(self, nums: List[int]) -> List[int]:
+    def applyOperations(self, nums: list[int]) -> list[int]:
         ans = []
         n = len(nums)
         i = 0
@@ -80,7 +80,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().applyOperations(nums)
 
     print("\noutput:", serialize(ans))

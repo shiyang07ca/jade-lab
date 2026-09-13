@@ -27,5 +27,5 @@
 | `cookbook/cpp/` | `labs/algorithms/cpp-implementations/` | 可编译、尚无公开 CMake package 和行为测试 |
 | `cookbook/go/` | `labs/languages/go-fundamentals/` | 独立运行的语言机制程序 |
 | `cookbook/java/` | `labs/languages/java-runtime/` | Java 并发与运行时机制程序 |
-| 已验证的 Python 实现 | `packages/python-algorithms/` | 可安装并由消费方测试的稳定软件包 |
-| 其余 Python 算法与语言代码 | `labs/algorithms/python-implementations/`、`labs/languages/python-runtime/` | 保留并逐项验证的实验 |
+| Python 算法与数据结构实现 | `labs/algorithms/python-implementations/` | 集中维护的复习、题解原型和实验代码 |
+| 其他 Python 语言代码 | `labs/languages/python-runtime/` | 保留并逐项验证的实验 |

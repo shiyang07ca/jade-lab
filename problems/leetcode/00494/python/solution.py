@@ -44,9 +44,11 @@
 - `-1000 <= target <= 1000`
 
 """
-from functools import *
-from typing import *
-from leetgo_py import *
+from __future__ import annotations
+
+from functools import cache
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -56,7 +58,7 @@ from leetgo_py import *
 
 class Solution:
     # 记忆化搜索
-    def findTargetSumWays1(self, nums: List[int], target: int) -> int:
+    def findTargetSumWays1(self, nums: list[int], target: int) -> int:
         # 找到正号总和 p，nums 总和为 s, 负号总和为 s-p
         # p - (s-p) = t
         # => 2p = s + t
@@ -79,7 +81,7 @@ class Solution:
         return dfs(n - 1, target)
 
     # 递推
-    def findTargetSumWays2(self, nums: List[int], target: int) -> int:
+    def findTargetSumWays2(self, nums: list[int], target: int) -> int:
         target += sum(nums)
         if target < 0 or target % 2:
             return 0
@@ -97,7 +99,7 @@ class Solution:
         return f[n][target]
 
     # 滚动数组更新
-    def findTargetSumWays(self, nums: List[int], target: int) -> int:
+    def findTargetSumWays(self, nums: list[int], target: int) -> int:
         target += sum(nums)
         if target < 0 or target % 2:
             return 0
@@ -114,7 +116,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     target: int = deserialize("int", read_line())
     ans = Solution().findTargetSumWays(nums, target)
     print("output:", serialize(ans))

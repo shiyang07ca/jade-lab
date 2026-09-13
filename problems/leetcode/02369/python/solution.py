@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/03/01 13:41
 # leetgo: dev
 # https://leetcode.cn/problems/check-if-there-is-a-valid-partition-for-the-array/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +13,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/check-if-there-is-a-valid-partition-for-the-array/solutions/1728735/by-endlesscheng-8y73/
-    def validPartition(self, nums: List[int]) -> bool:
+    def validPartition(self, nums: list[int]) -> bool:
         n = len(nums)
         f = [True] + [False] * n
         for i, x in enumerate(nums):
@@ -35,7 +35,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().validPartition(nums)
 
     print("\noutput:", serialize(ans))

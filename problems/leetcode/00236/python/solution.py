@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from typing import cast
+
 # Created by shiyang07ca at 2024/02/09 00:30
 # leetgo: dev
 # https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -27,8 +29,8 @@ class Solution:
     # - 只有右子树找到：返回递归右子树结果
     # - 左右子树都没找到：返回空节点
     def lowestCommonAncestor(
-        self, root: TreeNode, p: TreeNode, q: TreeNode
-    ) -> TreeNode:
+        self, root: TreeNode | None, p: TreeNode, q: TreeNode
+    ) -> TreeNode | None:
         if root in (None, p, q):
             return root
         left = self.lowestCommonAncestor(root.left, p, q)
@@ -43,8 +45,8 @@ class Solution:
 # Warning: this is a manual question, the generated test code may be incorrect.
 if __name__ == "__main__":
     root: TreeNode = deserialize("TreeNode", read_line())
-    p: int = deserialize("int", read_line())
-    q: int = deserialize("int", read_line())
+    p: TreeNode = cast(TreeNode, deserialize("int", read_line()))
+    q: TreeNode = cast(TreeNode, deserialize("int", read_line()))
     ans = Solution().lowestCommonAncestor(root, p, q)
 
     print("\noutput:", serialize(ans))

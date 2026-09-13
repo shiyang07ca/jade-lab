@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/04/05 23:50
 # leetgo: dev
 # https://leetcode.cn/problems/all-ancestors-of-a-node-in-a-directed-acyclic-graph/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +13,7 @@ from leetgo_py import *
 class Solution:
     # 作者：灵茶山艾府
     # 链接：https://leetcode.cn/problems/all-ancestors-of-a-node-in-a-directed-acyclic-graph/solutions/2723203/liang-chong-fang-fa-ni-xiang-zheng-xiang-rwjs/
-    def getAncestors(self, n: int, edges: List[List[int]]) -> List[List[int]]:
+    def getAncestors(self, n: int, edges: list[list[int]]) -> list[list[int]]:
         g = [[] for _ in range(n)]
         for x, y in edges:
             g[y].append(x)  # 反向建图
@@ -24,7 +24,7 @@ class Solution:
                 if not vis[y]:
                     dfs(y)  # 只递归没有访问过的点
 
-        ans = [None] * n
+        ans: list[list[int]] = [[] for _ in range(n)]
         for i in range(n):
             vis = [False] * n
             dfs(i)  # 从 i 开始 DFS
@@ -37,7 +37,7 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    edges: List[List[int]] = deserialize("List[List[int]]", read_line())
+    edges: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().getAncestors(n, edges)
 
     print("\noutput:", serialize(ans))

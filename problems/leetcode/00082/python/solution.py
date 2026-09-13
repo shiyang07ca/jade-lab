@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/01/15 00:02
 # leetgo: dev
 # https://leetcode.cn/problems/remove-duplicates-from-sorted-list-ii/
+from typing import Counter
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import ListNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -14,7 +16,7 @@ from leetgo_py import *
 #         self.val = val
 #         self.next = next
 class Solution:
-    def deleteDuplicates1(self, head: Optional[ListNode]) -> Optional[ListNode]:
+    def deleteDuplicates1(self, head: ListNode | None) -> ListNode | None:
         dummy = pre = ListNode()
         dummy.next = cur = head
         cnt = Counter()
@@ -32,7 +34,7 @@ class Solution:
         return dummy.next
 
     # 链接：https://leetcode.cn/problems/remove-duplicates-from-sorted-list-ii/solutions/2604688/python3javacgotypescript-yi-ti-yi-jie-yi-gzbt/
-    def deleteDuplicates(self, head: Optional[ListNode]) -> Optional[ListNode]:
+    def deleteDuplicates(self, head: ListNode | None) -> ListNode | None:
         dummy = pre = ListNode(next=head)
         cur = head
         while cur:

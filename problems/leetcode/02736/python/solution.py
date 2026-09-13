@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from bisect import bisect_left
+
 # Created by shiyang07ca at 2023/11/17 13:04
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-sum-queries/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -33,8 +35,8 @@ class BinaryIndexedTree:
 
 class Solution:
     def maximumSumQueries(
-        self, nums1: List[int], nums2: List[int], queries: List[List[int]]
-    ) -> List[int]:
+        self, nums1: list[int], nums2: list[int], queries: list[list[int]]
+    ) -> list[int]:
         nums = sorted(zip(nums1, nums2), key=lambda x: -x[0])
         nums2.sort()
         n, m = len(nums1), len(queries)
@@ -55,9 +57,9 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums1: List[int] = deserialize("List[int]", read_line())
-    nums2: List[int] = deserialize("List[int]", read_line())
-    queries: List[List[int]] = deserialize("List[List[int]]", read_line())
+    nums1: list[int] = deserialize("List[int]", read_line())
+    nums2: list[int] = deserialize("List[int]", read_line())
+    queries: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().maximumSumQueries(nums1, nums2, queries)
 
     print("\noutput:", serialize(ans))

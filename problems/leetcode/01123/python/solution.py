@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/09/06 00:19
 # leetgo: dev
 # https://leetcode.cn/problems/lowest-common-ancestor-of-deepest-leaves/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -20,11 +20,11 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/lowest-common-ancestor-of-deepest-leaves/solutions/2428724/liang-chong-di-gui-si-lu-pythonjavacgojs-xxnk/
-    def lcaDeepestLeaves1(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+    def lcaDeepestLeaves1(self, root: TreeNode | None) -> TreeNode | None:
         ans = None
         max_depth = -1  # 全局最大深度
 
-        def dfs(node: Optional[TreeNode], depth: int) -> int:
+        def dfs(node: TreeNode | None, depth: int) -> int:
             nonlocal ans, max_depth
             if node is None:
                 max_depth = max(max_depth, depth)  # 维护全局最大深度
@@ -38,8 +38,8 @@ class Solution:
         dfs(root, 0)
         return ans
 
-    def lcaDeepestLeaves(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
-        def dfs(node: Optional[TreeNode]) -> (int, Optional[TreeNode]):
+    def lcaDeepestLeaves(self, root: TreeNode | None) -> TreeNode | None:
+        def dfs(node: TreeNode | None) -> tuple[int, TreeNode | None]:
             if node is None:
                 return 0, None
             left_height, left_lca = dfs(node.left)

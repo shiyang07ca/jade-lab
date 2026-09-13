@@ -50,9 +50,11 @@
 - `0 <= grid[i][j] <=1`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from itertools import pairwise
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -61,7 +63,7 @@ from leetgo_py import *
 
 # 链接：https://leetcode.cn/problems/number-of-closed-islands/solutions/2312631/python3javacgotypescript-yi-ti-shuang-ji-ttoe/
 class Solution:
-    def closedIsland1(self, grid: List[List[int]]) -> int:
+    def closedIsland1(self, grid: list[list[int]]) -> int:
         def dfs(i: int, j: int) -> int:
             res = int(0 < i < m - 1 and 0 < j < n - 1)
             grid[i][j] = 1
@@ -76,7 +78,7 @@ class Solution:
         return sum(grid[i][j] == 0 and dfs(i, j) for i in range(m) for j in range(n))
 
     # 链接：https://leetcode.cn/problems/number-of-closed-islands/solutions/2312616/liang-chong-si-lu-xian-wai-hou-nei-chu-j-b1e4/
-    def closedIsland2(self, grid: List[List[int]]) -> int:
+    def closedIsland2(self, grid: list[list[int]]) -> int:
         m, n = len(grid), len(grid[0])
         if m < 3 or n < 3:
             return 0
@@ -104,7 +106,7 @@ class Solution:
                     dfs(i, j)
         return ans
 
-    def closedIsland(self, grid: List[List[int]]) -> int:
+    def closedIsland(self, grid: list[list[int]]) -> int:
         m, n = len(grid), len(grid[0])
         if m < 3 or n < 3:
             return 0
@@ -132,7 +134,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    grid: List[List[int]] = deserialize("List[List[int]]", read_line())
+    grid: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().closedIsland(grid)
 
     print("\noutput:", serialize(ans))

@@ -21,19 +21,6 @@ wheels = [
 ]
 
 [[package]]
-name = "jade-algorithms"
-version = "0.1.0"
-source = { editable = "../../../packages/python-algorithms" }
-
-[package.metadata]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=8.3,<9" },
-    { name = "ruff", specifier = ">=0.8.6" },
-]
-
-[[package]]
 name = "packaging"
 version = "26.3"
 source = { registry = "https://pypi.org/simple" }
@@ -80,9 +67,6 @@ wheels = [
 name = "python-algorithm-implementation-lab"
 version = "0.1.0"
 source = { virtual = "." }
-dependencies = [
-    { name = "jade-algorithms" },
-]
 
 [package.dev-dependencies]
 dev = [
@@ -90,7 +74,6 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "jade-algorithms", editable = "../../../packages/python-algorithms" }]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=8.3,<9" }]

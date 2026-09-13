@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from heapq import heappop, heappush
+
 # Created by shiyang07ca at 2023/07/07 09:36
 # leetgo: dev
 # https://leetcode.cn/problems/time-to-cross-a-bridge/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +15,7 @@ from leetgo_py import *
 # 作者：灵茶山艾府
 # 链接：https://leetcode.cn/problems/time-to-cross-a-bridge/solutions/2050900/by-endlesscheng-nzqo/
 class Solution:
-    def findCrossingTime(self, n: int, k: int, time: List[List[int]]) -> int:
+    def findCrossingTime(self, n: int, k: int, time: list[list[int]]) -> int:
         time.sort(key=lambda t: t[0] + t[2])  # 稳定排序
         cur = 0
         workL, waitL, waitR, workR = (
@@ -62,7 +64,7 @@ class Solution:
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
     k: int = deserialize("int", read_line())
-    time: List[List[int]] = deserialize("List[List[int]]", read_line())
+    time: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().findCrossingTime(n, k, time)
 
     print("\noutput:", serialize(ans))

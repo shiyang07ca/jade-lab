@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/02/24 12:42
 # leetgo: dev
 # https://leetcode.cn/problems/closest-nodes-queries-in-a-binary-search-tree/
+from bisect import bisect_left, bisect_right
 
-from bisect import *
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -17,8 +18,8 @@ from leetgo_py import *
 #         self.right = right
 class Solution:
     def closestNodes(
-        self, root: Optional[TreeNode], queries: List[int]
-    ) -> List[List[int]]:
+        self, root: TreeNode | None, queries: list[int]
+    ) -> list[list[int]]:
         vals = []
 
         def dfs(node):
@@ -47,7 +48,7 @@ class Solution:
 
 if __name__ == "__main__":
     root: TreeNode = deserialize("TreeNode", read_line())
-    queries: List[int] = deserialize("List[int]", read_line())
+    queries: list[int] = deserialize("List[int]", read_line())
     ans = Solution().closestNodes(root, queries)
 
     print("\noutput:", serialize(ans))

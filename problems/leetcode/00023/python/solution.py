@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from heapq import heapify, heappop, heappush
+
 # Created by shiyang07ca at 2023/08/12 00:22
 # leetgo: dev
 # https://leetcode.cn/problems/merge-k-sorted-lists/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import ListNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -14,11 +16,11 @@ from leetgo_py import *
 #         self.val = val
 #         self.next = next
 
-ListNode.__lt__ = lambda a, b: a.val < b.val  # 让堆可以比较节点大小
+ListNode.__lt__ = lambda self, other: self.val < other.val  # 让堆可以比较节点大小
 
 
 class Solution:
-    def mergeKLists1(self, lists: List[Optional[ListNode]]) -> Optional[ListNode]:
+    def mergeKLists1(self, lists: list[ListNode | None]) -> ListNode | None:
         ans = cur = ListNode()
         n = len(lists)
         if n == 0 or n == 1 and lists[0] is None:
@@ -36,7 +38,7 @@ class Solution:
 
         return ans.next
 
-    def mergeKLists(self, lists: List[Optional[ListNode]]) -> Optional[ListNode]:
+    def mergeKLists(self, lists: list[ListNode | None]) -> ListNode | None:
         cur = dummy = ListNode()  # 哨兵节点，作为合并后链表头节点的前一个节点
         h = [head for head in lists if head]  # 初始把所有链表的头节点入堆
         heapify(h)  # 堆化
@@ -52,7 +54,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    lists: List[ListNode] = deserialize("List[ListNode]", read_line())
+    lists: list[ListNode | None] = deserialize("List[ListNode]", read_line())
     ans = Solution().mergeKLists(lists)
 
-    print("\noutput:", serialize(ans))
+    print("\noutput:", serialize(ans, "ListNode"))

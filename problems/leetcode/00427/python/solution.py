@@ -1,10 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/11/10 17:38
 # leetgo: 1.4.10
 # https://leetcode.cn/problems/construct-quad-tree/
-
-from typing import *
-from leetgo_py import *
-
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -20,11 +19,29 @@ class Node:
         self.bottomRight = bottomRight
 """
 
+
+class Node:
+    def __init__(
+        self,
+        val: int,
+        isLeaf: bool,
+        topLeft: Node | None,
+        topRight: Node | None,
+        bottomLeft: Node | None,
+        bottomRight: Node | None,
+    ) -> None:
+        self.val = val
+        self.isLeaf = isLeaf
+        self.topLeft = topLeft
+        self.topRight = topRight
+        self.bottomLeft = bottomLeft
+        self.bottomRight = bottomRight
+
 # TODO:
 
 
 class Solution:
-    def construct(self, grid: List[List[int]]) -> "Node":
+    def construct(self, grid: list[list[int]]) -> Node:
         def dfs(a, b, c, d):
             ok = True
             t = grid[a][b]
@@ -51,6 +68,6 @@ class Solution:
 
 # Warning: this is a manual question, the generated test code may be incorrect.
 if __name__ == "__main__":
-    grid: List[List[int]] = deserialize("List[List[int]]", read_line())
+    grid: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().construct(grid)
     print("\noutput:", serialize(ans, "integer[][]"))

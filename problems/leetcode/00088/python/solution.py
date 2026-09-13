@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/08/13 00:35
 # leetgo: dev
 # https://leetcode.cn/problems/merge-sorted-array/
-
 from typing import cast
 
 # leetgo_py does not ship type stubs.

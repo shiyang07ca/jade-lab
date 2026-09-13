@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/10/31 22:37
 # leetgo: dev
 # https://leetcode.cn/problems/smallest-missing-genetic-value-in-each-subtree/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,8 +13,8 @@ from leetgo_py import *
 class Solution:
     # 链接：https://leetcode.cn/problems/smallest-missing-genetic-value-in-each-subtree/
     def smallestMissingValueSubtree(
-        self, parents: List[int], nums: List[int]
-    ) -> List[int]:
+        self, parents: list[int], nums: list[int]
+    ) -> list[int]:
         n = len(parents)
         ans = [1] * n
         if 1 not in nums:  # 不存在基因值为 1 的点
@@ -47,8 +47,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    parents: List[int] = deserialize("List[int]", read_line())
-    nums: List[int] = deserialize("List[int]", read_line())
+    parents: list[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().smallestMissingValueSubtree(parents, nums)
 
     print("\noutput:", serialize(ans))

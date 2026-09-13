@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/02/08 00:37
 # leetgo: dev
 # https://leetcode.cn/problems/cousins-in-binary-tree/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -15,7 +15,9 @@ from leetgo_py import *
 #         self.left = left
 #         self.right = right
 class Solution:
-    def isCousins1(self, root: Optional[TreeNode], x: int, y: int) -> bool:
+    def isCousins1(self, root: TreeNode | None, x: int, y: int) -> bool:
+        if root is None:
+            return False
         queue = [root]
         while queue:
             level = []
@@ -41,7 +43,7 @@ class Solution:
 
         return False
 
-    def isCousins(self, root: Optional[TreeNode], x: int, y: int) -> bool:
+    def isCousins(self, root: TreeNode | None, x: int, y: int) -> bool:
         def dfs(node, fa, depth, t):
             if node is None:
                 return (-1, -1)

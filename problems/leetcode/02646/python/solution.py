@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/12/06 20:54
 # leetgo: dev
 # https://leetcode.cn/problems/minimize-the-total-price-of-the-trips/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -11,7 +11,7 @@ from leetgo_py import *
 class Solution:
     # 链接：https://leetcode.cn/problems/minimize-the-total-price-of-the-trips/
     def minimumTotalPrice(
-        self, n: int, edges: List[List[int]], price: List[int], trips: List[List[int]]
+        self, n: int, edges: list[list[int]], price: list[int], trips: list[list[int]]
     ) -> int:
         g = [[] for _ in range(n)]
         for x, y in edges:
@@ -21,20 +21,20 @@ class Solution:
         cnt = [0] * n
         for start, end in trips:
 
-            def dfs(x: int, fa: int) -> bool:
+            def find_path(x: int, fa: int) -> bool:
                 if x == end:
                     cnt[x] += 1
                     return True  # 找到 end
                 for y in g[x]:
-                    if y != fa and dfs(y, x):
+                    if y != fa and find_path(y, x):
                         cnt[x] += 1  # x 是 end 的祖先节点，也就在路径上
                         return True
                 return False  # 未找到 end
 
-            dfs(start, -1)
+            find_path(start, -1)
 
         # 类似 337. 打家劫舍 III
-        def dfs(x: int, fa: int) -> (int, int):
+        def dfs(x: int, fa: int) -> tuple[int, int]:
             not_halve = price[x] * cnt[x]  # x 不变
             halve = not_halve // 2  # x 减半
             for y in g[x]:
@@ -51,9 +51,9 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    edges: List[List[int]] = deserialize("List[List[int]]", read_line())
-    price: List[int] = deserialize("List[int]", read_line())
-    trips: List[List[int]] = deserialize("List[List[int]]", read_line())
+    edges: list[list[int]] = deserialize("List[List[int]]", read_line())
+    price: list[int] = deserialize("List[int]", read_line())
+    trips: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().minimumTotalPrice(n, edges, price, trips)
 
     print("\noutput:", serialize(ans))

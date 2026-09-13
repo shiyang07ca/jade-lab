@@ -1,9 +1,12 @@
+from __future__ import annotations
+
+from functools import cache
+from itertools import accumulate
+
 # Created by shiyang07ca at 2024/02/03 14:40
 # leetgo: dev
 # https://leetcode.cn/problems/stone-game-vii/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +16,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/stone-game-vii/solutions/2629582/jiao-ni-yi-bu-bu-si-kao-dong-tai-gui-hua-zktx/
-    def stoneGameVII(self, stones: List[int]) -> int:
+    def stoneGameVII(self, stones: list[int]) -> int:
         s = list(accumulate(stones, initial=0))  # 前缀和
 
         @cache  # 缓存装饰器，避免重复计算 dfs 的结果
@@ -32,7 +35,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    stones: List[int] = deserialize("List[int]", read_line())
+    stones: list[int] = deserialize("List[int]", read_line())
     ans = Solution().stoneGameVII(stones)
 
     print("\noutput:", serialize(ans))

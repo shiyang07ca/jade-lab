@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from typing import cast
+
 # Created by shiyang07ca at 2024/04/03 23:18
 # leetgo: dev
 # https://leetcode.cn/problems/find-a-corresponding-node-of-a-binary-tree-in-a-clone-of-that-tree/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -19,14 +21,16 @@ class Solution:
     def getTargetCopy(
         self, original: TreeNode, cloned: TreeNode, target: TreeNode
     ) -> TreeNode:
-        def dfs(node):
+        def dfs(node: TreeNode | None) -> TreeNode | None:
             if not node:
                 return
             if node.val == target.val:
                 return node
             return dfs(node.left) or dfs(node.right)
 
-        return dfs(cloned)
+        result = dfs(cloned)
+        assert result is not None
+        return result
 
 
 # @lc code=end
@@ -34,7 +38,7 @@ class Solution:
 # Warning: this is a manual question, the generated test code may be incorrect.
 if __name__ == "__main__":
     tree: TreeNode = deserialize("TreeNode", read_line())
-    target: int = deserialize("int", read_line())
-    ans = Solution().getTargetCopy(tree, target)
+    target: TreeNode = cast(TreeNode, deserialize("int", read_line()))
+    ans = Solution().getTargetCopy(tree, tree, target)
 
     print("\noutput:", serialize(ans))

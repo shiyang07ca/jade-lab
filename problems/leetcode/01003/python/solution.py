@@ -48,15 +48,15 @@
 - `s` 由字母 `'a'`、 `'b'` 和 `'c'` 组成
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def isValid(self, s: str) -> bool:
+    def isValid2(self, s: str) -> bool:
         if len(s) % 3 != 0:
             return False
 

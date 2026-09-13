@@ -1,10 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/11/10 14:55
 # leetgo: 1.4.10
 # https://leetcode.cn/problems/jump-game-ii/
-
-from typing import *
-
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -19,7 +18,7 @@ class Solution:
     # 中文英文，aabbccdd
     # aabbccdd,a英文中文
 
-    def jump(self, nums: List[int]) -> int:
+    def jump(self, nums: list[int]) -> int:
         ans = 0
         cur_right = 0  # 已建造的桥的右端点
         next_right = 0  # 下一座桥的右端点的最大值
@@ -34,6 +33,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().jump(nums)
     print("\noutput:", serialize(ans, "integer"))

@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from collections import deque
+
 # Created by shiyang07ca at 2023/11/28 20:54
 # leetgo: dev
 # https://leetcode.cn/problems/design-front-middle-back-queue/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, join_array, read_line, serialize, split_array
 
 # @lc code=begin
 
@@ -72,7 +74,7 @@ class FrontMiddleBackQueue:
 # @lc code=end
 
 if __name__ == "__main__":
-    ops: List[str] = deserialize("List[str]", read_line())
+    ops: list[str] = deserialize("List[str]", read_line())
     params = split_array(read_line())
     output = ["null"]
 
@@ -82,18 +84,18 @@ if __name__ == "__main__":
         match ops[i]:
             case "pushFront":
                 method_params = split_array(params[i])
-                val: int = deserialize("int", method_params[0])
-                obj.pushFront(val)
+                front_val: int = deserialize("int", method_params[0])
+                obj.pushFront(front_val)
                 output.append("null")
             case "pushMiddle":
                 method_params = split_array(params[i])
-                val: int = deserialize("int", method_params[0])
-                obj.pushMiddle(val)
+                middle_val: int = deserialize("int", method_params[0])
+                obj.pushMiddle(middle_val)
                 output.append("null")
             case "pushBack":
                 method_params = split_array(params[i])
-                val: int = deserialize("int", method_params[0])
-                obj.pushBack(val)
+                back_val: int = deserialize("int", method_params[0])
+                obj.pushBack(back_val)
                 output.append("null")
             case "popFront":
                 ans = serialize(obj.popFront())

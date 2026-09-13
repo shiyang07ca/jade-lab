@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/11/30 22:26
 # leetgo: dev
 # https://leetcode.cn/problems/determine-if-two-strings-are-close/
+from typing import Counter
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

@@ -1,20 +1,18 @@
 """
 
-翻转链表
+反转链表
 
 """
 
 
 def reverse_iter(head):
-    if not head or not head.next:
-        return head
-
-    pre = None
-    while head:
-        cur = head
-        cur.next = pre
-        pre = cur
-        head = head.next
+    pre = None  # 前一个节点, 循环结束时为新的头节点
+    cur = head  # 当前节点, 循环结束时为新的尾节点
+    while cur:
+        nxt = cur.next  # 保持下一个节点
+        cur.next = pre  # 反转当前节点
+        pre = cur  # 更新前一个节点
+        cur = nxt  # 移动到下一个节点
 
     return pre
 

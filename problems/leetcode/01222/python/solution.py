@@ -1,17 +1,17 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/09/14 09:30
 # leetgo: dev
 # https://leetcode.cn/problems/queens-that-can-attack-the-king/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
     def queensAttacktheKing1(
-        self, queens: List[List[int]], king: List[int]
-    ) -> List[List[int]]:
+        self, queens: list[list[int]], king: list[int]
+    ) -> list[list[int]]:
         ans = []
         for i, (x2, y2) in enumerate(queens):
             x1, y1 = king
@@ -38,8 +38,8 @@ class Solution:
 
     # 链接：https://leetcode.cn/problems/queens-that-can-attack-the-king/
     def queensAttacktheKing(
-        self, queens: List[List[int]], king: List[int]
-    ) -> List[List[int]]:
+        self, queens: list[list[int]], king: list[int]
+    ) -> list[list[int]]:
         s = set(map(tuple, queens))
         ans = []
         for dx, dy in (
@@ -65,8 +65,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    queens: List[List[int]] = deserialize("List[List[int]]", read_line())
-    king: List[int] = deserialize("List[int]", read_line())
+    queens: list[list[int]] = deserialize("List[List[int]]", read_line())
+    king: list[int] = deserialize("List[int]", read_line())
     ans = Solution().queensAttacktheKing(queens, king)
 
     print("\noutput:", serialize(ans))

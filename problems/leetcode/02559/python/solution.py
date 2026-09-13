@@ -43,15 +43,17 @@
 - `0 <= queries[j][0] <= queries[j][1] < words.length`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from itertools import accumulate
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def vowelStrings(self, words: List[str], queries: List[List[int]]) -> List[int]:
+    def vowelStrings(self, words: list[str], queries: list[list[int]]) -> list[int]:
         s = list(
             accumulate((w[0] in "aeiou" and w[-1] in "aeiou" for w in words), initial=0)
         )
@@ -61,8 +63,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    words: List[str] = deserialize("List[str]", read_line())
-    queries: List[List[int]] = deserialize("List[List[int]]", read_line())
+    words: list[str] = deserialize("List[str]", read_line())
+    queries: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().vowelStrings(words, queries)
 
     print("\noutput:", serialize(ans))

@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/06/07 01:37
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-number-of-operations-with-the-same-score-i/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def maxOperations(self, nums: List[int]) -> int:
+    def maxOperations(self, nums: list[int]) -> int:
         t = nums[0] + nums[1]
         ans = 1
         n = len(nums)
@@ -26,6 +26,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().maxOperations(nums)
     print("\noutput:", serialize(ans, "integer"))

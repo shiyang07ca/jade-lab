@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/04/05 23:42
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-difference-between-node-and-ancestor/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -18,10 +18,12 @@ from leetgo_py import *
 #         self.right = right
 class Solution:
     # 链接：https://leetcode.cn/problems/maximum-difference-between-node-and-ancestor/solutions/2232367/liang-chong-fang-fa-zi-ding-xiang-xia-zi-wj9v/
-    def maxAncestorDiff(self, root: Optional[TreeNode]) -> int:
+    def maxAncestorDiff(self, root: TreeNode | None) -> int:
+        if root is None:
+            return 0
         ans = 0
 
-        def dfs(node: Optional[TreeNode], mn: int, mx: int) -> None:
+        def dfs(node: TreeNode | None, mn: int, mx: int) -> None:
             if node is None:
                 return
             # 虽然题目要求「不同节点」，但是相同节点的差值为 0，不会影响最大差值

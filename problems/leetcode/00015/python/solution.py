@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/07/09 21:29
 # leetgo: dev
 # https://leetcode.cn/problems/3sum/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +13,7 @@ from leetgo_py import *
 
 # 链接：https://leetcode.cn/problems/3sum/solutions/2336474/python3javacgotypescript-yi-ti-yi-jie-pa-7z00/
 class Solution:
-    def threeSum(self, nums: List[int]) -> List[List[int]]:
+    def threeSum(self, nums: list[int]) -> list[list[int]]:
         nums.sort()
         n = len(nums)
         ans = []
@@ -42,7 +42,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().threeSum(nums)
 
     print("\noutput:", serialize(ans))

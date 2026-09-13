@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/01/31 13:07
 # leetgo: dev
 # https://leetcode.cn/problems/find-the-distinct-difference-array/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def distinctDifferenceArray(self, nums: List[int]) -> List[int]:
+    def distinctDifferenceArray(self, nums: list[int]) -> list[int]:
         ans = []
         for i in range(len(nums)):
             ans.append(len(set(nums[: i + 1])) - len(set(nums[i + 1 :])))
@@ -19,7 +19,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().distinctDifferenceArray(nums)
 
     print("\noutput:", serialize(ans))

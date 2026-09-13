@@ -49,10 +49,12 @@ k" 字符混合而成，请返回 `-1` 。
 - 字符串中的字符只有 `'c'`, `'r'`, `'o'`, `'a'` 或者 `'k'`
 
 """
-from itertools import *
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from itertools import pairwise
+from typing import Counter
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/04/24 00:02
 # leetgo: dev
 # https://leetcode.cn/problems/amount-of-time-for-binary-tree-to-be-infected/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -20,11 +20,11 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/amount-of-time-for-binary-tree-to-be-infected/solutions/2753470/cong-liang-ci-bian-li-dao-yi-ci-bian-li-tmt0x/
-    def amountOfTime1(self, root: Optional[TreeNode], start: int) -> int:
+    def amountOfTime1(self, root: TreeNode | None, start: int) -> int:
         fa = {}
         start_node = None
 
-        def dfs(node: Optional[TreeNode], from_: Optional[TreeNode]) -> None:
+        def dfs(node: TreeNode | None, from_: TreeNode | None) -> None:
             if node is None:
                 return
             fa[node] = from_  # 记录每个节点的父节点
@@ -36,7 +36,7 @@ class Solution:
 
         dfs(root, None)
 
-        def maxDepth(node: Optional[TreeNode], from_: TreeNode) -> int:
+        def maxDepth(node: TreeNode | None, from_: TreeNode | None) -> int:
             if node is None:
                 return -1  # 注意这里是 -1，因为 start 的深度为 0
             return (
@@ -50,10 +50,10 @@ class Solution:
 
         return maxDepth(start_node, start_node)
 
-    def amountOfTime(self, root: Optional[TreeNode], start: int) -> int:
+    def amountOfTime(self, root: TreeNode | None, start: int) -> int:
         ans = 0
 
-        def dfs(node: Optional[TreeNode]) -> (int, bool):
+        def dfs(node: TreeNode | None) -> tuple[int, bool]:
             if node is None:
                 return 0, False
             l_len, l_found = dfs(node.left)

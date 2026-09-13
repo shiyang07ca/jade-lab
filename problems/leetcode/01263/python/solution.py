@@ -78,11 +78,12 @@ s/2019/11/16/sample_1_1620.png)**
 - `grid` 中 `'S'`, `'B'` 和 `'T'` 各只能出现一个。
 
 """
-from itertools import *
-from collections import *
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from collections import deque
+from itertools import pairwise
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -92,7 +93,7 @@ from leetgo_py import *
 
 # 链接：https://leetcode.cn/problems/minimum-moves-to-move-a-box-to-their-target-location/solutions/2261099/python3javacgotypescript-yi-ti-yi-jie-sh-xgcz/
 class Solution:
-    def minPushBox(self, grid: List[List[str]]) -> int:
+    def minPushBox(self, grid: list[list[str]]) -> int:
         def f(i: int, j: int) -> int:
             return i * n + j
 
@@ -140,6 +141,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    grid: List[List[str]] = deserialize("List[List[str]]", read_line())
+    grid: list[list[str]] = deserialize("List[List[str]]", read_line())
     ans = Solution().minPushBox(grid)
     print("output:", serialize(ans))

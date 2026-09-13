@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/01/23 00:02
 # leetgo: dev
 # https://leetcode.cn/problems/longest-alternating-subarray/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +12,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def alternatingSubarray1(self, nums: List[int]) -> int:
+    def alternatingSubarray1(self, nums: list[int]) -> int:
         ans = -1
         n = len(nums)
         i = 0
@@ -42,7 +42,7 @@ class Solution:
         # 下一组从 i 开始，无需 i += 1
     """
 
-    def alternatingSubarray(self, nums: List[int]) -> int:
+    def alternatingSubarray(self, nums: list[int]) -> int:
         ans = -1
         i, n = 0, len(nums)
         while i < n - 1:
@@ -62,7 +62,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().alternatingSubarray(nums)
 
     print("\noutput:", serialize(ans))

@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/04/20 13:54
 # leetgo: dev
 # https://leetcode.cn/problems/combination-sum/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -11,7 +11,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def combinationSum1(self, candidates: List[int], target: int) -> List[List[int]]:
+    def combinationSum1(self, candidates: list[int], target: int) -> list[list[int]]:
         candidates.sort()
         ans = []
         path = []
@@ -34,7 +34,7 @@ class Solution:
         return ans
 
     # 链接：https://leetcode.cn/problems/combination-sum/solutions/2747858/liang-chong-fang-fa-xuan-huo-bu-xuan-mei-mhf9/
-    def combinationSum(self, candidates: List[int], target: int) -> List[List[int]]:
+    def combinationSum(self, candidates: list[int], target: int) -> list[list[int]]:
         candidates.sort()
         ans = []
         path = []
@@ -61,7 +61,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    candidates: List[int] = deserialize("List[int]", read_line())
+    candidates: list[int] = deserialize("List[int]", read_line())
     target: int = deserialize("int", read_line())
     ans = Solution().combinationSum(candidates, target)
     print("\noutput:", serialize(ans, "integer[][]"))

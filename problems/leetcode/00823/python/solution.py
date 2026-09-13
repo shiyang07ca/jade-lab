@@ -1,9 +1,12 @@
+from __future__ import annotations
+
+from collections import defaultdict
+from functools import cache
+
 # Created by shiyang07ca at 2023/08/29 09:02
 # leetgo: dev
 # https://leetcode.cn/problems/binary-trees-with-factors/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -11,7 +14,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def numFactoredBinaryTrees1(self, arr: List[int]) -> int:
+    def numFactoredBinaryTrees1(self, arr: list[int]) -> int:
         MOD = 10**9 + 7
         n = len(arr)
         arr.sort()
@@ -38,7 +41,7 @@ class Solution:
         return sum(dfs(i) for i in range(n)) % MOD
 
     # 链接：https://leetcode.cn/problems/binary-trees-with-factors/solutions/2416115/cong-ji-yi-hua-sou-suo-dao-di-tui-jiao-n-nbk6/
-    def numFactoredBinaryTrees(self, arr: List[int]) -> int:
+    def numFactoredBinaryTrees(self, arr: list[int]) -> int:
         arr.sort()
         idx = {x: i for i, x in enumerate(arr)}
 
@@ -58,7 +61,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    arr: List[int] = deserialize("List[int]", read_line())
+    arr: list[int] = deserialize("List[int]", read_line())
     ans = Solution().numFactoredBinaryTrees(arr)
 
     print("\noutput:", serialize(ans))

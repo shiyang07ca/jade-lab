@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from heapq import heapify, heapreplace
+
 # Created by shiyang07ca at 2024/05/01 10:24
 # leetgo: dev
 # https://leetcode.cn/problems/total-cost-to-hire-k-workers/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +14,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/total-cost-to-hire-k-workers/solutions/1951938/liang-ge-zui-xiao-dui-mo-ni-by-endlessch-nagm/
-    def totalCost(self, costs: List[int], k: int, candidates: int) -> int:
+    def totalCost(self, costs: list[int], k: int, candidates: int) -> int:
         n = len(costs)
         if candidates * 2 + k > n:
             # 也可以 sum(nsmallest(k, costs))，但效率不如直接排序
@@ -40,7 +42,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    costs: List[int] = deserialize("List[int]", read_line())
+    costs: list[int] = deserialize("List[int]", read_line())
     k: int = deserialize("int", read_line())
     candidates: int = deserialize("int", read_line())
     ans = Solution().totalCost(costs, k, candidates)

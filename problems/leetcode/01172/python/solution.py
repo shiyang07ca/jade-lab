@@ -1,7 +1,7 @@
 # Created by shiyang07ca at 2023/04/28 23:31
 # https://leetcode.cn/problems/dinner-plate-stacks/
 
-"""
+r"""
 1172. 餐盘栈 (Hard)
 我们把无限数量 ∞ 的栈排成一行，按从左到右的次序从 0 开始编号
 。每个栈的的最大容量 `capacity` 都相同。
@@ -76,13 +76,12 @@ D.pop()            // 返回 -1。仍然没有栈。
 调用。
 
 """
-
-from typing import *
-from leetgo_py import *
+from __future__ import annotations
 
 # @lc code=begin
+from heapq import heappop, heappush
 
-from heapq import *
+from leetgo_py import deserialize, join_array, read_line, serialize, split_array
 
 
 class DinnerPlates:
@@ -137,7 +136,7 @@ class DinnerPlates:
 # @lc code=end
 
 if __name__ == "__main__":
-    ops: List[str] = deserialize("List[str]", read_line())
+    ops: list[str] = deserialize("List[str]", read_line())
     params = split_array(read_line())
     output = ["null"]
 

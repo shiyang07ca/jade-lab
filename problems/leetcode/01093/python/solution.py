@@ -63,15 +63,17 @@
 - `count` 的众数是 **唯一** 的
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from sys import maxsize as inf
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def sampleStats1(self, count: List[int]) -> List[float]:
+    def sampleStats1(self, count: list[int]) -> list[float]:
         mi = ma = mean = median = mode = -1
         tot = s = q = 0
         for n, c in enumerate(count):
@@ -104,16 +106,17 @@ class Solution:
                 if len(ns) == 2:
                     median = sum(ns) / 2
                     break
-        return float(mi), float(ma), mean, median, float(mode)
+        return [float(mi), float(ma), mean, float(median), float(mode)]
 
     # 链接：https://leetcode.cn/problems/statistics-from-a-large-sample/solutions/2285421/python3javacgotypescript-yi-ti-yi-jie-mo-ov62/
-    def sampleStats(self, count: List[int]) -> List[float]:
+    def sampleStats(self, count: list[int]) -> list[float]:
         def find(i: int) -> int:
             t = 0
             for k, x in enumerate(count):
                 t += x
                 if t >= i:
                     return k
+            raise ValueError("percentile is outside the sample")
 
         mi, mx = inf, -1
         s = cnt = 0
@@ -130,13 +133,13 @@ class Solution:
         median = (
             find(cnt // 2 + 1) if cnt & 1 else (find(cnt // 2) + find(cnt // 2 + 1)) / 2
         )
-        return [mi, mx, s / cnt, median, mode]
+        return [float(mi), float(mx), s / cnt, float(median), float(mode)]
 
 
 # @lc code=end
 
 if __name__ == "__main__":
-    count: List[int] = deserialize("List[int]", read_line())
+    count: list[int] = deserialize("List[int]", read_line())
     ans = Solution().sampleStats(count)
 
     print("\noutput:", serialize(ans))

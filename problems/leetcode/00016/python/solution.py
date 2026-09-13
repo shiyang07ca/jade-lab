@@ -1,16 +1,18 @@
+from __future__ import annotations
+
+from sys import maxsize as inf
+
 # Created by shiyang07ca at 2023/07/10 21:03
 # leetgo: dev
 # https://leetcode.cn/problems/3sum-closest/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 # TODO
 
 class Solution:
-    def threeSumClosest(self, nums: List[int], target: int) -> int:
+    def threeSumClosest(self, nums: list[int], target: int) -> int:
         nums.sort()
         n = len(nums)
         ans = inf
@@ -32,7 +34,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     target: int = deserialize("int", read_line())
     ans = Solution().threeSumClosest(nums, target)
 

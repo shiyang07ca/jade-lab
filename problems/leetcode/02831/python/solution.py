@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/05/23 23:52
 # leetgo: dev
 # https://leetcode.cn/problems/find-the-longest-equal-subarray/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -11,8 +11,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def longestEqualSubarray(self, nums: List[int], k: int) -> int:
-        n = len(nums)
+    def longestEqualSubarray(self, nums: list[int], k: int) -> int:
         pos = [[] for _ in range(len(nums) + 1)]
         for i, x in enumerate(nums):
             pos[x].append(i)
@@ -31,7 +30,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().longestEqualSubarray(nums, k)
     print("\noutput:", serialize(ans, "integer"))

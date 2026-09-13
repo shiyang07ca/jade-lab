@@ -1,9 +1,12 @@
+from __future__ import annotations
+
+from heapq import heappop, heappush
+from sys import maxsize as inf
+
 # Created by shiyang07ca at 2024/03/05 13:20
 # leetgo: dev
 # https://leetcode.cn/problems/number-of-ways-to-arrive-at-destination/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +16,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/number-of-ways-to-arrive-at-destination/solutions/2668041/zai-ji-suan-zui-duan-lu-de-tong-shi-dpfu-g4f3/
-    def countPaths(self, n: int, roads: List[List[int]]) -> int:
+    def countPaths(self, n: int, roads: list[list[int]]) -> int:
         g = [[] for _ in range(n)]  # 邻接表
         for x, y, d in roads:
             g[x].append((y, d))
@@ -47,7 +50,7 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    roads: List[List[int]] = deserialize("List[List[int]]", read_line())
+    roads: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().countPaths(n, roads)
 
     print("\noutput:", serialize(ans))

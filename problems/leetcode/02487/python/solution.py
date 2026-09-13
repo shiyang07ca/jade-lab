@@ -1,18 +1,14 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/01/03 00:01
 # leetgo: dev
 # https://leetcode.cn/problems/remove-nodes-from-linked-list/
-
-from bisect import *
-from typing import *
-
-from leetgo_py import *
+from leetgo_py import ListNode, deserialize, read_line, serialize
 
 # @lc code=begin
-
 # template
 # tag: Monotonic Stack
-
-from sortedcontainers import *
+from sortedcontainers import SortedList
 
 
 # Definition for singly-linked list.
@@ -21,7 +17,7 @@ from sortedcontainers import *
 #         self.val = val
 #         self.next = next
 class Solution:
-    def removeNodes1(self, head: Optional[ListNode]) -> Optional[ListNode]:
+    def removeNodes1(self, head: ListNode | None) -> ListNode | None:
         ns = []
         cur = head
         while cur:
@@ -39,7 +35,7 @@ class Solution:
 
         return pre
 
-    def removeNodes(self, head: Optional[ListNode]) -> Optional[ListNode]:
+    def removeNodes(self, head: ListNode | None) -> ListNode | None:
         ns = []
         cur = head
         while cur:

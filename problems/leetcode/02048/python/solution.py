@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from itertools import count
+
 # Created by shiyang07ca at 2023/12/09 10:55
 # leetgo: dev
 # https://leetcode.cn/problems/next-greater-numerically-balanced-number/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -19,6 +21,7 @@ class Solution:
                 cnt[v] += 1
             if all(v == 0 or i == v for i, v in enumerate(cnt)):
                 return x
+        raise RuntimeError("unreachable")
 
 
 # @lc code=end

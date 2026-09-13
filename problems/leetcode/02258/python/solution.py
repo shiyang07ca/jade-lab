@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/11/09 13:11
 # leetgo: dev
 # https://leetcode.cn/problems/escape-the-spreading-fire/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +12,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/escape-the-spreading-fire/
-    def maximumMinutes(self, grid: List[List[int]]) -> int:
+    def maximumMinutes(self, grid: list[list[int]]) -> int:
         m, n = len(grid), len(grid[0])
 
         # 返回能否在初始位置停留 t 分钟，并安全到达安全屋
@@ -86,7 +86,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    grid: List[List[int]] = deserialize("List[List[int]]", read_line())
+    grid: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().maximumMinutes(grid)
 
     print("\noutput:", serialize(ans))

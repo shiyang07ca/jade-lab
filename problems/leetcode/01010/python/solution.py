@@ -36,10 +36,9 @@ e[i] + time[j]) % 60 == 0`。
 - `1 <= time[i] <= 500`
 
 """
-from collections import *
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -52,7 +51,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def numPairsDivisibleBy60(self, time: List[int]) -> int:
+    def numPairsDivisibleBy60(self, time: list[int]) -> int:
         ans = 0
         cnt = [0] * 60
         for t in time:
@@ -66,6 +65,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    time: List[int] = deserialize("List[int]", read_line())
+    time: list[int] = deserialize("List[int]", read_line())
     ans = Solution().numPairsDivisibleBy60(time)
     print("output:", serialize(ans))

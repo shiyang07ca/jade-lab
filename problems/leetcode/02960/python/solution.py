@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/05/10 21:55
 # leetgo: dev
 # https://leetcode.cn/problems/count-tested-devices-after-test-operations/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def countTestedDevices(self, ps: List[int]) -> int:
+    def countTestedDevices(self, ps: list[int]) -> int:
         ans = 0
         n = len(ps)
         for i, p in enumerate(ps):
@@ -23,6 +23,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    batteryPercentages: List[int] = deserialize("List[int]", read_line())
+    batteryPercentages: list[int] = deserialize("List[int]", read_line())
     ans = Solution().countTestedDevices(batteryPercentages)
     print("\noutput:", serialize(ans, "integer"))

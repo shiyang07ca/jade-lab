@@ -1,18 +1,19 @@
+from __future__ import annotations
+
+from functools import cache
+
 # Created by shiyang07ca at 2023/10/06 00:14
 # leetgo: dev
 # https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/
+from sys import maxsize as inf
 
-from typing import *
-from math import *
-from functools import *
-
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def maxProfit(self, prices: List[int], fee: int) -> int:
+    def maxProfit(self, prices: list[int], fee: int) -> int:
         n = len(prices)
 
         @cache
@@ -30,7 +31,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    prices: List[int] = deserialize("List[int]", read_line())
+    prices: list[int] = deserialize("List[int]", read_line())
     fee: int = deserialize("int", read_line())
     ans = Solution().maxProfit(prices, fee)
 

@@ -1,18 +1,18 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/10/28 20:42
 # leetgo: dev
 # https://leetcode.cn/problems/take-gifts-from-the-richest-pile/
+from heapq import heappush, heapreplace
+from math import floor, sqrt
 
-from heapq import *
-from math import *
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def pickGifts(self, gifts: List[int], k: int) -> int:
+    def pickGifts(self, gifts: list[int], k: int) -> int:
         gs = []
         for g in gifts:
             heappush(gs, -g)
@@ -24,7 +24,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    gifts: List[int] = deserialize("List[int]", read_line())
+    gifts: list[int] = deserialize("List[int]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().pickGifts(gifts, k)
 

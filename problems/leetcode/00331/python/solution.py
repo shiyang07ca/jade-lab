@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/03/31 21:03
 # leetgo: dev
 # https://leetcode.cn/problems/verify-preorder-serialization-of-a-binary-tree/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -21,7 +21,7 @@ class Solution:
         return len(stk) == 1 and stk[0] == "#"
 
     # 链接：https://leetcode.cn/problems/verify-preorder-serialization-of-a-binary-tree/solutions/651132/pai-an-jiao-jue-de-liang-chong-jie-fa-zh-66nt/
-    def isValidSerialization(self, preorder):
+    def isValidSerialization2(self, preorder: str) -> bool:
         nodes = preorder.split(",")
         diff = 0
         for node in nodes:

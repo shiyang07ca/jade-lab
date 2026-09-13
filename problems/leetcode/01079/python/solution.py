@@ -38,10 +38,12 @@
 - `tiles` 由大写英文字母组成
 
 """
-from math import comb
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from math import comb
+from typing import Counter
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

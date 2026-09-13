@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from collections import deque
+
 # Created by shiyang07ca at 2023/09/09 12:40
 # leetgo: dev
 # https://leetcode.cn/problems/course-schedule/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +14,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def canFinish(self, n: int, edges: List[List[int]]) -> bool:
+    def canFinish(self, n: int, edges: list[list[int]]) -> bool:
         g = [[] for _ in range(n)]
         indeg = [0] * n
         for y, x in edges:
@@ -34,7 +36,7 @@ class Solution:
 
 if __name__ == "__main__":
     numCourses: int = deserialize("int", read_line())
-    prerequisites: List[List[int]] = deserialize("List[List[int]]", read_line())
+    prerequisites: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().canFinish(numCourses, prerequisites)
 
     print("\noutput:", serialize(ans))

@@ -1,0 +1,58 @@
+{
+  "folders": [
+    {
+      "name": "leetcode",
+      "path": "problems/leetcode"
+    },
+    {
+      "name": "algorithm-implementations",
+      "path": "labs/algorithms/python-implementations"
+    },
+    {
+      "name": "python-runtime",
+      "path": "labs/languages/python-runtime"
+    },
+    {
+      "name": "pydantic",
+      "path": "labs/frameworks/python/pydantic"
+    },
+    {
+      "name": "numpy",
+      "path": "labs/numerical-computing/numpy"
+    },
+    {
+      "name": "observability",
+      "path": "labs/observability/python"
+    },
+    {
+      "name": "distributed-timer",
+      "path": "labs/scheduling/distributed-timer"
+    },
+    {
+      "name": "btree",
+      "path": "labs/storage/btree"
+    },
+    {
+      "name": "socket-server",
+      "path": "labs/networking/python-socket-server"
+    },
+    {
+      "name": "process-inspector",
+      "path": "tools/process-inspector"
+    }
+  ],
+  "settings": {
+    "python.languageServer": "Pylance",
+    "basedpyright.disableLanguageServices": true,
+    "python.analysis.diagnosticMode": "openFilesOnly",
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.useNearestConfiguration": true,
+    "python.analysis.exclude": [
+      "**/.venv",
+      "**/__pycache__",
+      "**/.pytest_cache",
+      "**/.ruff_cache",
+      "**/node_modules"
+    ]
+  }
+}

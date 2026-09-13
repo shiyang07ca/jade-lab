@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/04/23 00:14
 # leetgo: dev
 # https://leetcode.cn/problems/grumpy-bookstore-owner/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -14,7 +14,7 @@ from leetgo_py import *
 class Solution:
     # 链接：https://leetcode.cn/problems/grumpy-bookstore-owner/solutions/
     def maxSatisfied(
-        self, customers: List[int], grumpy: List[int], minutes: int
+        self, customers: list[int], grumpy: list[int], minutes: int
     ) -> int:
         s = [0, 0]
         max_s1 = 0
@@ -31,8 +31,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    customers: List[int] = deserialize("List[int]", read_line())
-    grumpy: List[int] = deserialize("List[int]", read_line())
+    customers: list[int] = deserialize("List[int]", read_line())
+    grumpy: list[int] = deserialize("List[int]", read_line())
     minutes: int = deserialize("int", read_line())
     ans = Solution().maxSatisfied(customers, grumpy, minutes)
     print("\noutput:", serialize(ans, "integer"))

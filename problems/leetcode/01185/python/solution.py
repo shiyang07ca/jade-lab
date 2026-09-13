@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+import datetime
+
 # Created by shiyang07ca at 2023/12/30 00:07
 # leetgo: dev
 # https://leetcode.cn/problems/day-of-the-week/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

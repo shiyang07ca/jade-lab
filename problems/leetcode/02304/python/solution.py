@@ -1,15 +1,18 @@
+from __future__ import annotations
+
+from functools import cache
+from sys import maxsize as inf
+
 # Created by shiyang07ca at 2023/11/22 13:05
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-path-cost-in-a-grid/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def minPathCost(self, grid: List[List[int]], moveCost: List[List[int]]) -> int:
+    def minPathCost(self, grid: list[list[int]], moveCost: list[list[int]]) -> int:
         m, n = len(grid), len(grid[0])
 
         @cache
@@ -27,8 +30,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    grid: List[List[int]] = deserialize("List[List[int]]", read_line())
-    moveCost: List[List[int]] = deserialize("List[List[int]]", read_line())
+    grid: list[list[int]] = deserialize("List[List[int]]", read_line())
+    moveCost: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().minPathCost(grid, moveCost)
 
     print("\noutput:", serialize(ans))

@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/07/30 00:07
 # leetgo: dev
 # https://leetcode.cn/problems/linked-list-cycle-ii/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import ListNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -15,17 +15,20 @@ from leetgo_py import *
 
 
 class Solution:
-    def detectCycle1(self, head: Optional[ListNode]) -> Optional[ListNode]:
+    def detectCycle1(self, head: ListNode | None) -> ListNode | None:
         slow = fast = head
         while fast and fast.next:
+            assert slow is not None
             slow, fast = slow.next, fast.next.next
             if slow is fast:
                 while head != slow:
+                    assert head is not None
+                    assert slow is not None
                     head, slow = head.next, slow.next
                 return slow
         return None
 
-    def detectCycle(self, head: Optional[ListNode]) -> Optional[ListNode]:
+    def detectCycle(self, head: ListNode | None) -> ListNode | None:
         vis = set()
         while head:
             if head in vis:
@@ -39,7 +42,7 @@ class Solution:
 
 if __name__ == "__main__":
     head: ListNode = deserialize("ListNode", read_line())
-    pos: int = deserialize("int", read_line())
-    ans = Solution().detectCycle(head, pos)
+    _ = deserialize("int", read_line())
+    ans = Solution().detectCycle(head)
 
     print("\noutput:", serialize(ans))

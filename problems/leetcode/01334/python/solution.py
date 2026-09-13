@@ -1,9 +1,12 @@
+from __future__ import annotations
+
+from functools import cache
+from sys import maxsize as inf
+
 # Created by shiyang07ca at 2023/11/14 13:20
 # leetgo: dev
 # https://leetcode.cn/problems/find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -15,7 +18,7 @@ from leetgo_py import *
 # 链接：https://leetcode.cn/problems/find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance/
 class Solution:
     def findTheCity(
-        self, n: int, edges: List[List[int]], distanceThreshold: int
+        self, n: int, edges: list[list[int]], distanceThreshold: int
     ) -> int:
         w = [[inf] * n for _ in range(n)]
         for x, y, wt in edges:
@@ -44,7 +47,7 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    edges: List[List[int]] = deserialize("List[List[int]]", read_line())
+    edges: list[list[int]] = deserialize("List[List[int]]", read_line())
     distanceThreshold: int = deserialize("int", read_line())
     ans = Solution().findTheCity(n, edges, distanceThreshold)
 

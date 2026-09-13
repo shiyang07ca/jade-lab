@@ -47,15 +47,18 @@
 - `-10⁴ <= arr[i] <= 10⁴`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from functools import cache
+from sys import maxsize as inf
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def maximumSum1(self, arr: List[int]) -> int:
+    def maximumSum1(self, arr: list[int]) -> int:
         n = len(arr)
         f1 = [0] * (n + 1)
         f2 = [0] * (n + 1)
@@ -73,7 +76,7 @@ class Solution:
         return ans
 
     # 链接：https://leetcode.cn/problems/maximum-subarray-sum-with-one-deletion/solutions/2321829/jiao-ni-yi-bu-bu-si-kao-dong-tai-gui-hua-hzz6/
-    def maximumSum(self, arr: List[int]) -> int:
+    def maximumSum(self, arr: list[int]) -> int:
         # 定义 dfs(i,j) 表示子数组的右端点是 arr[i]，不能/必须删除数字的情况下，子数组元素和的最大值。
         @cache
         def dfs(i: int, j: int) -> int:
@@ -89,6 +92,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    arr: List[int] = deserialize("List[int]", read_line())
+    arr: list[int] = deserialize("List[int]", read_line())
     ans = Solution().maximumSum(arr)
     print("output:", serialize(ans))

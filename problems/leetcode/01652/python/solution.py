@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/05/05 00:09
 # leetgo: dev
 # https://leetcode.cn/problems/defuse-the-bomb/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def decrypt(self, code: List[int], k: int) -> List[int]:
+    def decrypt(self, code: list[int], k: int) -> list[int]:
         ans = []
         n = len(code)
         f = 0
@@ -30,7 +30,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    code: List[int] = deserialize("List[int]", read_line())
+    code: list[int] = deserialize("List[int]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().decrypt(code, k)
     print("\noutput:", serialize(ans, "integer[]"))

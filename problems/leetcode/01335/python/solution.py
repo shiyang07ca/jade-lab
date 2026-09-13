@@ -68,12 +68,13 @@
 - `1 <= d <= 10`
 
 """
-from itertools import *
-from functools import *
-from math import *
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from functools import cache
+from itertools import accumulate
+from sys import maxsize as inf
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -81,7 +82,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def minDifficulty1(self, jd: List[int], d: int) -> int:
+    def minDifficulty1(self, jd: list[int], d: int) -> int:
         if len(jd) < d:
             return -1
 
@@ -96,7 +97,7 @@ class Solution:
         return dfs(0, 0, d)
 
     # 链接：https://leetcode.cn/problems/minimum-difficulty-of-a-job-schedule/solutions/2271631/jiao-ni-yi-bu-bu-si-kao-dong-tai-gui-hua-68nx/
-    def minDifficulty2(self, a: List[int], d: int) -> int:
+    def minDifficulty2(self, a: list[int], d: int) -> int:
         n = len(a)
         if n < d:
             return -1
@@ -115,7 +116,7 @@ class Solution:
         return dfs(d - 1, n - 1)
 
     # TODO：
-    def minDifficulty(self, a: List[int], d: int) -> int:
+    def minDifficulty(self, a: list[int], d: int) -> int:
         n = len(a)
         if n < d:
             return -1
@@ -134,7 +135,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    jobDifficulty: List[int] = deserialize("List[int]", read_line())
+    jobDifficulty: list[int] = deserialize("List[int]", read_line())
     d: int = deserialize("int", read_line())
     ans = Solution().minDifficulty(jobDifficulty, d)
 

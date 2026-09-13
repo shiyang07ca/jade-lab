@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/06/17 08:17
 # leetgo: dev
 # https://leetcode.cn/problems/longest-uncommon-subsequence-ii/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +12,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/longest-uncommon-subsequence-ii/solutions/1627700/pythonjavatypescriptgo-mo-ni-by-himymben-1bsf/
-    def findLUSlength(self, strs: List[str]) -> int:
+    def findLUSlength(self, strs: list[str]) -> int:
         def is_sub_str(s1: str, s2: str) -> bool:
             if len(s2) < len(s1):
                 return False
@@ -37,6 +37,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    strs: List[str] = deserialize("List[str]", read_line())
+    strs: list[str] = deserialize("List[str]", read_line())
     ans = Solution().findLUSlength(strs)
     print("\noutput:", serialize(ans, "integer"))

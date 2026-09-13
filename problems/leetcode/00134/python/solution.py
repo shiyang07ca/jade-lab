@@ -1,10 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2025/02/04 13:21
 # leetgo: 1.4.13
 # https://leetcode.cn/problems/gas-station/
-
-from typing import *
-
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +12,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def canCompleteCircuit(self, gas: List[int], cost: List[int]) -> int:
+    def canCompleteCircuit(self, gas: list[int], cost: list[int]) -> int:
         # 链接：https://leetcode.cn/problems/gas-station/solutions/2933132/yong-zhe-xian-tu-zhi-guan-li-jie-pythonj-qccr/
         ans = min_s = s = 0  # s 表示油量，min_s 表示最小油量
         for i, (g, c) in enumerate(zip(gas, cost)):
@@ -28,7 +27,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    gas: List[int] = deserialize("List[int]", read_line())
-    cost: List[int] = deserialize("List[int]", read_line())
+    gas: list[int] = deserialize("List[int]", read_line())
+    cost: list[int] = deserialize("List[int]", read_line())
     ans = Solution().canCompleteCircuit(gas, cost)
     print("\noutput:", serialize(ans, "integer"))

@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/02/22 00:01
 # leetgo: dev
 # https://leetcode.cn/problems/construct-binary-tree-from-preorder-and-postorder-traversal/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -54,8 +54,8 @@ class Solution:
         return root
 
     def constructFromPrePost(
-        self, preorder: List[int], postorder: List[int]
-    ) -> Optional[TreeNode]:
+        self, preorder: list[int], postorder: list[int]
+    ) -> TreeNode | None:
         self.post_val_index = {}
         for i, val in enumerate(postorder):
             self.post_val_index[val] = i
@@ -68,8 +68,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    preorder: List[int] = deserialize("List[int]", read_line())
-    postorder: List[int] = deserialize("List[int]", read_line())
+    preorder: list[int] = deserialize("List[int]", read_line())
+    postorder: list[int] = deserialize("List[int]", read_line())
     ans = Solution().constructFromPrePost(preorder, postorder)
 
     print("\noutput:", serialize(ans))

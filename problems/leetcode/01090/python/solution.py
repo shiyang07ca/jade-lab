@@ -50,16 +50,18 @@ es[i]` 和 `labels[i]`。还会给出两个整数 `numWanted` 和 `useLimit` 。
 - `1 <= numWanted, useLimit <= n`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from typing import Counter
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
     def largestValsFromLabels(
-        self, values: List[int], labels: List[int], numWanted: int, useLimit: int
+        self, values: list[int], labels: list[int], numWanted: int, useLimit: int
     ) -> int:
         cnt = Counter()
         sz = ans = 0
@@ -76,8 +78,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    values: List[int] = deserialize("List[int]", read_line())
-    labels: List[int] = deserialize("List[int]", read_line())
+    values: list[int] = deserialize("List[int]", read_line())
+    labels: list[int] = deserialize("List[int]", read_line())
     numWanted: int = deserialize("int", read_line())
     useLimit: int = deserialize("int", read_line())
     ans = Solution().largestValsFromLabels(values, labels, numWanted, useLimit)

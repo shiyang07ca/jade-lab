@@ -1,15 +1,17 @@
+from __future__ import annotations
+
+from itertools import pairwise
+
 # Created by shiyang07ca at 2024/05/13 00:03
 # leetgo: dev
 # https://leetcode.cn/problems/rotting-oranges/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def orangesRotting(self, grid: List[List[int]]) -> int:
+    def orangesRotting(self, grid: list[list[int]]) -> int:
         m, n = len(grid), len(grid[0])
         q = []
         for i, row in enumerate(grid):
@@ -40,6 +42,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    grid: List[List[int]] = deserialize("List[List[int]]", read_line())
+    grid: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().orangesRotting(grid)
     print("\noutput:", serialize(ans, "integer"))

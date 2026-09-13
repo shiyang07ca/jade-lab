@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/11/12 21:59
 # leetgo: dev
 # https://leetcode.cn/problems/range-module/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, join_array, read_line, serialize, split_array
 
 # @lc code=begin
 
@@ -100,7 +100,7 @@ class RangeModule:
 # @lc code=end
 
 if __name__ == "__main__":
-    ops: List[str] = deserialize("List[str]", read_line())
+    ops: list[str] = deserialize("List[str]", read_line())
     params = split_array(read_line())
     output = ["null"]
 
@@ -110,21 +110,21 @@ if __name__ == "__main__":
         match ops[i]:
             case "addRange":
                 method_params = split_array(params[i])
-                left: int = deserialize("int", method_params[0])
-                right: int = deserialize("int", method_params[1])
-                obj.addRange(left, right)
+                add_left: int = deserialize("int", method_params[0])
+                add_right: int = deserialize("int", method_params[1])
+                obj.addRange(add_left, add_right)
                 output.append("null")
             case "queryRange":
                 method_params = split_array(params[i])
-                left: int = deserialize("int", method_params[0])
-                right: int = deserialize("int", method_params[1])
-                ans = serialize(obj.queryRange(left, right))
+                query_left: int = deserialize("int", method_params[0])
+                query_right: int = deserialize("int", method_params[1])
+                ans = serialize(obj.queryRange(query_left, query_right))
                 output.append(ans)
             case "removeRange":
                 method_params = split_array(params[i])
-                left: int = deserialize("int", method_params[0])
-                right: int = deserialize("int", method_params[1])
-                obj.removeRange(left, right)
+                remove_left: int = deserialize("int", method_params[0])
+                remove_right: int = deserialize("int", method_params[1])
+                obj.removeRange(remove_left, remove_right)
                 output.append("null")
 
     print("\noutput:", join_array(output))

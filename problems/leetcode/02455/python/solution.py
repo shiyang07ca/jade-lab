@@ -31,15 +31,15 @@
 - `1 <= nums[i] <= 1000`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def averageValue(self, nums: List[int]) -> int:
+    def averageValue(self, nums: list[int]) -> int:
         ans = [n for n in nums if n % 3 == 0 and n % 2 == 0]
         return sum(ans) // len(ans) if ans else 0
 
@@ -47,7 +47,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().averageValue(nums)
 
     print("\noutput:", serialize(ans))

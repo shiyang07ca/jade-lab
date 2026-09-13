@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/11/27 00:01
 # leetgo: dev
 # https://leetcode.cn/problems/sum-of-subarray-minimums/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -34,7 +34,7 @@ a    [ 3       1        2        4 ]
 
 
 class Solution:
-    def sumSubarrayMins1(self, arr: List[int]) -> int:
+    def sumSubarrayMins1(self, arr: list[int]) -> int:
         pos = [[]] * len(arr)
         st = []
         N = len(arr)
@@ -60,7 +60,7 @@ class Solution:
 
         return ans % MOD
 
-    def sumSubarrayMins(self, arr: List[int]) -> int:
+    def sumSubarrayMins(self, arr: list[int]) -> int:
         def get_near_more(nums):
             N = len(nums)
             left = [-1] * N  # left[i] 为左侧严格小于等于 nums[i] 的最近元素位置（不存在时为-1）
@@ -89,7 +89,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    arr: List[int] = deserialize("List[int]", read_line())
+    arr: list[int] = deserialize("List[int]", read_line())
     ans = Solution().sumSubarrayMins(arr)
 
     print("\noutput:", serialize(ans))

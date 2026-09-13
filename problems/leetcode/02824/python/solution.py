@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/11/24 13:27
 # leetgo: dev
 # https://leetcode.cn/problems/count-pairs-whose-sum-is-less-than-target/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def countPairs(self, nums: List[int], target: int) -> int:
+    def countPairs(self, nums: list[int], target: int) -> int:
         n = len(nums)
         ans = 0
         for i in range(n):
@@ -22,7 +22,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     target: int = deserialize("int", read_line())
     ans = Solution().countPairs(nums, target)
 

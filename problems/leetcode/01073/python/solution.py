@@ -44,16 +44,16 @@
 - `arr1` 和 `arr2` 都没有前导0
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def addNegabinary1(self, arr1: List[int], arr2: List[int]) -> List[int]:
-        def baseNeg2(n: int) -> List[int]:
+    def addNegabinary1(self, arr1: list[int], arr2: list[int]) -> list[int]:
+        def baseNeg2(n: int) -> list[int]:
             if n == 0:
                 return [0]
             if n == 1:
@@ -63,13 +63,13 @@ class Solution:
             else:
                 return baseNeg2(n // -2) + [0]
 
-        def to10(arr: List[int]) -> List[int]:
+        def to10(arr: list[int]) -> int:
             return sum((-2) ** (len(arr) - i - 1) for i, n in enumerate(arr) if n)
 
         return baseNeg2(int(to10(arr1) + to10(arr2)))
 
     # 链接：https://leetcode.cn/problems/adding-two-negabinary-numbers/solutions/2273578/fu-er-jin-zhi-shu-xiang-jia-by-leetcode-nwktq/
-    def addNegabinary(self, arr1: List[int], arr2: List[int]) -> List[int]:
+    def addNegabinary(self, arr1: list[int], arr2: list[int]) -> list[int]:
         i, j = len(arr1) - 1, len(arr2) - 1
         carry = 0
         ans = list()
@@ -101,8 +101,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    arr1: List[int] = deserialize("List[int]", read_line())
-    arr2: List[int] = deserialize("List[int]", read_line())
+    arr1: list[int] = deserialize("List[int]", read_line())
+    arr2: list[int] = deserialize("List[int]", read_line())
     ans = Solution().addNegabinary(arr1, arr2)
 
     print("\noutput:", serialize(ans))

@@ -1,24 +1,26 @@
+from __future__ import annotations
+
+import re
+
 # Created by shiyang07ca at 2023/08/03 13:33
 # leetgo: dev
 # https://leetcode.cn/problems/remove-comments/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def removeComments1(self, source: List[str]) -> List[str]:
+    def removeComments1(self, source: list[str]) -> list[str]:
         # 匹配所有 // 和 /* */，后者用非贪婪模式。将所有匹配结果替换成空串。最后移除多余空行。
         return list(
             filter(
-                None, re.sub("//.*|/\*(.|\n)*?\*/", "", "\n".join(source)).split("\n")
+                None, re.sub("//.*|/\\*(.|\n)*?\\*/", "", "\n".join(source)).split("\n")
             )
         )
 
     # 链接：https://leetcode.cn/problems/remove-comments/solutions/2370636/python3javacgorust-yi-ti-yi-jie-fen-qing-0vka/
-    def removeComments(self, source: List[str]) -> List[str]:
+    def removeComments(self, source: list[str]) -> list[str]:
         ans = []
         t = []
         block_comment = False
@@ -47,7 +49,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    source: List[str] = deserialize("List[str]", read_line())
+    source: list[str] = deserialize("List[str]", read_line())
     ans = Solution().removeComments(source)
 
     print("\noutput:", serialize(ans))

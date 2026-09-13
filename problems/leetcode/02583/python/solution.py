@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/02/23 00:01
 # leetgo: dev
 # https://leetcode.cn/problems/kth-largest-sum-in-a-binary-tree/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -15,7 +15,9 @@ from leetgo_py import *
 #         self.left = left
 #         self.right = right
 class Solution:
-    def kthLargestLevelSum(self, root: Optional[TreeNode], k: int) -> int:
+    def kthLargestLevelSum(self, root: TreeNode | None, k: int) -> int:
+        if root is None:
+            return -1
         q = [root]
         ans = []
         while q:

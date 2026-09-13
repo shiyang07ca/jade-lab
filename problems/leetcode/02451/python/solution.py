@@ -47,17 +47,17 @@
 - `words[i]` 只含有小写英文字母。
 
 """
-from itertools import *
+from __future__ import annotations
 
+from itertools import pairwise
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def oddString(self, words: List[str]) -> str:
+    def oddString(self, words: list[str]) -> str:
         def diff(w):
             return (ord(b) - ord(a) for a, b in pairwise(w))
 
@@ -71,12 +71,13 @@ class Solution:
         for ws in cnt.values():
             if len(ws) == 1:
                 return ws[0]
+        raise ValueError("no unique difference")
 
 
 # @lc code=end
 
 if __name__ == "__main__":
-    words: List[str] = deserialize("List[str]", read_line())
+    words: list[str] = deserialize("List[str]", read_line())
     ans = Solution().oddString(words)
 
     print("\noutput:", serialize(ans))

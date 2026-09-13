@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/09/29 12:06
 # leetgo: dev
 # https://leetcode.cn/problems/can-place-flowers/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def canPlaceFlowers1(self, flowerbed: List[int], n: int) -> bool:
+    def canPlaceFlowers1(self, flowerbed: list[int], n: int) -> bool:
         N = len(flowerbed)
         for i, x in enumerate(flowerbed):
             if n <= 0:
@@ -26,7 +26,7 @@ class Solution:
         return n <= 0
 
     # 链接：https://leetcode.cn/problems/can-place-flowers/
-    def canPlaceFlowers(self, flowerbed: List[int], n: int) -> bool:
+    def canPlaceFlowers(self, flowerbed: list[int], n: int) -> bool:
         flowerbed = [0] + flowerbed + [0]
         for i in range(1, len(flowerbed) - 1):
             if flowerbed[i - 1] == 0 and flowerbed[i] == 0 and flowerbed[i + 1] == 0:
@@ -38,7 +38,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    flowerbed: List[int] = deserialize("List[int]", read_line())
+    flowerbed: list[int] = deserialize("List[int]", read_line())
     n: int = deserialize("int", read_line())
     ans = Solution().canPlaceFlowers(flowerbed, n)
 

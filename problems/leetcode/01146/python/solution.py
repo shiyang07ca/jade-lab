@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from bisect import bisect
+
 # Created by shiyang07ca at 2024/04/26 00:17
 # leetgo: dev
 # https://leetcode.cn/problems/snapshot-array/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, join_array, read_line, serialize, split_array
 
 # @lc code=begin
 
@@ -49,7 +51,7 @@ class SnapshotArray:
 # @lc code=end
 
 if __name__ == "__main__":
-    ops: List[str] = deserialize("List[str]", read_line())
+    ops: list[str] = deserialize("List[str]", read_line())
     params = split_array(read_line())
     output = ["null"]
 
@@ -61,18 +63,18 @@ if __name__ == "__main__":
         match ops[i]:
             case "set":
                 method_params = split_array(params[i])
-                index: int = deserialize("int", method_params[0])
+                set_index: int = deserialize("int", method_params[0])
                 val: int = deserialize("int", method_params[1])
-                obj.set(index, val)
+                obj.set(set_index, val)
                 output.append("null")
             case "snap":
                 ans = serialize(obj.snap())
                 output.append(ans)
             case "get":
                 method_params = split_array(params[i])
-                index: int = deserialize("int", method_params[0])
+                get_index: int = deserialize("int", method_params[0])
                 snap_id: int = deserialize("int", method_params[1])
-                ans = serialize(obj.get(index, snap_id))
+                ans = serialize(obj.get(get_index, snap_id))
                 output.append(ans)
 
     print("\noutput:", join_array(output))

@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/09/01 13:16
 # leetgo: dev
 # https://leetcode.cn/problems/number-of-ways-to-buy-pens-and-pencils/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

@@ -1,10 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/07/15 18:26
 # leetgo: dev
 # https://leetcode.cn/problems/4sum/
-
-from os import wait
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +12,7 @@ from leetgo_py import *
 
 # 链接：https://leetcode.cn/problems/4sum/solutions/2344523/python3javacgo-yi-ti-yi-jie-pai-xu-shuan-wy6n/
 class Solution:
-    def fourSum(self, nums: List[int], target: int) -> List[List[int]]:
+    def fourSum(self, nums: list[int], target: int) -> list[list[int]]:
         n = len(nums)
         ans = []
         if n < 4:
@@ -45,7 +44,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     target: int = deserialize("int", read_line())
     ans = Solution().fourSum(nums, target)
 

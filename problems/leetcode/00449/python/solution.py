@@ -1,9 +1,12 @@
+from __future__ import annotations
+
+from bisect import bisect_right
+from sys import maxsize as inf
+
 # Created by shiyang07ca at 2023/09/04 08:20
 # leetgo: dev
 # https://leetcode.cn/problems/serialize-and-deserialize-bst/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line
 
 # @lc code=begin
 
@@ -19,7 +22,7 @@ from leetgo_py import *
 
 # https://leetcode.cn/problems/serialize-and-deserialize-bst/solutions/1485442/by-ac_oier-ncwn/?envType=daily-question&envId=2023-09-04
 class Codec1:
-    def serialize(self, root: Optional[TreeNode]) -> str:
+    def serialize(self, root: TreeNode | None) -> str:
         """Encodes a tree to a single string."""
 
         def dfs(root):
@@ -33,7 +36,7 @@ class Codec1:
         dfs(root)
         return "#".join(nums)
 
-    def deserialize(self, data: str) -> Optional[TreeNode]:
+    def deserialize(self, data: str) -> TreeNode | None:
         """Decodes your encoded data to tree."""
 
         def dfs(l, r):
@@ -55,10 +58,10 @@ class Codec1:
 
 # https://leetcode.cn/problems/serialize-and-deserialize-bst/solutions/2425348/python3javacgo-yi-ti-yi-jie-xian-xu-bian-7ktz/
 class Codec2:
-    def serialize(self, root: Optional[TreeNode]) -> str:
+    def serialize(self, root: TreeNode | None) -> str:
         """Encodes a tree to a single string."""
 
-        def dfs(root: Optional[TreeNode]):
+        def dfs(root: TreeNode | None):
             if root is None:
                 return
             nums.append(root.val)
@@ -69,10 +72,10 @@ class Codec2:
         dfs(root)
         return " ".join(map(str, nums))
 
-    def deserialize(self, data: str) -> Optional[TreeNode]:
+    def deserialize(self, data: str) -> TreeNode | None:
         """Decodes your encoded data to tree."""
 
-        def dfs(mi: int, mx: int) -> Optional[TreeNode]:
+        def dfs(mi: int, mx: int) -> TreeNode | None:
             nonlocal i
             if i == len(nums) or not mi <= nums[i] <= mx:
                 return None
@@ -93,7 +96,7 @@ class Codec:
     def serialize(self, root: TreeNode) -> str:
         arr = []
 
-        def postOrder(root: TreeNode) -> None:
+        def postOrder(root: TreeNode | None) -> None:
             if root is None:
                 return
             postOrder(root.left)
@@ -103,10 +106,10 @@ class Codec:
         postOrder(root)
         return " ".join(map(str, arr))
 
-    def deserialize(self, data: str) -> TreeNode:
+    def deserialize(self, data: str) -> TreeNode | None:
         arr = list(map(int, data.split()))
 
-        def construct(lower: int, upper: int) -> TreeNode:
+        def construct(lower: int, upper: int) -> TreeNode | None:
             if arr == [] or arr[-1] < lower or arr[-1] > upper:
                 return None
             val = arr.pop()
@@ -130,6 +133,6 @@ class Codec:
 # Warning: this is a manual question, the generated test code may be incorrect.
 if __name__ == "__main__":
     root: TreeNode = deserialize("TreeNode", read_line())
-    ans = Solution().CodecDriver(root)
+    ans = Codec().serialize(root)
 
-    print("\noutput:", serialize(ans))
+    print("\noutput:", ans)

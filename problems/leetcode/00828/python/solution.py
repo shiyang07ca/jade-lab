@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from collections import defaultdict
+
 # Created by shiyang07ca at 2023/11/26 21:02
 # leetgo: dev
 # https://leetcode.cn/problems/count-unique-characters-of-all-substrings-of-a-given-string/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

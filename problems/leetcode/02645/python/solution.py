@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from itertools import pairwise
+
 # Created by shiyang07ca at 2024/01/11 21:30
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-additions-to-make-valid-string/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from functools import cache
+
 # Created by shiyang07ca at 2024/03/25 21:54
 # leetgo: dev
 # https://leetcode.cn/problems/coin-change-ii/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +14,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def change(self, amount: int, coins: List[int]) -> int:
+    def change(self, amount: int, coins: list[int]) -> int:
         @cache
         def dfs(i, n):
             if i >= len(coins):
@@ -31,7 +33,7 @@ class Solution:
 
 if __name__ == "__main__":
     amount: int = deserialize("int", read_line())
-    coins: List[int] = deserialize("List[int]", read_line())
+    coins: list[int] = deserialize("List[int]", read_line())
     ans = Solution().change(amount, coins)
 
     print("\noutput:", serialize(ans))

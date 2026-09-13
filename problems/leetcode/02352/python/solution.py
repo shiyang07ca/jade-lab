@@ -41,15 +41,17 @@
 - `1 <= grid[i][j] <= 10⁵`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from collections import defaultdict
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def equalPairs1(self, grid: List[List[int]]) -> int:
+    def equalPairs1(self, grid: list[list[int]]) -> int:
         ans = 0
         n = len(grid)
         for row in grid:
@@ -62,7 +64,7 @@ class Solution:
                 ans += int(flag)
         return ans
 
-    def equalPairs(self, grid: List[List[int]]) -> int:
+    def equalPairs(self, grid: list[list[int]]) -> int:
         ans = 0
         n = len(grid)
         cnt = defaultdict(int)
@@ -77,7 +79,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    grid: List[List[int]] = deserialize("List[List[int]]", read_line())
+    grid: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().equalPairs(grid)
 
     print("\noutput:", serialize(ans))

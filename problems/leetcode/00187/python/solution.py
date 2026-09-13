@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/11/05 12:35
 # leetgo: dev
 # https://leetcode.cn/problems/repeated-dna-sequences/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def findRepeatedDnaSequences(self, s: str) -> List[str]:
+    def findRepeatedDnaSequences(self, s: str) -> list[str]:
         n = len(s)
         if n < 10:
             return []

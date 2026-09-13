@@ -43,9 +43,9 @@
 - 对于链表中的每个节点，节点的值： `-1000 <= node.val <= 1000`.
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import ListNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -66,7 +66,7 @@ from leetgo_py import *
 
 # 链接：https://leetcode.cn/problems/remove-zero-sum-consecutive-nodes-from-linked-list/solutions/2304678/python3javacgotypescript-yi-ti-yi-jie-qi-3vsy/
 class Solution:
-    def removeZeroSumSublists(self, head: Optional[ListNode]) -> Optional[ListNode]:
+    def removeZeroSumSublists(self, head: ListNode | None) -> ListNode | None:
         dummy = ListNode(next=head)
         last = {}
         s, cur = 0, dummy

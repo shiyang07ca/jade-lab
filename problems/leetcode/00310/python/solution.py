@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from collections import deque
+
 # Created by shiyang07ca at 2024/03/17 11:24
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-height-trees/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +14,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/minimum-height-trees/solutions/2691752/python3javacgotypescript-yi-ti-yi-jie-tu-4aet/
-    def findMinHeightTrees(self, n: int, edges: List[List[int]]) -> List[int]:
+    def findMinHeightTrees(self, n: int, edges: list[list[int]]) -> list[int]:
         if n == 1:
             return [0]
         g = [[] for _ in range(n)]
@@ -40,7 +42,7 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    edges: List[List[int]] = deserialize("List[List[int]]", read_line())
+    edges: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().findMinHeightTrees(n, edges)
 
     print("\noutput:", serialize(ans))

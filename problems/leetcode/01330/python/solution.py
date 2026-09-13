@@ -35,11 +35,12 @@ nums.length-1` 的 `|nums[i]-nums[i+1]|` 的和。
 - `-10^5 <= nums[i] <= 10^5`
 
 """
-from itertools import *
-from math import *
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from itertools import pairwise
+from sys import maxsize as inf
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -49,7 +50,7 @@ from leetgo_py import *
 
 class Solution:
     # https://leetcode.cn/problems/reverse-subarray-to-maximize-array-value/solutions/2266682/python3javacgotypescript-yi-ti-yi-jie-fe-3ygf/
-    def maxValueAfterReverse(self, nums: List[int]) -> int:
+    def maxValueAfterReverse(self, nums: list[int]) -> int:
         ans = s = sum(abs(x - y) for x, y in pairwise(nums))
         for x, y in pairwise(nums):
             ans = max(ans, s + abs(nums[0] - y) - abs(x - y))
@@ -68,6 +69,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().maxValueAfterReverse(nums)
     print("output:", serialize(ans))

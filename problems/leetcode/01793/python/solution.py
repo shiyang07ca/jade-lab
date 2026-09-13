@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/03/19 00:00
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-score-of-a-good-subarray/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +13,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/maximum-score-of-a-good-subarray/solutions/2695415/liang-chong-fang-fa-dan-diao-zhan-shuang-24zl/
-    def maximumScore(self, nums: List[int], k: int) -> int:
+    def maximumScore(self, nums: list[int], k: int) -> int:
         n = len(nums)
         ans = min_h = nums[k]
         i = j = k
@@ -31,7 +31,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().maximumScore(nums, k)
 

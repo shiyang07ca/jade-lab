@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from functools import cache
+
 # Created by shiyang07ca at 2023/08/17 21:50
 # leetgo: dev
 # https://leetcode.cn/problems/number-of-ways-of-cutting-a-pizza/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +15,7 @@ from leetgo_py import *
 
 # 链接：https://leetcode.cn/problems/number-of-ways-of-cutting-a-pizza/solutions/2392051/ji-bai-100cong-di-gui-dao-di-tui-dao-you-dxz5/
 class Solution:
-    def ways(self, pizza: List[str], k: int) -> int:
+    def ways(self, pizza: list[str], k: int) -> int:
         MOD = 10**9 + 7
         ms = MatrixSum(pizza)
         m, n = len(pizza), len(pizza[0])
@@ -36,7 +38,7 @@ class Solution:
 
 # 二维前缀和模板（'A' 视作 1，'.' 视作 0）
 class MatrixSum:
-    def __init__(self, matrix: List[str]):
+    def __init__(self, matrix: list[str]):
         m, n = len(matrix), len(matrix[0])
         s = [[0] * (n + 1) for _ in range(m + 1)]
         for i, row in enumerate(matrix):
@@ -52,7 +54,7 @@ class MatrixSum:
 # @lc code=end
 
 if __name__ == "__main__":
-    pizza: List[str] = deserialize("List[str]", read_line())
+    pizza: list[str] = deserialize("List[str]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().ways(pizza, k)
 

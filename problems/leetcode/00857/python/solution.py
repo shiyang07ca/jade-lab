@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from heapq import heapify, heapreplace
+
 # Created by shiyang07ca at 2024/05/02 14:10
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-cost-to-hire-k-workers/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +15,7 @@ from leetgo_py import *
 class Solution:
     # 链接：https://leetcode.cn/problems/minimum-cost-to-hire-k-workers/solutions/1815856/yi-bu-bu-ti-shi-ru-he-si-kao-ci-ti-by-en-1p00/
     def mincostToHireWorkers(
-        self, quality: List[int], wage: List[int], k: int
+        self, quality: list[int], wage: list[int], k: int
     ) -> float:
         pairs = sorted(zip(quality, wage), key=lambda p: p[1] / p[0])  # 按照 r 值排序
         h = [-q for q, _ in pairs[:k]]  # 加负号变成最大堆
@@ -30,8 +32,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    quality: List[int] = deserialize("List[int]", read_line())
-    wage: List[int] = deserialize("List[int]", read_line())
+    quality: list[int] = deserialize("List[int]", read_line())
+    wage: list[int] = deserialize("List[int]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().mincostToHireWorkers(quality, wage, k)
     print("\noutput:", serialize(ans, "double"))

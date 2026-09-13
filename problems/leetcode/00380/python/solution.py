@@ -1,10 +1,11 @@
+from __future__ import annotations
+
+import random
+
 # Created by shiyang07ca at 2025/02/03 09:57
 # leetgo: 1.4.13
 # https://leetcode.cn/problems/insert-delete-getrandom-o1/
-
-from typing import *
-
-from leetgo_py import *
+from leetgo_py import deserialize, join_array, read_line, serialize, split_array
 
 # TODO:
 # tag: hash, array, design
@@ -53,7 +54,7 @@ class RandomizedSet:
 # @lc code=end
 
 if __name__ == "__main__":
-    ops: List[str] = deserialize("List[str]", read_line())
+    ops: list[str] = deserialize("List[str]", read_line())
     params = split_array(read_line())
     output = ["null"]
 
@@ -63,13 +64,13 @@ if __name__ == "__main__":
         match ops[i]:
             case "insert":
                 method_params = split_array(params[i])
-                val: int = deserialize("int", method_params[0])
-                ans = serialize(obj.insert(val))
+                insert_val: int = deserialize("int", method_params[0])
+                ans = serialize(obj.insert(insert_val))
                 output.append(ans)
             case "remove":
                 method_params = split_array(params[i])
-                val: int = deserialize("int", method_params[0])
-                ans = serialize(obj.remove(val))
+                remove_val: int = deserialize("int", method_params[0])
+                ans = serialize(obj.remove(remove_val))
                 output.append(ans)
             case "getRandom":
                 ans = serialize(obj.getRandom())

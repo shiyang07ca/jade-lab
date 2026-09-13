@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/10/15 18:02
 # leetgo: dev
 # https://leetcode.cn/problems/single-number-ii/
+from typing import Counter
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -11,7 +13,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def singleNumber1(self, nums: List[int]) -> int:
+    def singleNumber1(self, nums: list[int]) -> int:
         n = len(nums)
         if n == 1:
             return nums[0]
@@ -27,7 +29,7 @@ class Solution:
         return nums[n - 1]
 
     # 链接：https://leetcode.cn/problems/single-number-ii/
-    def singleNumber(self, nums: List[int]) -> int:
+    def singleNumber(self, nums: list[int]) -> int:
         ans = 0
         for i in range(31):
             cnt1 = sum(x >> i & 1 for x in nums)
@@ -39,7 +41,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().singleNumber(nums)
 
     print("\noutput:", serialize(ans))

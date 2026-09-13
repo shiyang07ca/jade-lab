@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/08/07 00:03
 # leetgo: dev
 # https://leetcode.cn/problems/reverse-string/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def reverseString(self, s: List[str]) -> None:
+    def reverseString(self, s: list[str]) -> None:
         """
         Do not return anything, modify s in-place instead.
         """
@@ -23,8 +23,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    s: List[str] = deserialize("List[str]", read_line())
-    reverseString(s)
+    s: list[str] = deserialize("List[str]", read_line())
+    Solution().reverseString(s)
     ans = s
 
     print("\noutput:", serialize(ans))

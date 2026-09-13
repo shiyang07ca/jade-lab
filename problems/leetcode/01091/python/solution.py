@@ -51,18 +51,18 @@
 - `grid[i][j]` 为 `0` 或 `1`
 
 """
-from collections import *
-from itertools import *
+from __future__ import annotations
 
+from collections import deque
+from itertools import product
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def shortestPathBinaryMatrix(self, grid: List[List[int]]) -> int:
+    def shortestPathBinaryMatrix(self, grid: list[list[int]]) -> int:
         if grid[0][0]:
             return -1
         if len(grid) == 1:
@@ -97,7 +97,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    grid: List[List[int]] = deserialize("List[List[int]]", read_line())
+    grid: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().shortestPathBinaryMatrix(grid)
 
     print("\noutput:", serialize(ans))

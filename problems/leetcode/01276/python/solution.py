@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/12/25 00:04
 # leetgo: dev
 # https://leetcode.cn/problems/number-of-burgers-with-no-waste-of-ingredients/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def numOfBurgers(self, n: int, m: int) -> List[int]:
+    def numOfBurgers(self, n: int, m: int) -> list[int]:
         """
         x + y = m
         4x + 2y = n

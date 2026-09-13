@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/02/20 00:02
 # leetgo: dev
 # https://leetcode.cn/problems/construct-binary-tree-from-preorder-and-inorder-traversal/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -45,7 +45,7 @@ class Solution:
 
         return root
 
-    def buildTree(self, preorder: List[int], inorder: List[int]) -> Optional[TreeNode]:
+    def buildTree(self, preorder: list[int], inorder: list[int]) -> TreeNode | None:
         self.inorder_val_index = {}
         for i, val in enumerate(inorder):
             self.inorder_val_index[val] = i
@@ -56,8 +56,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    preorder: List[int] = deserialize("List[int]", read_line())
-    inorder: List[int] = deserialize("List[int]", read_line())
+    preorder: list[int] = deserialize("List[int]", read_line())
+    inorder: list[int] = deserialize("List[int]", read_line())
     ans = Solution().buildTree(preorder, inorder)
 
     print("\noutput:", serialize(ans))

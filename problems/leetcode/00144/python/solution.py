@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/02/11 00:03
 # leetgo: dev
 # https://leetcode.cn/problems/binary-tree-preorder-traversal/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -15,7 +15,7 @@ from leetgo_py import *
 #         self.left = left
 #         self.right = right
 class Solution:
-    def preorderTraversal1(self, root: Optional[TreeNode]) -> List[int]:
+    def preorderTraversal1(self, root: TreeNode | None) -> list[int]:
         def dfs(node):
             if not node:
                 return
@@ -29,7 +29,7 @@ class Solution:
         dfs(root)
         return ans
 
-    def preorderTraversal(self, root: Optional[TreeNode]) -> List[int]:
+    def preorderTraversal(self, root: TreeNode | None) -> list[int]:
         if not root:
             return []
 

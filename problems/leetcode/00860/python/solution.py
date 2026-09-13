@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/07/22 18:04
 # leetgo: dev
 # https://leetcode.cn/problems/lemonade-change/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def lemonadeChange(self, bills: List[int]) -> bool:
+    def lemonadeChange(self, bills: list[int]) -> bool:
         x = y = 0
         for b in bills:
             if b == 5:
@@ -34,7 +34,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    bills: List[int] = deserialize("List[int]", read_line())
+    bills: list[int] = deserialize("List[int]", read_line())
     ans = Solution().lemonadeChange(bills)
 
     print("\noutput:", serialize(ans))

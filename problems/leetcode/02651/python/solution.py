@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/09/08 09:56
 # leetgo: dev
 # https://leetcode.cn/problems/calculate-delayed-arrival-time/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

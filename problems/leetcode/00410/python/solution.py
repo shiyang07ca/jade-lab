@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/01/21 21:38
 # leetgo: dev
 # https://leetcode.cn/problems/split-array-largest-sum/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +13,7 @@ from leetgo_py import *
 
 class Solution:
     # https://leetcode.cn/problems/split-array-largest-sum/solutions/2613046/er-fen-da-an-fu-ti-dan-pythonjavacgojsru-n5la/
-    def splitArray(self, nums: List[int], k: int) -> int:
+    def splitArray(self, nums: list[int], k: int) -> int:
         def check(mx):
             cnt = 1
             s = 0
@@ -41,7 +41,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     k: int = deserialize("int", read_line())
     ans = Solution().splitArray(nums, k)
 

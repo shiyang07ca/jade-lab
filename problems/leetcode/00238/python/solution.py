@@ -1,16 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2025/02/03 09:30
 # leetgo: 1.4.13
 # https://leetcode.cn/problems/product-of-array-except-self/
-
-from typing import *
-
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def productExceptSelf(self, nums: List[int]) -> List[int]:
+    def productExceptSelf(self, nums: list[int]) -> list[int]:
         n = len(nums)
         pre = [1] * n
         for i in range(1, n):
@@ -26,6 +25,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().productExceptSelf(nums)
     print("\noutput:", serialize(ans, "integer[]"))

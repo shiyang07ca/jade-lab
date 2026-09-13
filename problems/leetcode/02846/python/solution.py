@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/01/26 00:40
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-edge-weight-equilibrium-queries-in-a-tree/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,8 +13,8 @@ from leetgo_py import *
 class Solution:
     # 链接：https://leetcode.cn/problems/minimum-edge-weight-equilibrium-queries-in-a-tree/solutions/2424060/lca-mo-ban-by-endlesscheng-j54b/
     def minOperationsQueries(
-        self, n: int, edges: List[List[int]], queries: List[List[int]]
-    ) -> List[int]:
+        self, n: int, edges: list[list[int]], queries: list[list[int]]
+    ) -> list[int]:
         g = [[] for _ in range(n)]
         for x, y, w in edges:
             g[x].append((y, w - 1))
@@ -82,8 +82,8 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    edges: List[List[int]] = deserialize("List[List[int]]", read_line())
-    queries: List[List[int]] = deserialize("List[List[int]]", read_line())
+    edges: list[list[int]] = deserialize("List[List[int]]", read_line())
+    queries: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().minOperationsQueries(n, edges, queries)
 
     print("\noutput:", serialize(ans))

@@ -50,9 +50,9 @@
 - `1 <= target <= n`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -61,7 +61,7 @@ from leetgo_py import *
 
 class Solution:
     def frogPosition1(
-        self, n: int, edges: List[List[int]], t: int, target: int
+        self, n: int, edges: list[list[int]], t: int, target: int
     ) -> float:
         g = [[] for _ in range(n + 1)]
         for u, v in edges:
@@ -101,7 +101,7 @@ class Solution:
         # 链接：https://leetcode.cn/problems/frog-position-after-t-seconds/solutions/2281408/dfs-ji-yi-ci-you-qu-de-hack-by-endlessch-jtsr/
 
     def frogPosition2(
-        self, n: int, edges: List[List[int]], t: int, target: int
+        self, n: int, edges: list[list[int]], t: int, target: int
     ) -> float:
         g = [[] for _ in range(n + 1)]
         g[1] = [0]  # 减少额外判断的小技巧
@@ -110,7 +110,7 @@ class Solution:
             g[y].append(x)  # 建树
         ans = 0
 
-        def dfs(x: int, fa: int, left_t: int, prod: int) -> True:
+        def dfs(x: int, fa: int, left_t: int, prod: int) -> bool:
             # t 秒后必须在 target（恰好到达，或者 target 是叶子停在原地）
             if x == target and (left_t == 0 or len(g[x]) == 1):
                 nonlocal ans
@@ -127,7 +127,7 @@ class Solution:
         return ans
 
     def frogPosition(
-        self, n: int, edges: List[List[int]], t: int, target: int
+        self, n: int, edges: list[list[int]], t: int, target: int
     ) -> float:
         g = [[] for _ in range(n + 1)]
         g[1] = [0]  # 减少额外判断的小技巧
@@ -156,7 +156,7 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    edges: List[List[int]] = deserialize("List[List[int]]", read_line())
+    edges: list[list[int]] = deserialize("List[List[int]]", read_line())
     t: int = deserialize("int", read_line())
     target: int = deserialize("int", read_line())
     ans = Solution().frogPosition(n, edges, t, target)

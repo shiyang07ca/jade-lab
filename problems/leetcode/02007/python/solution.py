@@ -1,9 +1,13 @@
+from __future__ import annotations
+
+from collections import deque
+
 # Created by shiyang07ca at 2024/04/18 23:01
 # leetgo: dev
 # https://leetcode.cn/problems/find-original-array-from-doubled-array/
+from typing import Counter
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +16,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/find-original-array-from-doubled-array/solutions/2744966/san-chong-fang-fa-cong-onlogn-dao-onpyth-irrt/
-    def findOriginalArray1(self, changed: List[int]) -> List[int]:
+    def findOriginalArray1(self, changed: list[int]) -> list[int]:
         changed.sort()
         ans = []
         cnt = Counter()
@@ -27,7 +31,7 @@ class Solution:
         # 只有所有双倍标记都被清除掉，才能说明 changed 是一个双倍数组
         return [] if cnt else ans
 
-    def findOriginalArray(self, changed: List[int]) -> List[int]:
+    def findOriginalArray(self, changed: list[int]) -> list[int]:
         changed.sort()
         ans = []
         q = deque()
@@ -47,6 +51,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    changed: List[int] = deserialize("List[int]", read_line())
+    changed: list[int] = deserialize("List[int]", read_line())
     ans = Solution().findOriginalArray(changed)
     print("\noutput:", serialize(ans, "integer[]"))

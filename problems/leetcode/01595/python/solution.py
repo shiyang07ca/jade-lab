@@ -60,9 +60,11 @@
 - `0 <= cost[i][j] <= 100`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from functools import cache
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -82,7 +84,7 @@ class Solution:
     # 其中 j\{k} 表示集合 j 中去掉元素 k 后的集合。
     # 递归边界：设第二组的点 x 与第一组的点连接时，最小成本是 minCost[x], 那么有
     #                dfs(-1, j) = sum(minCost[k])
-    def connectTwoGroups1(self, cost: List[List[int]]) -> int:
+    def connectTwoGroups1(self, cost: list[list[int]]) -> int:
         n, m = len(cost), len(cost[0])
         min_cost = [min(col) for col in zip(*cost)]  # 每一列的最小值
 
@@ -99,7 +101,7 @@ class Solution:
     # 递推
     # f[i+1][j] = min(f[i][j\{k] + cost[i][k]), 0<=k<=m-1
     # 初始值 f[0][j] = sum(minCost[k])
-    def connectTwoGroups(self, cost: List[List[int]]) -> int:
+    def connectTwoGroups(self, cost: list[list[int]]) -> int:
         n, m = len(cost), len(cost[0])
         min_cost = [min(col) for col in zip(*cost)]  # 每一列的最小值
 
@@ -118,7 +120,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    cost: List[List[int]] = deserialize("List[List[int]]", read_line())
+    cost: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().connectTwoGroups(cost)
 
     print("\noutput:", serialize(ans))

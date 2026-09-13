@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from collections import defaultdict
+
 # Created by shiyang07ca at 2024/04/07 22:48
 # leetgo: dev
 # https://leetcode.cn/problems/throne-inheritance/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, join_array, read_line, serialize, split_array
 
 # @lc code=begin
 
@@ -23,9 +25,10 @@ class ThroneInheritance:
     def death(self, name: str) -> None:
         self.dead.add(name)
 
-    def getInheritanceOrder(self) -> List[str]:
+    def getInheritanceOrder(self) -> list[str]:
         def dfs(x: str):
-            x not in self.dead and ans.append(x)
+            if x not in self.dead:
+                ans.append(x)
             for y in self.g[x]:
                 dfs(y)
 
@@ -44,7 +47,7 @@ class ThroneInheritance:
 # @lc code=end
 
 if __name__ == "__main__":
-    ops: List[str] = deserialize("List[str]", read_line())
+    ops: list[str] = deserialize("List[str]", read_line())
     params = split_array(read_line())
     output = ["null"]
 

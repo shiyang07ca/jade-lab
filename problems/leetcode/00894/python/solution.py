@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from functools import cache
+
 # Created by shiyang07ca at 2024/04/02 09:27
 # leetgo: dev
 # https://leetcode.cn/problems/all-possible-full-binary-trees/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -30,13 +32,13 @@ for i in range(2, MX):  # 计算 f[i]
 
 
 class Solution:
-    def allPossibleFBT1(self, n: int) -> List[Optional[TreeNode]]:
+    def allPossibleFBT1(self, n: int) -> list[TreeNode | None]:
         return f[(n + 1) // 2] if n % 2 else []
 
     # 链接：https://leetcode.cn/problems/all-possible-full-binary-trees/solutions/2720015/python3javacgotypescript-yi-ti-yi-jie-ji-d1vm/
-    def allPossibleFBT(self, n: int) -> List[Optional[TreeNode]]:
+    def allPossibleFBT(self, n: int) -> list[TreeNode | None]:
         @cache
-        def dfs(n: int) -> List[Optional[TreeNode]]:
+        def dfs(n: int) -> list[TreeNode | None]:
             if n == 1:
                 return [TreeNode()]
             ans = []

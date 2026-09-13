@@ -1,9 +1,12 @@
+from __future__ import annotations
+
+from functools import cache
+from sys import maxsize as inf
+
 # Created by shiyang07ca at 2023/07/13 10:02
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-falling-path-sum/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -11,7 +14,7 @@ from leetgo_py import *
 
 
 class Solution:
-    def minFallingPathSum1(self, matrix: List[List[int]]) -> int:
+    def minFallingPathSum1(self, matrix: list[list[int]]) -> int:
         n = len(matrix)
         if n == 1:
             return min(matrix[0])
@@ -30,7 +33,7 @@ class Solution:
 
     # 链接：https://leetcode.cn/problems/minimum-falling-path-sum/solutions/2341851/cong-di-gui-dao-di-tui-jiao-ni-yi-bu-bu-2cwkb/
     # 记忆化搜索
-    def minFallingPathSum2(self, matrix: List[List[int]]) -> int:
+    def minFallingPathSum2(self, matrix: list[list[int]]) -> int:
         n = len(matrix)
 
         # dfs(r, c) 表示从 matrix[r][c] 出发，向上走到第一行的最小路径和
@@ -47,7 +50,7 @@ class Solution:
         return min(dfs(n - 1, i) for i in range(n))  # 枚举起点，取最小值
 
     # 递推
-    def minFallingPathSum(self, matrix: List[List[int]]) -> int:
+    def minFallingPathSum(self, matrix: list[list[int]]) -> int:
         n = len(matrix)
         f = [[inf] * (n + 2) for _ in range(n)]
         f[0][1 : n + 1] = matrix[0]
@@ -62,7 +65,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    matrix: List[List[int]] = deserialize("List[List[int]]", read_line())
+    matrix: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().minFallingPathSum(matrix)
 
     print("\noutput:", serialize(ans))

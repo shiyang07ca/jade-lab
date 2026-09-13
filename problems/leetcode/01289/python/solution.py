@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/08/10 10:04
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-falling-path-sum-ii/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def minFallingPathSum1(self, grid: List[List[int]]) -> int:
+    def minFallingPathSum1(self, grid: list[list[int]]) -> int:
         n = len(grid)
         cur = grid[0][:]
         pre = grid[0][:]
@@ -20,7 +20,7 @@ class Solution:
         return min(cur)
 
     # 链接：https://leetcode.cn/problems/minimum-falling-path-sum-ii/solutions/2381174/python3javacgotypescript-yi-ti-yi-jie-do-sko0/
-    def minFallingPathSum2(self, grid: List[List[int]]) -> int:
+    def minFallingPathSum2(self, grid: list[list[int]]) -> int:
         n = len(grid)
         f = [[0] * n for _ in range(n + 1)]
         for i, row in enumerate(grid, 1):
@@ -33,7 +33,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    grid: List[List[int]] = deserialize("List[List[int]]", read_line())
-    ans = Solution().minFallingPathSum(grid)
+    grid: list[list[int]] = deserialize("List[List[int]]", read_line())
+    ans = Solution().minFallingPathSum2(grid)
 
     print("\noutput:", serialize(ans))

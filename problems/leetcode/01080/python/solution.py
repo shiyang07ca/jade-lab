@@ -48,9 +48,9 @@
 - `-10⁹ <= limit <= 10⁹`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -63,8 +63,8 @@ from leetgo_py import *
 #         self.right = right
 class Solution:
     def sufficientSubset(
-        self, root: Optional[TreeNode], limit: int
-    ) -> Optional[TreeNode]:
+        self, root: TreeNode | None, limit: int
+    ) -> TreeNode | None:
         def dfs(node, limit):
             if not node.left and not node.right:
                 if node.val < limit:

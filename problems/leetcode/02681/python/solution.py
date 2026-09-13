@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/08/01 13:29
 # leetgo: dev
 # https://leetcode.cn/problems/power-of-heroes/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +12,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/power-of-heroes/solutions/2268792/gong-xian-fa-pythonjavacgo-by-endlessche-d4jx/
-    def sumOfPower(self, nums: List[int]) -> int:
+    def sumOfPower(self, nums: list[int]) -> int:
         MOD = 10**9 + 7
         nums.sort()
         ans = s = 0
@@ -25,7 +25,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().sumOfPower(nums)
 
     print("\noutput:", serialize(ans))

@@ -1,29 +1,29 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/03/02 12:49
 # leetgo: dev
 # https://leetcode.cn/problems/reachable-nodes-with-restrictions/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
     def reachableNodes1(
-        self, n: int, edges: List[List[int]], restricted: List[int]
+        self, n: int, edges: list[list[int]], restricted: list[int]
     ) -> int:
         g = [[] for _ in range(n)]
         for x, y in edges:
             g[x].append(y)
             g[y].append(x)  # 建图
 
-        restricted = set(restricted)
+        restricted_set = set(restricted)
 
         ans = 0
         vis = set()
 
         def dfs(node):
-            if node in vis or node in restricted:
+            if node in vis or node in restricted_set:
                 return
 
             nonlocal ans
@@ -37,7 +37,7 @@ class Solution:
 
     # 链接：https://leetcode.cn/problems/reachable-nodes-with-restrictions/solutions/2662538/shu-shang-dfspythonjavacgojsrust-by-endl-0r3a/
     def reachableNodes(
-        self, n: int, edges: List[List[int]], restricted: List[int]
+        self, n: int, edges: list[list[int]], restricted: list[int]
     ) -> int:
         r = set(restricted)
         g = [[] for _ in range(n)]
@@ -60,8 +60,8 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    edges: List[List[int]] = deserialize("List[List[int]]", read_line())
-    restricted: List[int] = deserialize("List[int]", read_line())
+    edges: list[list[int]] = deserialize("List[List[int]]", read_line())
+    restricted: list[int] = deserialize("List[int]", read_line())
     ans = Solution().reachableNodes(n, edges, restricted)
 
     print("\noutput:", serialize(ans))

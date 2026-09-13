@@ -26,8 +26,8 @@ schema = 1
 bash_version = "5.3.15"
 
 [[modules]]
-id = "package-python-algorithms"
-path = "packages/python-algorithms"
+id = "package-example"
+path = "packages/example-package"
 kind = "package"
 status = "stable"
 summary = "Python samples"
@@ -47,12 +47,12 @@ class CatalogTests(unittest.TestCase):
         catalog = self.load(VALID_CATALOG)
 
         self.assertEqual("5.3.15", catalog.runtimes["bash_version"])
-        self.assertEqual("package-python-algorithms", catalog.modules[0].id)
+        self.assertEqual("package-example", catalog.modules[0].id)
         self.assertTrue(catalog.modules[0].default_check)
 
     def test_rejects_parent_path(self) -> None:
         invalid = VALID_CATALOG.replace(
-            'path = "packages/python-algorithms"', 'path = "../python"'
+            'path = "packages/example-package"', 'path = "../python"'
         )
 
         with self.assertRaisesRegex(repo.CatalogError, "normalized repository-relative"):
@@ -66,8 +66,8 @@ class CatalogTests(unittest.TestCase):
 
     def test_rejects_path_outside_kind_root(self) -> None:
         invalid = VALID_CATALOG.replace(
-            'path = "packages/python-algorithms"',
-            'path = "labs/python-algorithms"',
+            'path = "packages/example-package"',
+            'path = "labs/example-python"',
         )
 
         with self.assertRaisesRegex(repo.CatalogError, "must be under packages/"):
@@ -93,8 +93,8 @@ class CatalogTests(unittest.TestCase):
 class ListTests(unittest.TestCase):
     def test_default_list_hides_non_active_statuses(self) -> None:
         stable = repo.Module(
-            id="package-python-algorithms",
-            path=PurePosixPath("packages/python-algorithms"),
+            id="package-example",
+            path=PurePosixPath("packages/example-package"),
             kind="package",
             status="stable",
             summary="Stable Python package",
@@ -119,7 +119,7 @@ class ListTests(unittest.TestCase):
             )
 
         self.assertEqual(0, result)
-        self.assertIn("package-python-algorithms", output.getvalue())
+        self.assertIn("package-example", output.getvalue())
         self.assertNotIn("lab-legacy", output.getvalue())
 
     def test_explicit_kind_shows_hidden_statuses(self) -> None:
@@ -170,7 +170,7 @@ class CheckExpansionTests(unittest.TestCase):
     def test_expands_known_paths_without_shell(self) -> None:
         module = repo.Module(
             id="example",
-            path=PurePosixPath("packages/python-algorithms"),
+            path=PurePosixPath("packages/example-package"),
             kind="package",
             status="stable",
             summary="example",
@@ -186,22 +186,22 @@ class CheckExpansionTests(unittest.TestCase):
 
 class PackagePolicyTests(unittest.TestCase):
     def test_rejects_empty_source_and_unfinished_marker(self) -> None:
-        empty = repo._package_source_errors(Path("packages/python-algorithms/empty.py"), "")
+        empty = repo._package_source_errors(Path("packages/example-package/empty.py"), "")
         unfinished = repo._package_source_errors(
-            Path("packages/python-algorithms/sample.py"), "value = 1  # TODO\n"
+            Path("packages/example-package/sample.py"), "value = 1  # TODO\n"
         )
 
         self.assertEqual(
-            ["empty source file in package: packages/python-algorithms/empty.py"], empty
+            ["empty source file in package: packages/example-package/empty.py"], empty
         )
         self.assertEqual(
-            ["unfinished marker in package: packages/python-algorithms/sample.py:1"],
+            ["unfinished marker in package: packages/example-package/sample.py:1"],
             unfinished,
         )
 
     def test_allows_empty_python_package_marker(self) -> None:
         errors = repo._package_source_errors(
-            Path("packages/python-algorithms/topic/__init__.py"), ""
+            Path("packages/example-package/topic/__init__.py"), ""
         )
 
         self.assertEqual([], errors)
@@ -222,12 +222,12 @@ class RepositoryConfigurationTests(unittest.TestCase):
 class CommandSeparationTests(unittest.TestCase):
     def test_module_check_does_not_run_repository_policy(self) -> None:
         module = repo.Module(
-            id="package-python-algorithms",
-            path=PurePosixPath("packages/python-algorithms"),
-            kind="package",
-            status="stable",
-            summary="Stable Python package",
-            default_check=True,
+            id="lab-python-implementations",
+            path=PurePosixPath("labs/algorithms/python-implementations"),
+            kind="lab",
+            status="incomplete",
+            summary="Python algorithm implementations",
+            default_check=False,
             checks=(("true",),),
         )
         args = Namespace(modules=[module.id], all=False, keep_going=False)

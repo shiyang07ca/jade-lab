@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/03/09 14:58
 # leetgo: dev
 # https://leetcode.cn/problems/find-the-minimum-possible-sum-of-a-beautiful-array/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

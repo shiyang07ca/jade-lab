@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/08/14 00:10
 # leetgo: dev
 # https://leetcode.cn/problems/merge-two-binary-trees/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -16,8 +16,8 @@ from leetgo_py import *
 #         self.right = right
 class Solution:
     def mergeTrees(
-        self, root1: Optional[TreeNode], root2: Optional[TreeNode]
-    ) -> Optional[TreeNode]:
+        self, root1: TreeNode | None, root2: TreeNode | None
+    ) -> TreeNode | None:
         if root1 is None and root2 is None:
             return None
         elif root1 is None and root2 is not None:

@@ -1,15 +1,17 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/08/16 00:41
 # leetgo: dev
 # https://leetcode.cn/problems/find-the-losers-of-the-circular-game/
+from typing import Counter
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def circularGameLosers(self, n: int, k: int) -> List[int]:
+    def circularGameLosers(self, n: int, k: int) -> list[int]:
         cnt = Counter([0])
         s = 0
         i = 1

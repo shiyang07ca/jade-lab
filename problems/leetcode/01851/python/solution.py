@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from heapq import heappop, heappush
+
 # Created by shiyang07ca at 2023/07/18 09:25
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-interval-to-include-each-query/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,14 +15,14 @@ from leetgo_py import *
 
 # 链接：https://leetcode.cn/problems/minimum-interval-to-include-each-query/solutions/2348342/python3javacgo-yi-ti-yi-jie-pai-xu-chi-x-5mgt/
 class Solution:
-    def minInterval(self, intervals: List[List[int]], queries: List[int]) -> List[int]:
+    def minInterval(self, intervals: list[list[int]], queries: list[int]) -> list[int]:
         n, m = len(intervals), len(queries)
         intervals.sort()
-        queries = sorted((x, i) for i, x in enumerate(queries))
+        sorted_queries = sorted((x, i) for i, x in enumerate(queries))
         ans = [-1] * m
-        pq = []
+        pq: list[tuple[int, int]] = []
         i = 0
-        for x, j in queries:
+        for x, j in sorted_queries:
             while i < n and intervals[i][0] <= x:
                 a, b = intervals[i]
                 heappush(pq, (b - a + 1, b))
@@ -35,8 +37,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    intervals: List[List[int]] = deserialize("List[List[int]]", read_line())
-    queries: List[int] = deserialize("List[int]", read_line())
+    intervals: list[list[int]] = deserialize("List[List[int]]", read_line())
+    queries: list[int] = deserialize("List[int]", read_line())
     ans = Solution().minInterval(intervals, queries)
 
     print("\noutput:", serialize(ans))

@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/09/30 23:52
 # leetgo: dev
 # https://leetcode.cn/problems/earliest-possible-day-of-full-bloom/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +12,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/earliest-possible-day-of-full-bloom/description/
-    def earliestFullBloom(self, plantTime: List[int], growTime: List[int]) -> int:
+    def earliestFullBloom(self, plantTime: list[int], growTime: list[int]) -> int:
         ans = days = 0
         for p, g in sorted(zip(plantTime, growTime), key=lambda z: -z[1]):
             days += p  # 累加播种天数
@@ -23,8 +23,8 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    plantTime: List[int] = deserialize("List[int]", read_line())
-    growTime: List[int] = deserialize("List[int]", read_line())
+    plantTime: list[int] = deserialize("List[int]", read_line())
+    growTime: list[int] = deserialize("List[int]", read_line())
     ans = Solution().earliestFullBloom(plantTime, growTime)
 
     print("\noutput:", serialize(ans))

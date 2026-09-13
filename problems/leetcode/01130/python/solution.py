@@ -41,9 +41,12 @@
 - 答案保证是一个 32 位带符号整数，即小于 `2³¹` 。
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from functools import cache
+from sys import maxsize as inf
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -53,9 +56,9 @@ from leetgo_py import *
 
 # 链接：https://leetcode.cn/problems/minimum-cost-tree-from-leaf-values/solutions/2290549/python3javacgotypescript-yi-ti-shuang-ji-qpwv/
 class Solution:
-    def mctFromLeafValues1(self, arr: List[int]) -> int:
+    def mctFromLeafValues1(self, arr: list[int]) -> int:
         @cache
-        def dfs(i: int, j: int) -> Tuple:
+        def dfs(i: int, j: int) -> tuple:
             if i == j:
                 return 0, arr[i]
             s, mx = inf, -1
@@ -70,7 +73,7 @@ class Solution:
 
         return dfs(0, len(arr) - 1)[0]
 
-    def mctFromLeafValues(self, arr: List[int]) -> int:
+    def mctFromLeafValues(self, arr: list[int]) -> int:
         @cache
         def dfs(i: int, j: int) -> int:
             if i == j:
@@ -92,7 +95,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    arr: List[int] = deserialize("List[int]", read_line())
+    arr: list[int] = deserialize("List[int]", read_line())
     ans = Solution().mctFromLeafValues(arr)
 
     print("\noutput:", serialize(ans))

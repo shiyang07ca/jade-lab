@@ -1,11 +1,11 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/01/06 11:10
 # leetgo: dev
 # https://leetcode.cn/problems/insert-greatest-common-divisors-in-linked-list/
+from math import gcd
 
-from math import *
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import ListNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -17,8 +17,10 @@ from leetgo_py import *
 #         self.next = next
 class Solution:
     def insertGreatestCommonDivisors(
-        self, head: Optional[ListNode]
-    ) -> Optional[ListNode]:
+        self, head: ListNode | None
+    ) -> ListNode | None:
+        if head is None:
+            return None
         dummy = ListNode()
         dummy.next = head
         cur = head.next

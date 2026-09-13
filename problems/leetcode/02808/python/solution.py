@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from collections import defaultdict
+
 # Created by shiyang07ca at 2024/01/30 13:47
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-seconds-to-equalize-a-circular-array/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +14,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/minimum-seconds-to-equalize-a-circular-array/solutions/2614614/shi-xun-huan-shu-zu-suo-you-yuan-su-xian-1bfa/
-    def minimumSeconds(self, nums: List[int]) -> int:
+    def minimumSeconds(self, nums: list[int]) -> int:
         mp = defaultdict(list)
         res = n = len(nums)
         for i, a in enumerate(nums):
@@ -28,7 +30,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().minimumSeconds(nums)
 
     print("\noutput:", serialize(ans))

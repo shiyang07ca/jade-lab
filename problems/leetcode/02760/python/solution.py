@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/11/16 00:16
 # leetgo: dev
 # https://leetcode.cn/problems/longest-even-odd-subarray-with-threshold/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def longestAlternatingSubarray(self, nums: List[int], threshold: int) -> int:
+    def longestAlternatingSubarray(self, nums: list[int], threshold: int) -> int:
         ans = 0
         l = 0
         r = 1
@@ -30,7 +30,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     threshold: int = deserialize("int", read_line())
     ans = Solution().longestAlternatingSubarray(nums, threshold)
 

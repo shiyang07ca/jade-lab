@@ -1,17 +1,17 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/05/25 22:44
 # leetgo: dev
 # https://leetcode.cn/problems/find-indices-with-index-and-value-difference-i/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
     def findIndices(
-        self, nums: List[int], indexDifference: int, valueDifference: int
-    ) -> List[int]:
+        self, nums: list[int], indexDifference: int, valueDifference: int
+    ) -> list[int]:
         for i, row in enumerate(nums):
             for j in range(i, len(nums)):
                 if (
@@ -25,7 +25,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     indexDifference: int = deserialize("int", read_line())
     valueDifference: int = deserialize("int", read_line())
     ans = Solution().findIndices(nums, indexDifference, valueDifference)

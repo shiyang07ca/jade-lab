@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/12/01 12:50
 # leetgo: dev
 # https://leetcode.cn/problems/first-completely-painted-row-or-column/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def firstCompleteIndex(self, arr: List[int], mat: List[List[int]]) -> int:
+    def firstCompleteIndex(self, arr: list[int], mat: list[list[int]]) -> int:
         M, N = len(mat), len(mat[0])
         pos = {}
         for i, row in enumerate(mat):
@@ -24,13 +24,14 @@ class Solution:
             col[y] += 1
             if row[x] == N or col[y] == M:
                 return i
+        raise ValueError("no row or column completed")
 
 
 # @lc code=end
 
 if __name__ == "__main__":
-    arr: List[int] = deserialize("List[int]", read_line())
-    mat: List[List[int]] = deserialize("List[List[int]]", read_line())
+    arr: list[int] = deserialize("List[int]", read_line())
+    mat: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().firstCompleteIndex(arr, mat)
 
     print("\noutput:", serialize(ans))

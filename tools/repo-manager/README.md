@@ -9,7 +9,7 @@ mise run modules
 mise run modules --all
 mise run doctor
 mise run policy
-mise run check package-python-algorithms
+mise run check lab-python-implementations
 mise run check --all --keep-going
 ```
 

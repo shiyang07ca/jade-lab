@@ -1,10 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2025/02/04 14:01
 # leetgo: 1.4.13
 # https://leetcode.cn/problems/reverse-words-in-a-string/
-
-from typing import *
-
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

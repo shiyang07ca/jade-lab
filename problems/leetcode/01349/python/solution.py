@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from functools import cache
+
 # Created by shiyang07ca at 2023/12/26 00:11
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-students-taking-exam/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +15,7 @@ from leetgo_py import *
 
 class Solution:
     # https://leetcode.cn/problems/maximum-students-taking-exam/solutions/2580043/jiao-ni-yi-bu-bu-si-kao-dong-tai-gui-hua-9y5k/
-    def maxStudents(self, seats: List[List[str]]) -> int:
+    def maxStudents(self, seats: list[list[str]]) -> int:
         a = [sum((c == ".") << j for j, c in enumerate(s)) for s in seats]
 
         @cache  # 缓存装饰器，避免重复计算 dfs 的结果
@@ -36,7 +38,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    seats: List[List[str]] = deserialize("List[List[str]]", read_line())
+    seats: list[list[str]] = deserialize("List[List[str]]", read_line())
     ans = Solution().maxStudents(seats)
 
     print("\noutput:", serialize(ans))

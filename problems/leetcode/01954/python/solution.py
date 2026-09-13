@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/12/24 14:13
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-garden-perimeter-to-collect-enough-apples/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

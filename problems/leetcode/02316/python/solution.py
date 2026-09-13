@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/10/21 17:14
 # leetgo: dev
 # https://leetcode.cn/problems/count-unreachable-pairs-of-nodes-in-an-undirected-graph/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def countPairs1(self, n: int, edges: List[List[int]]) -> int:
+    def countPairs1(self, n: int, edges: list[list[int]]) -> int:
         def find(x):
             if p[x] != x:
                 # 路径压缩
@@ -36,7 +36,7 @@ class Solution:
 
     # DFS
     # 链接：https://leetcode.cn/problems/count-unreachable-pairs-of-nodes-in-an-undirected-graph/solutions/
-    def countPairs(self, n: int, edges: List[List[int]]) -> int:
+    def countPairs(self, n: int, edges: list[list[int]]) -> int:
         g = [[] for _ in range(n)]
         for x, y in edges:
             g[x].append(y)
@@ -64,7 +64,7 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    edges: List[List[int]] = deserialize("List[List[int]]", read_line())
+    edges: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().countPairs(n, edges)
 
     print("\noutput:", serialize(ans))

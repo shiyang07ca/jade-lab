@@ -48,17 +48,17 @@
 - `0 <= colsum[i] <= 2`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
     def reconstructMatrix1(
-        self, upper: int, lower: int, colsum: List[int]
-    ) -> List[List[int]]:
+        self, upper: int, lower: int, colsum: list[int]
+    ) -> list[list[int]]:
         if upper + lower != sum(colsum):
             return []
 
@@ -88,8 +88,8 @@ class Solution:
 
     # 链接：https://leetcode.cn/problems/reconstruct-a-2-row-binary-matrix/solutions/2324031/python3javacgotypescript-yi-ti-yi-jie-ta-ecug/
     def reconstructMatrix(
-        self, upper: int, lower: int, colsum: List[int]
-    ) -> List[List[int]]:
+        self, upper: int, lower: int, colsum: list[int]
+    ) -> list[list[int]]:
         n = len(colsum)
         ans = [[0] * n for _ in range(2)]
         for j, v in enumerate(colsum):
@@ -113,7 +113,7 @@ class Solution:
 if __name__ == "__main__":
     upper: int = deserialize("int", read_line())
     lower: int = deserialize("int", read_line())
-    colsum: List[int] = deserialize("List[int]", read_line())
+    colsum: list[int] = deserialize("List[int]", read_line())
     ans = Solution().reconstructMatrix(upper, lower, colsum)
 
     print("\noutput:", serialize(ans))

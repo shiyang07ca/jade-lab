@@ -42,15 +42,15 @@
 - `1 <= nums[i] <= 1000`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def unequalTriplets(self, nums: List[int]) -> int:
+    def unequalTriplets(self, nums: list[int]) -> int:
         ans = 0
         for i, ni in enumerate(nums):
             for j, nj in enumerate(nums[i + 1 :], i):
@@ -63,7 +63,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().unequalTriplets(nums)
 
     print("\noutput:", serialize(ans))

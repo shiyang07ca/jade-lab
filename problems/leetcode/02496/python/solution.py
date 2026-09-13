@@ -41,15 +41,15 @@
 - `strs[i]` 只包含小写英文字母和数字。
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def maximumValue(self, strs: List[str]) -> int:
+    def maximumValue(self, strs: list[str]) -> int:
         ans = 0
         for s in strs:
             t = 0
@@ -67,7 +67,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    strs: List[str] = deserialize("List[str]", read_line())
+    strs: list[str] = deserialize("List[str]", read_line())
     ans = Solution().maximumValue(strs)
 
     print("\noutput:", serialize(ans))

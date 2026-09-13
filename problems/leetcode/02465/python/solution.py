@@ -49,15 +49,15 @@
 - `0 <= nums[i] <= 100`
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def distinctAverages(self, nums: List[int]) -> int:
+    def distinctAverages(self, nums: list[int]) -> int:
         ans = set()
         i, j = 0, len(nums) - 1
         nums.sort()
@@ -71,7 +71,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().distinctAverages(nums)
 
     print("\noutput:", serialize(ans))

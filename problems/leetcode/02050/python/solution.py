@@ -1,9 +1,11 @@
+from __future__ import annotations
+
+from collections import defaultdict, deque
+
 # Created by shiyang07ca at 2023/07/28 12:44
 # leetgo: dev
 # https://leetcode.cn/problems/parallel-courses-iii/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -14,7 +16,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/parallel-courses-iii/solutions/2362108/python3javacgotypescript-yi-ti-yi-jie-tu-4nbv/
-    def minimumTime(self, n: int, relations: List[List[int]], time: List[int]) -> int:
+    def minimumTime(self, n: int, relations: list[list[int]], time: list[int]) -> int:
         g = defaultdict(list)
         indeg = [0] * n
         for a, b in relations:
@@ -39,7 +41,7 @@ class Solution:
         return ans
 
     # 链接：https://leetcode.cn/problems/parallel-courses-iii/solutions/1063928/tuo-bu-pai-xu-dong-tai-gui-hua-by-endles-dph6/
-    def minimumTime2(self, n: int, relations: List[List[int]], time: List[int]) -> int:
+    def minimumTime2(self, n: int, relations: list[list[int]], time: list[int]) -> int:
         g = [[] for _ in range(n)]
         deg = [0] * n  # deg[i] 表示 i 的先修课的个数
         for x, y in relations:
@@ -63,8 +65,8 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    relations: List[List[int]] = deserialize("List[List[int]]", read_line())
-    time: List[int] = deserialize("List[int]", read_line())
+    relations: list[list[int]] = deserialize("List[List[int]]", read_line())
+    time: list[int] = deserialize("List[int]", read_line())
     ans = Solution().minimumTime(n, relations, time)
 
     print("\noutput:", serialize(ans))

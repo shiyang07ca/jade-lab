@@ -57,16 +57,17 @@ c", "pcxbcf"].
 - `words[i]` 仅由小写英文字母组成。
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
-from functools import *
+from functools import cache
+
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def longestStrChain(self, words: List[str]) -> int:
+    def longestStrChain1(self, words: list[str]) -> int:
         ws = sorted([(len(w), w) for w in words], reverse=True)
         wpos = {w[1]: i for i, w in enumerate(ws)}
 
@@ -89,7 +90,7 @@ class Solution:
     # 链接：https://leetcode.cn/problems/longest-string-chain/solutions/2247269/jiao-ni-yi-bu-bu-si-kao-dong-tai-gui-hua-wdkm/
     # 来源：力扣（LeetCode）
     # 著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
-    def longestStrChain(self, words: List[str]) -> int:
+    def longestStrChain(self, words: list[str]) -> int:
         ws = set(words)
 
         @cache  # 缓存装饰器，避免重复计算 dfs 的结果
@@ -107,6 +108,6 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    words: List[str] = deserialize("List[str]", read_line())
+    words: list[str] = deserialize("List[str]", read_line())
     ans = Solution().longestStrChain(words)
     print("output:", serialize(ans))

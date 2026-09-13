@@ -1,15 +1,15 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/01/17 13:24
 # leetgo: dev
 # https://leetcode.cn/problems/find-maximum-number-of-string-pairs/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def maximumNumberOfStringPairs(self, words: List[str]) -> int:
+    def maximumNumberOfStringPairs(self, words: list[str]) -> int:
         ans = 0
         for i, w in enumerate(words):
             for j in range(i + 1, len(words)):
@@ -21,7 +21,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    words: List[str] = deserialize("List[str]", read_line())
+    words: list[str] = deserialize("List[str]", read_line())
     ans = Solution().maximumNumberOfStringPairs(words)
 
     print("\noutput:", serialize(ans))

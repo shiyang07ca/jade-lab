@@ -74,15 +74,15 @@ eᵢ` 的值都是 **唯一** 的。
 - `leaveTimeᵢ` 按严格递增顺序排列
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def hardestWorker(self, n: int, logs: List[List[int]]) -> int:
+    def hardestWorker(self, n: int, logs: list[list[int]]) -> int:
         start = 0
         ans, ma = logs[0][0], logs[0][1]
         for i, end in logs:
@@ -100,6 +100,6 @@ class Solution:
 
 if __name__ == "__main__":
     n: int = deserialize("int", read_line())
-    logs: List[List[int]] = deserialize("List[List[int]]", read_line())
+    logs: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().hardestWorker(n, logs)
     print("output:", serialize(ans))

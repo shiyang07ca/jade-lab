@@ -1,22 +1,22 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/09/13 13:06
 # leetgo: dev
 # https://leetcode.cn/problems/check-knight-tour-configuration/
+from itertools import pairwise
 
-from itertools import *
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def checkValidGrid(self, grid: List[List[int]]) -> bool:
+    def checkValidGrid(self, grid: list[list[int]]) -> bool:
         if grid[0][0] != 0:
             return False
 
         n = len(grid)
-        pos = [0] * (n * n)
+        pos: list[tuple[int, int]] = [(0, 0)] * (n * n)
         for i, row in enumerate(grid):
             for j, x in enumerate(row):
                 pos[x] = (i, j)
@@ -31,7 +31,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    grid: List[List[int]] = deserialize("List[List[int]]", read_line())
+    grid: list[list[int]] = deserialize("List[List[int]]", read_line())
     ans = Solution().checkValidGrid(grid)
 
     print("\noutput:", serialize(ans))

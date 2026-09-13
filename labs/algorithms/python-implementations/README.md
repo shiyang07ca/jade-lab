@@ -1,16 +1,16 @@
 # Python 算法实现实验
 
-本实验保留尚未形成稳定公开接口的 Python 算法、数据结构和竞赛实现。它们仍有逐项审查和比较价值，但部分文件
-只有内嵌 `unittest`、依赖当前目录导入或同时包含多种未验证实现，因此不能从目录位置推断可复用性。
+本实验集中保存 Python 算法、数据结构和竞赛实现，包括 `algorithms` 中已经整理的实现和仍在逐项审查的旧实现。
+这些代码服务于算法复习、题解原型和实验比较，不再单独作为可发布的软件包维护。
 
-已经整理并由消费方测试验证的实现位于
-[`packages/python-algorithms/`](../../../packages/python-algorithms/)；本实验测试只通过 `jade_algorithms` 公开接口
-调用它们，避免重新复制一份实现。
+`algorithms` 是本实验内部的导入包，公开入口在
+[`algorithms/__init__.py`](algorithms/__init__.py)。其他实验代码和测试可以从公开入口导入；
+`algorithms/`、`competitive-programming/` 和 `data-structures/` 下的代码仍按文件自身的验证程度使用。
 
 ```sh
 mise install python uv
 mise run check lab-python-implementations
 ```
 
-当前检查运行消费方测试，并对保留源码执行语法编译。某个旧实现需要复用时，逐项补输入限制、错误类型和行为测试，
-然后移动到按能力命名的软件包；其余源码继续作为实验保留，不标记为稳定。
+当前检查运行 `algorithms` 的行为测试，并对实验源码执行语法编译。需要把某项实现用于其他独立项目时，
+再根据实际调用场景重新整理为软件包，而不是在本实验外复制一份源码。

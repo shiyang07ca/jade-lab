@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/03/20 19:02
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-non-zero-product-of-the-array-elements/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

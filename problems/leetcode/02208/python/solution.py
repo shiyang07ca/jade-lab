@@ -1,15 +1,17 @@
+from __future__ import annotations
+
+from heapq import heappush, heapreplace
+
 # Created by shiyang07ca at 2023/07/25 12:50
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-operations-to-halve-array-sum/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
-    def halveArray(self, nums: List[int]) -> int:
+    def halveArray(self, nums: list[int]) -> int:
         t = sum(nums) / 2
         ans = 0
         h = []
@@ -27,7 +29,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().halveArray(nums)
 
     print("\noutput:", serialize(ans))

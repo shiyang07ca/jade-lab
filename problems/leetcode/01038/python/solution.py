@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/12/04 22:34
 # leetgo: dev
 # https://leetcode.cn/problems/binary-search-tree-to-greater-sum-tree/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -21,7 +21,7 @@ class Solution:
     def bstToGst(self, root: TreeNode) -> TreeNode:
         s = 0
 
-        def dfs(node: TreeNode) -> None:
+        def dfs(node: TreeNode | None) -> None:
             if node is None:
                 return
             dfs(node.right)  # 递归右子树

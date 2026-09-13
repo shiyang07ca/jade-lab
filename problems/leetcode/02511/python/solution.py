@@ -1,16 +1,16 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/09/02 09:27
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-enemy-forts-that-can-be-captured/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
 
 class Solution:
     # 链接：https://leetcode.cn/problems/maximum-enemy-forts-that-can-be-captured/solutions/2422340/python3javacgorust-yi-ti-yi-jie-shuang-z-xws6/
-    def captureForts(self, forts: List[int]) -> int:
+    def captureForts(self, forts: list[int]) -> int:
         n = len(forts)
         i = ans = 0
         while i < n:
@@ -27,7 +27,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    forts: List[int] = deserialize("List[int]", read_line())
+    forts: list[int] = deserialize("List[int]", read_line())
     ans = Solution().captureForts(forts)
 
     print("\noutput:", serialize(ans))

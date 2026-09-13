@@ -44,9 +44,9 @@ treeAncestor.getKthAncestor(6, 3);  // 返回 -1 因为不存在满足要求的�
 - 至多查询 `5 * 10⁴` 次
 
 """
+from __future__ import annotations
 
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, join_array, read_line, serialize, split_array
 
 # @lc code=begin
 
@@ -56,7 +56,7 @@ from leetgo_py import *
 
 # 链接：https://leetcode.cn/problems/kth-ancestor-of-a-tree-node/solutions/2305895/mo-ban-jiang-jie-shu-shang-bei-zeng-suan-v3rw/
 class TreeAncestor:
-    def __init__(self, n: int, parent: List[int]):
+    def __init__(self, n: int, parent: list[int]):
         m = n.bit_length() - 1
         pa = [[p] + [-1] * m for p in parent]
         for i in range(m):
@@ -89,13 +89,13 @@ class TreeAncestor:
 # @lc code=end
 
 if __name__ == "__main__":
-    ops: List[str] = deserialize("List[str]", read_line())
+    ops: list[str] = deserialize("List[str]", read_line())
     params = split_array(read_line())
     output = ["null"]
 
     constructor_params = split_array(params[0])
     n: int = deserialize("int", constructor_params[0])
-    parent: List[int] = deserialize("List[int]", constructor_params[1])
+    parent: list[int] = deserialize("List[int]", constructor_params[1])
     obj = TreeAncestor(n, parent)
 
     for i in range(1, len(ops)):

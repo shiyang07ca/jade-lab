@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/11/04 13:55
 # leetgo: dev
 # https://leetcode.cn/problems/maximum-xor-of-two-numbers-in-an-array/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -12,7 +12,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/maximum-xor-of-two-numbers-in-an-array/description/
-    def findMaximumXOR(self, nums: List[int]) -> int:
+    def findMaximumXOR(self, nums: list[int]) -> int:
         ans = mask = 0
         high_bit = max(nums).bit_length() - 1
         for i in range(high_bit, -1, -1):  # 从最高位开始枚举
@@ -31,7 +31,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().findMaximumXOR(nums)
 
     print("\noutput:", serialize(ans))

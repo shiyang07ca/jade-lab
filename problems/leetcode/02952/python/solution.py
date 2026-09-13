@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/03/30 00:07
 # leetgo: dev
 # https://leetcode.cn/problems/minimum-number-of-coins-to-be-added/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -13,7 +13,7 @@ from leetgo_py import *
 
 class Solution:
     # 链接：https://leetcode.cn/problems/minimum-number-of-coins-to-be-added/solutions/2551707/yong-gui-na-fa-si-kao-pythonjavacgo-by-e-8etj/
-    def minimumAddedCoins(self, coins: List[int], target: int) -> int:
+    def minimumAddedCoins(self, coins: list[int], target: int) -> int:
         coins.sort()
         ans, s, i = 0, 1, 0
         while s <= target:
@@ -29,7 +29,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    coins: List[int] = deserialize("List[int]", read_line())
+    coins: list[int] = deserialize("List[int]", read_line())
     target: int = deserialize("int", read_line())
     ans = Solution().minimumAddedCoins(coins, target)
 

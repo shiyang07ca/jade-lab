@@ -1,21 +1,19 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/10/13 00:01
 # leetgo: dev
 # https://leetcode.cn/problems/avoid-flood-in-the-city/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
-
 # TODO:
 # tag: binary search
-
 from sortedcontainers import SortedList
 
 
 class Solution:
     # 链接：https://leetcode.cn/problems/avoid-flood-in-the-city/
-    def avoidFlood(self, rains: List[int]) -> List[int]:
+    def avoidFlood(self, rains: list[int]) -> list[int]:
         n = len(rains)
         ans = [-1] * n
         sunny = SortedList()
@@ -38,7 +36,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    rains: List[int] = deserialize("List[int]", read_line())
+    rains: list[int] = deserialize("List[int]", read_line())
     ans = Solution().avoidFlood(rains)
 
     print("\noutput:", serialize(ans))

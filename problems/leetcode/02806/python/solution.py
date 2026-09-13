@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2024/06/12 00:16
 # leetgo: dev
 # https://leetcode.cn/problems/account-balance-after-rounded-purchase/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 

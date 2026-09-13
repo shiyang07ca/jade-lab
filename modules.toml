@@ -25,19 +25,6 @@ summary = "Bash 自动化与部署脚本课程"
 checks = [["python", "{root}/tools/repo-manager/bash_course.py"]]
 
 [[modules]]
-id = "package-python-algorithms"
-path = "packages/python-algorithms"
-kind = "package"
-status = "stable"
-summary = "用于算法复习和题解原型的可安装 Python 软件包"
-default_check = true
-checks = [
-  ["uv", "run", "--frozen", "pytest"],
-  ["uv", "run", "--frozen", "ruff", "check", "."],
-  ["uv", "build", "--out-dir", "{scratch}/dist/python-algorithms"],
-]
-
-[[modules]]
 id = "lab-cpp-implementations"
 path = "labs/algorithms/cpp-implementations"
 kind = "lab"

@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/09/27 13:38
 # leetgo: dev
 # https://leetcode.cn/problems/filter-restaurants-by-vegan-friendly-price-and-distance/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
 
@@ -11,11 +11,11 @@ from leetgo_py import *
 class Solution:
     def filterRestaurants(
         self,
-        restaurants: List[List[int]],
+        restaurants: list[list[int]],
         veganFriendly: int,
         maxPrice: int,
         maxDistance: int,
-    ) -> List[int]:
+    ) -> list[int]:
         ans = []
         for r in restaurants:
             if veganFriendly:
@@ -30,7 +30,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    restaurants: List[List[int]] = deserialize("List[List[int]]", read_line())
+    restaurants: list[list[int]] = deserialize("List[List[int]]", read_line())
     veganFriendly: int = deserialize("int", read_line())
     maxPrice: int = deserialize("int", read_line())
     maxDistance: int = deserialize("int", read_line())

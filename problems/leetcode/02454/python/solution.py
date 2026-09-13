@@ -1,18 +1,17 @@
+from __future__ import annotations
+
 # Created by shiyang07ca at 2023/12/12 22:12
 # leetgo: dev
 # https://leetcode.cn/problems/next-greater-element-iv/
-
-from typing import *
-from leetgo_py import *
+from leetgo_py import deserialize, read_line, serialize
 
 # @lc code=begin
-
 from sortedcontainers import SortedList
 
 
 class Solution:
     # 链接：https://leetcode.cn/problems/next-greater-element-iv/solutions/1935877/by-endlesscheng-q6t5/?envType=daily-question&envId=2023-12-12
-    def secondGreaterElement1(self, nums: List[int]) -> List[int]:
+    def secondGreaterElement1(self, nums: list[int]) -> list[int]:
         ans = [-1] * len(nums)
         s = []
         t = []
@@ -28,7 +27,7 @@ class Solution:
         return ans
 
     # https://leetcode.cn/problems/next-greater-element-iv/solutions/2563191/python3javactypescript-yi-ti-yi-jie-pai-sysin/?envType=daily-question&envId=2023-12-12
-    def secondGreaterElement(self, nums: List[int]) -> List[int]:
+    def secondGreaterElement(self, nums: list[int]) -> list[int]:
         arr = [(x, i) for i, x in enumerate(nums)]
         arr.sort(key=lambda x: -x[0])
         sl = SortedList()
@@ -45,7 +44,7 @@ class Solution:
 # @lc code=end
 
 if __name__ == "__main__":
-    nums: List[int] = deserialize("List[int]", read_line())
+    nums: list[int] = deserialize("List[int]", read_line())
     ans = Solution().secondGreaterElement(nums)
 
     print("\noutput:", serialize(ans))
