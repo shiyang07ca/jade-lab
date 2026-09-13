@@ -33,8 +33,8 @@ class Solution:
         while n >= k:
             n -= k
 
-            pre = None  # 前一个节点, 循环结束时为新的头节点
-            cur = last_tail.next  # 当前节点, 循环结束时为新的尾节点
+            pre = None  # 当前这一组翻转后的头节点, 负责当前组已经翻转的部分
+            cur = last_tail.next  # 当前正在处理的节点, 负责当前组还没翻转的部分
             for _ in range(k):  # 同 92 题
                 nxt = cur.next
                 cur.next = pre

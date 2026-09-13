@@ -6,8 +6,8 @@
 
 
 def reverse_iter(head):
-    pre = None  # 前一个节点, 循环结束时为新的头节点
-    cur = head  # 当前节点, 循环结束时为新的尾节点
+    pre = None  # 翻转后的头节点, 负责当前已经翻转的部分
+    cur = head  # 当前正在处理的节点, 负责当前还没翻转的部分
     while cur:
         nxt = cur.next  # 保持下一个节点
         cur.next = pre  # 反转当前节点

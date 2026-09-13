@@ -23,8 +23,8 @@ class Solution:
         for _ in range(left - 1):
             p0 = p0.next
 
-        pre = None  # 前一个节点, 循环结束时为新的头节点
-        cur = p0.next  # 当前节点, 循环结束时为新的尾节点
+        pre = None  # 当前这一组翻转后的头节点, 负责当前已经翻转的部分
+        cur = p0.next  # 当前正在处理的节点, 负责当前还没翻转的部分
         for _ in range(right - left + 1):
             nxt = cur.next
             cur.next = pre
