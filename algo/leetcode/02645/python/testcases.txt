@@ -1,0 +1,14 @@
+input:
+"b"
+output:
+2
+
+input:
+"aaa"
+output:
+6
+
+input:
+"abc"
+output:
+0

@@ -1,0 +1,23 @@
+target_case: 0
+
+input:
+"?5:00"
+output:
+2
+
+input:
+"0?:0?"
+output:
+100
+
+input:
+"??:??"
+output:
+1440
+
+input:
+"21:08"
+output:
+1
+
+

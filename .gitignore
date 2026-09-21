@@ -1,0 +1,63 @@
+# Operating systems and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# Local scratch space and secrets
+.scratch/
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.python-version
+.pdm-python
+.pdm.toml
+.pdm-build/
+__pypackages__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# leetgo compatibility output
+/algo/leetcode/requirements.txt
+
+# Go
+go.work
+go.work.sum
+
+# Java
+target/
+*.class
+hs_err_pid*
+
+# C and C++
+*.o
+*.obj
+*.so
+*.dylib
+*.a
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+CMakeUserPresets.json
+
+# Runtime output
+*.log
+nohup.out
+
+# Editor
+*.code-workspace

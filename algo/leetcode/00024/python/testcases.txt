@@ -1,0 +1,14 @@
+input:
+[1,2,3,4]
+output:
+[2,1,4,3]
+
+input:
+[]
+output:
+[]
+
+input:
+[1]
+output:
+[1]

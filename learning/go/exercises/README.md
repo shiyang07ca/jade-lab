@@ -1,0 +1,17 @@
+# Go 课程练习
+
+本目录是 Go 课程的可执行练习模块。每课使用独立子目录；练习只证明课程指定的行为，不作为通用依赖发布。
+
+从仓库根目录运行全部检查：
+
+```sh
+sh learning/go/check.sh
+```
+
+只运行第 1 课：
+
+```sh
+cd learning/go/exercises
+mise exec go@1.26.5 -- env GOTOOLCHAIN=local go test -race -count=1 ./lesson01
+mise exec go@1.26.5 -- env GOTOOLCHAIN=local go run ./lesson01
+```

@@ -1,0 +1,9 @@
+input:
+"string"
+output:
+"rtsng"
+
+input:
+"poiinter"
+output:
+"ponter"

@@ -1,0 +1,9 @@
+input:
+"000110"
+output:
+"111011"
+
+input:
+"01"
+output:
+"01"

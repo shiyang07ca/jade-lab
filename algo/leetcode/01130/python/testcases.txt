@@ -1,0 +1,9 @@
+input:
+[6,2,4]
+output:
+32
+
+input:
+[4,11]
+output:
+44

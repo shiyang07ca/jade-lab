@@ -1,0 +1,14 @@
+input:
+"capiTalIze tHe titLe"
+output:
+"Capitalize The Title"
+
+input:
+"First leTTeR of EACH Word"
+output:
+"First Letter of Each Word"
+
+input:
+"i lOve leetcode"
+output:
+"i Love Leetcode"

@@ -1,0 +1,17 @@
+input:
+5
+[1,2,5]
+output:
+4
+
+input:
+3
+[2]
+output:
+0
+
+input:
+10
+[10]
+output:
+1

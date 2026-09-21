@@ -1,0 +1,9 @@
+input:
+["adc","wzy","abc"]
+output:
+"abc"
+
+input:
+["aaa","bob","ccc","ddd"]
+output:
+"bob"

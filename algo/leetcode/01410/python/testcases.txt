@@ -1,0 +1,14 @@
+input:
+"&amp; is an HTML entity but &ambassador; is not."
+output:
+"& is an HTML entity but &ambassador; is not."
+
+input:
+"and I quote: &quot;...&quot;"
+output:
+"and I quote: \"...\""
+
+input:
+"&amp;gt;"
+output:
+"&gt;"

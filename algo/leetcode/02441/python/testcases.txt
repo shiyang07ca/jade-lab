@@ -1,0 +1,16 @@
+target_case: 0
+
+input:
+[-1,2,-3,3]
+output:
+3
+
+input:
+[-1,10,6,7,-7,1]
+output:
+7
+
+input:
+[-10,8,6,7,-2,-3]
+output:
+-1

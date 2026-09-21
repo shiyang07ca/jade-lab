@@ -1,0 +1,9 @@
+input:
+"ABFCACDB"
+output:
+2
+
+input:
+"ACBBD"
+output:
+5

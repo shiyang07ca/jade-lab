@@ -1,0 +1,11 @@
+target_case: 0
+
+input:
+"abab"
+output:
+"bab"
+
+input:
+"leetcode"
+output:
+"tcode"

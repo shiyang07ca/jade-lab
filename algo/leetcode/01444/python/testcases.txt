@@ -1,0 +1,17 @@
+input:
+["A..","AAA","..."]
+3
+output:
+3
+
+input:
+["A..","AA.","..."]
+3
+output:
+1
+
+input:
+["A..","A..","..."]
+1
+output:
+1

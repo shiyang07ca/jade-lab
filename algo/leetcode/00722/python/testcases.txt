@@ -1,0 +1,29 @@
+input:
+["/*Test program */", "int main()", "{ ", "  // variable declaration ", "int a, b, c;", "/* This is a test", "   multiline  ", "   comment for ", "   testing */", "a = b + c;", "}"]
+output:
+["int main()","{ ","  ","int a,b,c;","a = b + c;","}"]
+
+input:
+["a/*comment", "line", "more_comment*/b"]
+output:
+["ab"]
+
+input:
+["struct Node{", "    /*/ declare members;/**/", "    int size;", "    /**/int val;", "};"]
+output:
+["struct Node{","    ","    int size;","    int val;","};"]
+
+input:
+["main() {", "   func(1);", "   /** / more comments here", "   float f = 2.0", "   f += f;", "   cout << f; */", "}"]
+output:
+["main() {","   func(1);","   ","}"]
+
+input:
+["a//*b//*c","blank","d/*/e*//f"]
+output:
+["a","blank","d/f"]
+
+input:
+["main() {", "  Node* p;", "  /* declare a Node", "  /*float f = 2.0", "   p->val = f;", "   /**/", "   p->val = 1;", "   //*/ cout << success;*/", "}", " "]
+output:
+["main() {","  Node* p;","  ","   p->val = 1;","   ","}"," "]

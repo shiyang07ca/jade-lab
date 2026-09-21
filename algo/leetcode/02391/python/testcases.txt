@@ -1,0 +1,11 @@
+input:
+["G","P","GP","GG"]
+[2,4,3]
+output:
+21
+
+input:
+["MMM","PGM","GP"]
+[3,10]
+output:
+37

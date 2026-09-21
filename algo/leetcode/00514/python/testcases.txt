@@ -1,0 +1,11 @@
+input:
+"godding"
+"gd"
+output:
+4
+
+input:
+"godding"
+"godding"
+output:
+13

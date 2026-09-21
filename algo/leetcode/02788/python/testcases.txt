@@ -1,0 +1,17 @@
+input:
+["one.two.three","four.five","six"]
+"."
+output:
+["one","two","three","four","five","six"]
+
+input:
+["$easy$","$problem$"]
+"$"
+output:
+["easy","problem"]
+
+input:
+["|||"]
+"|"
+output:
+[]

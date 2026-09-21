@@ -1,0 +1,30 @@
+from __future__ import annotations
+
+from collections import deque
+
+# Created by shiyang07ca at 2024/04/13 15:11
+# leetgo: dev
+# https://leetcode.cn/problems/find-champion-ii/
+from leetgo_py import deserialize, read_line, serialize
+
+# @lc code=begin
+
+
+class Solution:
+    def findChampion(self, n: int, edges: list[list[int]]) -> int:
+        g = [[] for _ in range(n)]
+        indeg = [0] * n
+        for x, y in edges:
+            g[x].append(y)
+            indeg[y] += 1
+        q = deque(i for i, v in enumerate(indeg) if v == 0)
+        return q[0] if len(q) == 1 else -1
+
+
+# @lc code=end
+
+if __name__ == "__main__":
+    n: int = deserialize("int", read_line())
+    edges: list[list[int]] = deserialize("List[List[int]]", read_line())
+    ans = Solution().findChampion(n, edges)
+    print("\noutput:", serialize(ans, "integer"))

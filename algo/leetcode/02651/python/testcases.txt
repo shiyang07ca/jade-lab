@@ -1,0 +1,11 @@
+input:
+15
+5
+output:
+20
+
+input:
+13
+11
+output:
+0

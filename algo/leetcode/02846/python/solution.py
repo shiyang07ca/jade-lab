@@ -1,0 +1,89 @@
+from __future__ import annotations
+
+# Created by shiyang07ca at 2024/01/26 00:40
+# leetgo: dev
+# https://leetcode.cn/problems/minimum-edge-weight-equilibrium-queries-in-a-tree/
+from leetgo_py import deserialize, read_line, serialize
+
+# @lc code=begin
+
+# TODO:
+
+
+class Solution:
+    # 链接：https://leetcode.cn/problems/minimum-edge-weight-equilibrium-queries-in-a-tree/solutions/2424060/lca-mo-ban-by-endlesscheng-j54b/
+    def minOperationsQueries(
+        self, n: int, edges: list[list[int]], queries: list[list[int]]
+    ) -> list[int]:
+        g = [[] for _ in range(n)]
+        for x, y, w in edges:
+            g[x].append((y, w - 1))
+            g[y].append((x, w - 1))
+
+        m = n.bit_length()
+        pa = [[-1] * m for _ in range(n)]
+        cnt = [[[0] * 26 for _ in range(m)] for _ in range(n)]
+        depth = [0] * n
+
+        def dfs(x: int, fa: int) -> None:
+            pa[x][0] = fa
+            for y, w in g[x]:
+                if y != fa:
+                    cnt[y][0][w] = 1
+                    depth[y] = depth[x] + 1
+                    dfs(y, x)
+
+        dfs(0, -1)
+
+        # 倍增模板
+        for i in range(m - 1):
+            for x in range(n):
+                p = pa[x][i]
+                if p != -1:
+                    pp = pa[p][i]
+                    pa[x][i + 1] = pp
+                    for j, (c1, c2) in enumerate(zip(cnt[x][i], cnt[p][i])):
+                        cnt[x][i + 1][j] = c1 + c2
+
+        ans = []
+        for x, y in queries:
+            path_len = depth[x] + depth[y]  # 最后减去 depth[lca] * 2
+            cw = [0] * 26
+            if depth[x] > depth[y]:
+                x, y = y, x
+
+            # 使 y 和 x 在同一深度
+            k = depth[y] - depth[x]
+            for i in range(k.bit_length()):
+                if (k >> i) & 1:  # k 二进制从低到高第 i 位是 1
+                    p = pa[y][i]
+                    for j, c in enumerate(cnt[y][i]):
+                        cw[j] += c
+                    y = p
+
+            if y != x:
+                for i in range(m - 1, -1, -1):
+                    px, py = pa[x][i], pa[y][i]
+                    if px != py:
+                        for j, (c1, c2) in enumerate(zip(cnt[x][i], cnt[y][i])):
+                            cw[j] += c1 + c2
+                        x, y = px, py  # 同时上跳 2^i 步
+                for j, (c1, c2) in enumerate(zip(cnt[x][0], cnt[y][0])):
+                    cw[j] += c1 + c2
+                x = pa[x][0]
+
+            lca = x
+            path_len -= depth[lca] * 2
+            ans.append(path_len - max(cw))
+        return ans
+
+
+# @lc code=end
+
+if __name__ == "__main__":
+    n: int = deserialize("int", read_line())
+    edges: list[list[int]] = deserialize("List[List[int]]", read_line())
+    queries: list[list[int]] = deserialize("List[List[int]]", read_line())
+    ans = Solution().minOperationsQueries(n, edges, queries)
+
+    print("\noutput:", serialize(ans))

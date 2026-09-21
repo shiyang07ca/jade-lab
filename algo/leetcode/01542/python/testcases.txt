@@ -1,0 +1,14 @@
+input:
+"3242415"
+output:
+5
+
+input:
+"12345678"
+output:
+1
+
+input:
+"213123"
+output:
+6

@@ -1,0 +1,17 @@
+input:
+["FrequencyTracker","add","add","hasFrequency"]
+[[],[3],[3],[2]]
+output:
+[null, null, null, true]
+
+input:
+["FrequencyTracker","add","deleteOne","hasFrequency"]
+[[],[1],[1],[1]]
+output:
+[null, null, null, false]
+
+input:
+["FrequencyTracker","hasFrequency","add","hasFrequency"]
+[[],[2],[3],[1]]
+output:
+[null, false, null, true]

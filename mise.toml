@@ -1,0 +1,107 @@
+[tools]
+python = "3.13.5"
+uv = "0.8.15"
+go = "1.26.5"
+java = "temurin-21"
+maven = "3.9.9"
+cmake = "3.31.6"
+ninja = "1.12.1"
+shellcheck = "0.10.0"
+shfmt = "3.10.0"
+"github:j178/leetgo" = "1.4.17"
+
+[env]
+JADE_BASH_IMAGE = "docker.io/library/bash:5.3.15-alpine3.24@sha256:a19c811ee9e97fa8a080001d82b8e0ded303f0795cffdb1cbd162731bc8ce208"
+JADE_BASH_VERSION = "5.3.15"
+
+[tasks.check]
+description = "Run all configured repository checks"
+run = '''
+set -eu
+mise run check:algo
+mise run check:learning
+mise run check:labs
+'''
+
+[tasks."check:algo"]
+description = "Check the algorithm handbook and LeetCode smoke case"
+run = '''
+set -eu
+
+(
+  cd algo/copypasta/python
+  uv run --frozen pytest
+  uv run --frozen ruff check .
+  PYTHONPYCACHEPREFIX="$PWD/../../../.scratch/pycache/copypasta-python" \
+    uv run --frozen python -m compileall -q ./*.py tests
+)
+
+(
+  cd algo/copypasta/go
+  unformatted=$(gofmt -l .)
+  if [ -n "$unformatted" ]; then
+    printf 'gofmt required:\n%s\n' "$unformatted" >&2
+    exit 1
+  fi
+  go test ./...
+  go vet ./...
+)
+
+cmake -S algo/copypasta/cpp -B .scratch/build/copypasta-cpp -G Ninja
+cmake --build .scratch/build/copypasta-cpp
+python algo/leetcode/check.py 88
+'''
+
+[tasks."check:learning"]
+description = "Check the Go and Bash learning workspaces"
+run = '''
+set -eu
+sh learning/go/check.sh
+python learning/bash/check.py
+'''
+
+[tasks."check:labs"]
+description = "Check the labs explicitly included in the root task"
+run = '''
+set -eu
+
+(
+  cd labs/btree
+  uv run --frozen pytest
+  uv run --frozen ruff check .
+)
+
+(
+  cd labs/go-examples
+  unformatted=$(gofmt -l .)
+  if [ -n "$unformatted" ]; then
+    printf 'gofmt required:\n%s\n' "$unformatted" >&2
+    exit 1
+  fi
+  go test ./...
+  go vet ./...
+)
+
+(cd labs/java-examples && mvn test)
+(cd labs/mapstruct && mvn test)
+
+(
+  cd labs/python-examples
+  uv run --frozen pytest
+  PYTHONPYCACHEPREFIX="$PWD/../../.scratch/pycache/python-examples" \
+    uv run --frozen python -m compileall -q language standard-library testing
+)
+
+(
+  cd labs/python-observability
+  uv run --frozen pytest
+  uv run --frozen ruff check .
+)
+
+(cd labs/spring-web && mvn test)
+'''
+
+[tasks.bash]
+description = "Run the pinned GNU Bash course runtime in a read-only repository mount"
+raw_args = true
+run = 'docker run --rm -v "{{config_root}}:/workspace:ro" -w /workspace "$JADE_BASH_IMAGE" bash'

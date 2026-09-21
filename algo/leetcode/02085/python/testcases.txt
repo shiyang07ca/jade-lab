@@ -1,0 +1,17 @@
+input:
+["leetcode","is","amazing","as","is"]
+["amazing","leetcode","is"]
+output:
+2
+
+input:
+["b","bb","bbb"]
+["a","aa","aaa"]
+output:
+0
+
+input:
+["a","ab"]
+["a","a","a","ab"]
+output:
+1

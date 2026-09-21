@@ -1,0 +1,17 @@
+input:
+"cczazcc"
+3
+output:
+"zzcccac"
+
+input:
+"aababab"
+2
+output:
+"bbabaa"
+
+input:
+"robnsdvpuxbapuqgopqvxdrchivlifeepy"
+2
+output:
+"yxxvvuvusrrqqppopponliihgfeeddcbba"

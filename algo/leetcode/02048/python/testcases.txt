@@ -1,0 +1,14 @@
+input:
+1
+output:
+22
+
+input:
+1000
+output:
+1333
+
+input:
+3000
+output:
+3133

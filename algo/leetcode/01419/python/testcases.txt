@@ -1,0 +1,26 @@
+target_case: 0
+
+input:
+"croakcroak"
+output:
+1
+
+input:
+"crcoakroak"
+output:
+2
+
+input:
+"croakcrook"
+output:
+-1
+
+input:
+"croakcroa"
+output:
+-1
+
+input:
+"crocakcroraoakk"
+output:
+2

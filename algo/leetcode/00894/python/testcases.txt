@@ -1,0 +1,9 @@
+input:
+7
+output:
+[[0,0,0,null,null,0,0,null,null,0,0],[0,0,0,null,null,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,null,null,null,null,0,0],[0,0,0,0,0,null,null,0,0]]
+
+input:
+3
+output:
+[[0,0,0]]

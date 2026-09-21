@@ -1,0 +1,17 @@
+input:
+[1,2,3,4,-99,-99,7,8,9,-99,-99,12,13,-99,14]
+1
+output:
+[1,2,3,4,null,null,7,8,9,null,14]
+
+input:
+[5,4,8,11,null,17,4,7,1,null,null,5,3]
+22
+output:
+[5,4,8,11,null,17,4,7,null,null,null,5]
+
+input:
+[1,2,-3,-5,null,4,null]
+-1
+output:
+[1,null,-3,4]

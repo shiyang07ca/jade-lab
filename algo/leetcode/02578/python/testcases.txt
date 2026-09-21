@@ -1,0 +1,9 @@
+input:
+4325
+output:
+59
+
+input:
+687
+output:
+75

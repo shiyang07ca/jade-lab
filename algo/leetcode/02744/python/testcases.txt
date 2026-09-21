@@ -1,0 +1,14 @@
+input:
+["cd","ac","dc","ca","zz"]
+output:
+2
+
+input:
+["ab","ba","cc"]
+output:
+1
+
+input:
+["aa","ab"]
+output:
+0

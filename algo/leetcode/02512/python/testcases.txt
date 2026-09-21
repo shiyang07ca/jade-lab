@@ -1,0 +1,26 @@
+input:
+["smart","brilliant","studious"]
+["not"]
+["this student is studious","the student is smart"]
+[1,2]
+2
+output:
+[1,2]
+
+input:
+["smart","brilliant","studious"]
+["not"]
+["this student is not studious","the student is smart"]
+[1,2]
+2
+output:
+[2,1]
+
+input:
+["fkeofjpc","qq","iio"]
+["jdh","khj","eget","rjstbhe","yzyoatfyx","wlinrrgcm"]
+["rjstbhe eget kctxcoub urrmkhlmi yniqafy fkeofjpc iio yzyoatfyx khj iio","gpnhgabl qq qq fkeofjpc dflidshdb qq iio khj qq yzyoatfyx","tizpzhlbyb eget z rjstbhe iio jdh jdh iptxh qq rjstbhe","jtlghe wlinrrgcm jnkdbd k iio et rjstbhe iio qq jdh","yp fkeofjpc lkhypcebox rjstbhe ewwykishv egzhne jdh y qq qq","fu ql iio fkeofjpc jdh luspuy yzyoatfyx li qq v","wlinrrgcm iio qq omnc sgkt tzgev iio iio qq qq","d vhg qlj khj wlinrrgcm qq f jp zsmhkjokmb rjstbhe"]
+[96537918,589204657,765963609,613766496,43871615,189209587,239084671,908938263]
+3
+output:
+[239084671,589204657,43871615]

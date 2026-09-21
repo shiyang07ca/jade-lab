@@ -1,0 +1,14 @@
+input:
+["alic3","bob","3","4","00000"]
+output:
+5
+
+input:
+["1","01","001","0001"]
+output:
+1
+
+input:
+["kzgy","0qgl3","4","khzv","jtglz","85b","47","jf","8i0a","oy"]
+output:
+47

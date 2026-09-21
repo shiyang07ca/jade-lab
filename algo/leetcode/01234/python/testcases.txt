@@ -1,0 +1,14 @@
+input:
+"QWER"
+output:
+0
+
+input:
+"QQWE"
+output:
+1
+
+input:
+"QQQW"
+output:
+2

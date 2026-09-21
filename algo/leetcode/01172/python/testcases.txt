@@ -1,0 +1,15 @@
+target_case: 0
+
+input:
+["DinnerPlates","push","push","push","push","push","popAtStack","push","push","popAtStack","popAtStack","pop","pop","pop","pop","pop"]
+[[2],[1],[2],[3],[4],[5],[0],[20],[21],[0],[2],[],[],[],[],[]]
+output:
+[null,null,null,null,null,null,2,null,null,20,21,5,4,3,1,-1]
+
+input:
+["DinnerPlates","push","push","popAtStack","pop","push","push","pop","pop"]
+[[1],[1],[2],[1],[],[1],[2],[],[]]
+output:
+[null,null,null,2,1,null,null,2,1]
+
+

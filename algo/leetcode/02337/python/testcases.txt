@@ -1,0 +1,17 @@
+input:
+"_L__R__R_"
+"L______RR"
+output:
+true
+
+input:
+"R_L_"
+"__LR"
+output:
+false
+
+input:
+"_R"
+"R_"
+output:
+false

@@ -1,0 +1,14 @@
+input:
+"egcfe"
+output:
+"efcfe"
+
+input:
+"abcd"
+output:
+"abba"
+
+input:
+"seven"
+output:
+"neven"

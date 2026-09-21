@@ -1,0 +1,17 @@
+input:
+16
+7
+output:
+[1,6]
+
+input:
+17
+4
+output:
+[]
+
+input:
+4
+17
+output:
+[]

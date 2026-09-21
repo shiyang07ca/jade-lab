@@ -1,0 +1,13 @@
+target_case: 0
+
+input:
+"0110"
+3
+output:
+true
+
+input:
+"0110"
+4
+output:
+false

@@ -1,0 +1,14 @@
+input:
+[[100,200],[200,1300],[1000,1250],[2000,3200]]
+output:
+3Explanation:There are totally 4 courses, but you can take 3 courses at most:First, take the 1
+
+input:
+[[1,2]]
+output:
+1
+
+input:
+[[3,2],[4,3]]
+output:
+0

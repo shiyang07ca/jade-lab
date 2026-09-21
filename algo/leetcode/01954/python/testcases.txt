@@ -1,0 +1,14 @@
+input:
+1
+output:
+8
+
+input:
+13
+output:
+16
+
+input:
+1000000000
+output:
+5040

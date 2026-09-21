@@ -1,0 +1,15 @@
+input:
+"acb"
+4
+"ab"
+2
+output:
+2
+
+input:
+"acb"
+1
+"acb"
+1
+output:
+1
