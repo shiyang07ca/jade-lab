@@ -9,7 +9,7 @@ code:
   python3:
     out_dir: .
     filename_template: "{{ .Id | padWithZero 5 }}/python"
-    executable: python3.12
+    executable: python3.13
 
   go:
     out_dir: .
