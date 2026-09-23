@@ -1,0 +1,13 @@
+input:
+"AACCGGTT"
+"AACCGGTA"
+["AACCGGTA"]
+output:
+1
+
+input:
+"AACCGGTT"
+"AAACGGTA"
+["AACCGGTA","AACCGCTA","AAACGGTA"]
+output:
+2
