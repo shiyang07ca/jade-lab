@@ -2,6 +2,7 @@
 # leetgo: 1.4.17
 # https://leetcode.cn/problems/interleaving-string/
 
+from functools import cache
 from typing import *
 
 from leetgo_py import *
@@ -22,12 +23,16 @@ class Solution:
             if i < 0 and j < 0:
                 return True
             return (
-                i >= 0
-                and s1[i] == s3[i + j + 1]
-                and dfs(i - 1, j)
-                or j >= 0
-                and s2[j] == s3[i + j + 1]
-                and dfs(i, j - 1)
+                (
+                    i >= 0
+                    and s1[i] == s3[i + j + 1]
+                    and dfs(i - 1, j)
+                )
+                or (
+                    j >= 0
+                    and s2[j] == s3[i + j + 1]
+                    and dfs(i, j - 1)
+                )
             )
 
         return dfs(n - 1, m - 1)
