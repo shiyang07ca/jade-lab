@@ -3,17 +3,10 @@ name = "leetcode-solutions"
 version = "0.1.0"
 description = "使用 leetgo 管理的多语言 LeetCode 题解"
 requires-python = ">=3.13,<3.15"
-dependencies = [
-    "leetgo-py==0.2.4",
-    "sortedcontainers==2.4.0",
-]
+dependencies = ["leetgo-py==0.2.4", "sortedcontainers==2.4.0"]
 
 [dependency-groups]
-dev = [
-    "basedpyright==1.32.1",
-    "pytest>=8.3,<9",
-    "ruff>=0.8.6",
-]
+dev = ["basedpyright==1.32.1", "pytest>=8.3,<9", "ruff>=0.8.6"]
 
 [tool.uv]
 package = false
