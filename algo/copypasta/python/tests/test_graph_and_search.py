@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from bisect import bisect_left, bisect_right
+from itertools import combinations_with_replacement
 from math import inf
 
 import pytest
 
-from binary_search import binary_search, lower_bound, upper_bound
+from binary_search import binary_search, first_true, lower_bound, upper_bound
 from graph import adjacency_list, bfs_order, dijkstra
 from lca import LowestCommonAncestor
 from manacher import longest_palindrome, longest_palindrome_length
@@ -35,6 +37,49 @@ def test_binary_search_boundaries_and_empty_input() -> None:
     assert binary_search(values, 3) == 1
     assert binary_search(values, 2) is None
     assert lower_bound([], 10) == 0
+
+
+def test_binary_search_matches_bisect_and_linear_search() -> None:
+    for size in range(6):
+        for values in combinations_with_replacement([-1, 0, 2], size):
+            for target in range(-2, 4):
+                assert lower_bound(values, target) == bisect_left(values, target)
+                assert upper_bound(values, target) == bisect_right(values, target)
+                expected = values.index(target) if target in values else None
+                assert binary_search(values, target) == expected
+
+
+@pytest.mark.parametrize(
+    ("values", "target", "lower", "upper"),
+    [([0.5, 1.5, 1.5, 1.8], 1.5, 1, 3), (["a", "c", "c", "e"], "c", 1, 3)],
+)
+def test_binary_search_non_integer_values(values, target, lower, upper) -> None:
+    assert lower_bound(values, target) == lower
+    assert upper_bound(values, target) == upper
+    assert binary_search(values, target) == lower
+
+
+def test_first_true_every_partition_and_search_boundary() -> None:
+    for left in [-5, 0, 3]:
+        for size in range(7):
+            right = left + size
+            for boundary in range(left, right + 1):
+
+                def predicate(value: int, left=left, right=right, boundary=boundary) -> bool:
+                    assert left <= value < right
+                    return value >= boundary
+
+                assert first_true(left, right, predicate) == boundary
+                # 把「先真后假」的条件取反，再减一；包括全真、全假和空区间。
+                result = first_true(left, right, lambda x, boundary=boundary: not (x < boundary))
+                assert result - 1 == boundary - 1
+
+
+def test_first_true_answer_search_and_invalid_range() -> None:
+    assert first_true(0, 21, lambda k: k * k >= 20) == 5
+    assert first_true(0, 91, lambda k: k * k > 90) - 1 == 9
+    with pytest.raises(ValueError, match="left must not exceed right"):
+        first_true(2, 1, lambda _: True)
 
 
 def test_sorting_returns_sorted_copies() -> None:
