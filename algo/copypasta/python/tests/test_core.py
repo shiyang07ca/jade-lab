@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import pytest
 
-from disjoint_set import DisjointSet
 from heap import MinHeap
 from knapsack import zero_one_knapsack
 from number_theory import (
@@ -13,6 +12,7 @@ from number_theory import (
 )
 from range_queries import MatrixPrefixSum, apply_range_additions
 from sequences import fibonacci_sequence
+from union_find import UnionFind
 from windows import sliding_window_max
 
 
@@ -43,17 +43,34 @@ def test_prime_preprocessing_and_factorization() -> None:
         eratosthenes(True)
 
 
-def test_disjoint_set_tracks_components_and_sizes() -> None:
-    groups = DisjointSet(6)
-    assert groups.union(0, 1)
-    assert groups.union(1, 2)
-    assert not groups.union(0, 2)
-    assert groups.connected(0, 2)
-    assert not groups.connected(0, 3)
-    assert groups.component_size(1) == 3
-    assert groups.components == 4
-    with pytest.raises(IndexError):
-        groups.find(6)
+def test_union_find_tracks_components_and_sizes() -> None:
+    union_find = UnionFind(7)
+    assert union_find.union(0, 1)
+    assert union_find.union(2, 3)
+    assert union_find.union(0, 2)
+    assert not union_find.union(1, 3)
+    assert not union_find.union(6, 6)
+    assert union_find.union(4, 5)
+
+    assert union_find.same(1, 3)
+    assert not union_find.same(0, 6)
+    assert union_find.size[union_find.find(3)] == 4
+    assert union_find.groups == 3
+    assert union_find.parent[3] == 0
+    assert union_find.size[union_find.find(5)] == 2
+
+    # 小连通块作为第一个参数时，仍应合并到大连通块。
+    root = union_find.find(0)
+    assert union_find.union(6, 1)
+    assert union_find.find(6) == root
+    assert union_find.size[root] == 5
+    assert union_find.groups == 2
+
+
+def test_union_find_empty() -> None:
+    union_find = UnionFind(0)
+    assert union_find.parent == union_find.size == []
+    assert union_find.groups == 0
 
 
 def test_min_heap_orders_duplicates_and_rejects_empty_access() -> None:
