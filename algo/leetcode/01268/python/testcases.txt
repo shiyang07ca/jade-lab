@@ -1,0 +1,11 @@
+input:
+["mobile","mouse","moneypot","monitor","mousepad"]
+"mouse"
+output:
+[["mobile","moneypot","monitor"],["mobile","moneypot","monitor"],["mouse","mousepad"],["mouse","mousepad"],["mouse","mousepad"]]
+
+input:
+["havana"]
+"havana"
+output:
+[["havana"],["havana"],["havana"],["havana"],["havana"],["havana"]]
