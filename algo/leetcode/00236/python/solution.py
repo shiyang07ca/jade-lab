@@ -9,8 +9,6 @@ from leetgo_py import TreeNode, deserialize, read_line, serialize
 
 # @lc code=begin
 
-# TODO:
-
 # Definition for a binary tree node.
 # class TreeNode:
 #     def __init__(self, x):
@@ -18,26 +16,34 @@ from leetgo_py import TreeNode, deserialize, read_line, serialize
 #         self.left = None
 #         self.right = None
 
+# TODO
+
 
 class Solution:
-    # 分类讨论：
-    # - 当前节点是空节点：返回当前节点
-    # - 当前节点是 p：返回当前节点
-    # - 当前节点是 q：返回当前节点
-    # - 左右子树都能找到：返回当前节点
-    # - 只有左子树找到：返回递归左子树结果
-    # - 只有右子树找到：返回递归右子树结果
-    # - 左右子树都没找到：返回空节点
     def lowestCommonAncestor(
         self, root: TreeNode | None, p: TreeNode, q: TreeNode
     ) -> TreeNode | None:
-        if root in (None, p, q):
-            return root
-        left = self.lowestCommonAncestor(root.left, p, q)
-        right = self.lowestCommonAncestor(root.right, p, q)
-        if left and right:
-            return root
-        return left or right
+        def dfs(node: TreeNode | None) -> TreeNode | None:
+            if node is None:
+                return None
+
+            # 找到目标，向上返回。
+            if node is p or node is q:
+                return node
+
+            left = dfs(node.left)
+            right = dfs(node.right)
+
+            # 两边各有一个目标，当前节点就是最近公共祖先。
+            if left is not None and right is not None:
+                return node
+
+            # 只有一边有结果就原样返回；都没有则返回 None。
+            if left is not None:
+                return left
+            return right
+
+        return dfs(root)
 
 
 # @lc code=end
