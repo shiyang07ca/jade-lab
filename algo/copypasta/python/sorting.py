@@ -1,6 +1,38 @@
 """Comparison sorting algorithms."""
 
 from collections.abc import Sequence
+from random import randrange
+
+
+def quickselect[T](values: list[T], k: int) -> T:
+    """原地选择升序下标 k 的元素；期望 O(n)，最坏 O(n²)，额外空间 O(1)。"""
+    if not 0 <= k < len(values):
+        raise IndexError("k out of range")
+
+    left, right = 0, len(values)
+    while True:
+        pivot = values[randrange(left, right)]
+        lower, current, upper = left, left, right
+        # [left, lower) < pivot，[lower, current) == pivot，[upper, right) > pivot。
+        while current < upper:
+            if values[current] < pivot:
+                values[lower], values[current] = values[current], values[lower]
+                lower += 1
+                current += 1
+            elif values[current] > pivot:
+                upper -= 1
+                values[current], values[upper] = values[upper], values[current]
+                # 换入的元素尚未检查，current 不动。
+            else:
+                current += 1
+
+        # k 始终是原数组下标，只缩小搜索区间。
+        if k < lower:
+            right = lower
+        elif k >= upper:
+            left = upper
+        else:
+            return values[k]
 
 
 def merge_sort[T](values: Sequence[T]) -> list[T]:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from bisect import bisect_left, bisect_right
-from itertools import combinations_with_replacement
+from itertools import combinations_with_replacement, product
 from math import inf
 
 import pytest
@@ -10,7 +10,7 @@ from binary_search import binary_search, first_true, lower_bound, upper_bound
 from graph import adjacency_list, bfs_order, dijkstra
 from lca import LowestCommonAncestor
 from manacher import longest_palindrome, longest_palindrome_length
-from sorting import merge_sort, quick_sort
+from sorting import merge_sort, quick_sort, quickselect
 from topological_sort import topological_sort
 
 
@@ -88,6 +88,37 @@ def test_sorting_returns_sorted_copies() -> None:
     assert quick_sort(values) == [-1, 0, 3, 3, 5]
     assert values == [5, -1, 3, 3, 0]
     assert quick_sort([]) == []
+
+
+def test_quickselect_matches_sorted_for_every_rank() -> None:
+    for size in range(1, 6):
+        for values in product([-1, 0, 2], repeat=size):
+            expected = sorted(values)
+            for k, value in enumerate(expected):
+                actual = list(values)
+                assert quickselect(actual, k) == value
+                assert actual[k] == value
+                assert all(x <= value for x in actual[:k])
+                assert all(x >= value for x in actual[k + 1:])
+                assert sorted(actual) == expected
+
+
+@pytest.mark.parametrize("values", [list(range(100)), list(range(99, -1, -1)), [7] * 100])
+def test_quickselect_ordered_and_equal_values(values: list[int]) -> None:
+    for k in (0, 50, 99):
+        assert quickselect(values.copy(), k) == sorted(values)[k]
+
+
+def test_quickselect_supports_strings() -> None:
+    assert quickselect(["c", "a", "b", "b"], 2) == "b"
+
+
+@pytest.mark.parametrize(("values", "k"), [([], 0), ([1], -1), ([1], 1)])
+def test_quickselect_rejects_invalid_rank(values: list[int], k: int) -> None:
+    original = values.copy()
+    with pytest.raises(IndexError, match="k out of range"):
+        quickselect(values, k)
+    assert values == original
 
 
 def test_manacher_handles_even_odd_and_separator_characters() -> None:
